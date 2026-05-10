@@ -1,0 +1,15 @@
+# Supabase CLI project config — enables `supabase db push` for CI/CD.
+# See https://supabase.com/docs/guides/cli/config
+
+project_id = "erm-navigator"
+
+[db]
+# Local Postgres port (only used by `supabase start` for local dev).
+port = 54322
+# Remote schemas we own. Everything lives in `public` for ERM.
+schemas = ["public"]
+
+[db.migrations]
+# Migrations are applied in lexical filename order.
+# Keep them numbered (YYYYMMDDHHMMSS_*.sql) so order is deterministic.
+schema_paths = []
