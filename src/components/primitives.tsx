@@ -1,9 +1,10 @@
 import React, { ReactNode } from "react";
 
 /*
- * ERM Navigator primitives — Runway-inspired aesthetic.
- * Warm cream base, rich brown ink, amber accent. Reusable atoms that
- * keep the premium FP&A-dashboard feel consistent across screens.
+ * ERM Navigator primitives — "Editorial Risk Atlas" aesthetic.
+ * Warm cream base, rich ink, gold highlight. Reads like an institutional
+ * quarterly report: folio numerals, ornamental rules, editorial marginalia.
+ * Every atom is sized for print-grade typography in a browser.
  */
 
 type Severity = "none" | "amber" | "mint" | "coral" | "ink";
@@ -81,7 +82,7 @@ export function Metric({
     xl: "text-7xl",
   };
   const toneMap: Record<string, string> = {
-    amber: "text-[var(--color-accent-ink)]",
+    amber: "text-[var(--color-gold)]",
     mint: "text-[var(--color-mint)]",
     coral: "text-[var(--color-coral)]",
     ink: "text-[var(--color-ink)]",
@@ -145,24 +146,28 @@ export function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-/* ── Brand mark — maturity compass glyph ─────────────────
-   Eight-point geometric star (Islamic-art heritage) with a
-   central ascending arrow-stem. Reads as: "measurement across
-   all directions, trending upward toward maturity."
-   Colors use the primary-on-ink pairing from the active theme. */
+/* ── Brand mark — eight-point maturity compass ─────────────
+   Gold 8-point star on ink (Islamic-art heritage) with an
+   ascending stem (maturity trajectory). Fixed: uses highlight
+   token so the star reads as gold, not ink-on-ink. */
 export function BrandMark({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect x="1" y="1" width="22" height="22" rx="5" fill="var(--color-ink)" />
-      {/* 8-point star outline — governance compass */}
-      <g stroke="var(--color-accent)" strokeWidth="1" opacity="0.35">
-        <path d="M12 4 L14 8 L18 6 L16 10 L20 12 L16 14 L18 18 L14 16 L12 20 L10 16 L6 18 L8 14 L4 12 L8 10 L6 6 L10 8 Z" />
-      </g>
+      {/* 8-point star — governance compass */}
+      <path
+        d="M12 4 L13.5 8.2 L17.8 6.2 L16 10.5 L20.4 12 L16 13.5 L17.8 17.8 L13.5 15.8 L12 20 L10.5 15.8 L6.2 17.8 L8 13.5 L3.6 12 L8 10.5 L6.2 6.2 L10.5 8.2 Z"
+        stroke="var(--color-highlight)"
+        strokeWidth="0.6"
+        strokeLinejoin="round"
+        fill="var(--color-highlight)"
+        fillOpacity="0.10"
+      />
       {/* Ascending stem — maturity trajectory */}
       <path
-        d="M12 17 L12 9 M9 12 L12 9 L15 12"
-        stroke="var(--color-accent)"
-        strokeWidth="1.5"
+        d="M12 16.5 L12 8.8 M9.3 11.5 L12 8.8 L14.7 11.5"
+        stroke="var(--color-highlight)"
+        strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -170,7 +175,7 @@ export function BrandMark({ size = 24 }: { size?: number }) {
   );
 }
 
-/* ── Section rule ───────────────────────────────────────── */
+/* ── Section rule — horizontal divider with optional label ─ */
 export function SectionRule({ label }: { label?: string }) {
   return (
     <div className="flex items-center gap-4 py-3">
@@ -178,6 +183,177 @@ export function SectionRule({ label }: { label?: string }) {
       {label && <Eyebrow>{label}</Eyebrow>}
       <div className="flex-1 h-px bg-[var(--color-border)]" />
     </div>
+  );
+}
+
+/* ── Ornamental rule — art-deco divider for editorial moments ─
+   Double hairline with a small diamond in the center. Used to
+   anchor the top of a screen or separate chapters. */
+export function OrnamentalRule({ color = "ink" }: { color?: "ink" | "gold" }) {
+  const strokeVar = color === "gold" ? "var(--color-gold)" : "var(--color-border-strong)";
+  return (
+    <div className="flex items-center justify-center py-3" aria-hidden>
+      <div className="flex-1 flex flex-col gap-[3px]">
+        <div className="h-px" style={{ background: strokeVar }} />
+        <div className="h-px opacity-50" style={{ background: strokeVar }} />
+      </div>
+      <svg width="10" height="10" viewBox="0 0 10 10" className="mx-4">
+        <path d="M5 0 L10 5 L5 10 L0 5 Z" fill={strokeVar} opacity="0.7" />
+      </svg>
+      <div className="flex-1 flex flex-col gap-[3px]">
+        <div className="h-px opacity-50" style={{ background: strokeVar }} />
+        <div className="h-px" style={{ background: strokeVar }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Folio numeral — Roman chapter mark in display serif ─── */
+export function FolioNumeral({
+  numeral,
+  size = 64,
+}: {
+  numeral: string;
+  size?: number;
+}) {
+  return (
+    <span
+      className="folio-num text-[var(--color-ink)]"
+      style={{ fontSize: `${size}px`, lineHeight: 1 }}
+    >
+      {numeral}
+    </span>
+  );
+}
+
+/* ── BU glyph — commissioned illustration per business unit ─
+   Each operating unit gets its own editorial mark. Uses ink + gold
+   from the active theme. Renders at a fixed 28px viewBox. */
+export function BuGlyph({ id, size = 28 }: { id: string; size?: number }) {
+  const stroke = "var(--color-ink)";
+  const accent = "var(--color-gold)";
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 28 28",
+    fill: "none",
+    strokeWidth: 1.4,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+
+  switch (id) {
+    case "gen": // Turbine blades + hub — power generation
+      return (
+        <svg {...common}>
+          <circle cx="14" cy="14" r="2" stroke={stroke} />
+          <path d="M14 12 L14 5 M13 5 Q14 2 15 5" stroke={stroke} />
+          <path d="M15.7 15 L21.8 18.5 M21.8 17.5 Q24.3 18.5 22.8 20.2" stroke={stroke} />
+          <path d="M12.3 15 L6.2 18.5 M6.2 17.5 Q3.7 18.5 5.2 20.2" stroke={stroke} />
+          <circle cx="14" cy="14" r="10" stroke={accent} opacity="0.35" />
+        </svg>
+      );
+    case "tra": // Grid nodes with arteries — transmission
+      return (
+        <svg {...common}>
+          <circle cx="5" cy="7" r="1.5" fill={stroke} />
+          <circle cx="23" cy="7" r="1.5" fill={stroke} />
+          <circle cx="14" cy="14" r="1.8" fill={accent} />
+          <circle cx="5" cy="21" r="1.5" fill={stroke} />
+          <circle cx="23" cy="21" r="1.5" fill={stroke} />
+          <path d="M5 7 L14 14 L23 7 M5 21 L14 14 L23 21" stroke={stroke} />
+        </svg>
+      );
+    case "dis": // Distribution — substation + branch
+      return (
+        <svg {...common}>
+          <rect x="11" y="4" width="6" height="8" stroke={stroke} />
+          <path d="M14 12 L14 17" stroke={stroke} />
+          <path d="M14 17 L6 17 L6 22 M14 17 L14 22 M14 17 L22 17 L22 22" stroke={stroke} />
+          <path d="M12.5 7.5 L15.5 7.5 M12.5 9 L15.5 9" stroke={accent} />
+        </svg>
+      );
+    case "corp": // Corporate — tiered column with gold capital
+      return (
+        <svg {...common}>
+          <path d="M6 24 L6 10 L14 5 L22 10 L22 24" stroke={stroke} />
+          <path d="M6 10 L22 10" stroke={accent} />
+          <path d="M10 24 L10 14 L14 14 L14 24 M18 24 L18 14" stroke={stroke} />
+          <path d="M3 24 L25 24" stroke={stroke} />
+        </svg>
+      );
+    case "sub": // Subsidiaries — three stacked platforms
+      return (
+        <svg {...common}>
+          <path d="M4 9 L14 4 L24 9 L14 14 Z" stroke={stroke} fill="none" />
+          <path d="M4 14 L14 19 L24 14" stroke={stroke} />
+          <path d="M4 19 L14 24 L24 19" stroke={accent} />
+        </svg>
+      );
+    case "jv": // Joint Ventures — interlocking partners
+      return (
+        <svg {...common}>
+          <circle cx="10" cy="14" r="6" stroke={stroke} />
+          <circle cx="18" cy="14" r="6" stroke={accent} />
+          <path d="M10 11 L10 17 M7 14 L13 14 M18 11 L18 17 M15 14 L21 14" stroke={stroke} opacity="0.5" />
+        </svg>
+      );
+    default:
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="20" height="20" rx="2" stroke={stroke} />
+          <path d="M10 14 L13 17 L18 11" stroke={accent} strokeWidth="1.8" />
+        </svg>
+      );
+  }
+}
+
+/* ── Running footer — editorial page chrome ─────────────── */
+export function RunningFooter({
+  folio,
+  left,
+  right,
+}: {
+  folio?: string;
+  left?: string;
+  right?: string;
+}) {
+  return (
+    <footer className="fixed bottom-0 left-0 right-0 pointer-events-none z-30">
+      <div className="max-w-[1600px] mx-auto px-8 pb-4">
+        <div className="flex items-end justify-between font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+          <span>{left || "ERM Navigator · SEC Risk Maturity"}</span>
+          {folio && (
+            <span className="font-display text-[13px] tracking-normal italic text-[var(--color-ink-soft)]">
+              {folio}
+            </span>
+          )}
+          <span>{right || "Folio · MMXXVI"}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ── Pull quote — editorial reference block ─────────────── */
+export function PullQuote({
+  children,
+  attribution,
+}: {
+  children: ReactNode;
+  attribution?: string;
+}) {
+  return (
+    <figure className="pull-quote">
+      <span className="pull-quote-mark" aria-hidden>“</span>
+      <blockquote>{children}</blockquote>
+      {attribution && (
+        <figcaption className="font-mono text-[10px] tracking-[0.18em] uppercase text-[var(--color-ink-muted)] mt-3">
+          — {attribution}
+        </figcaption>
+      )}
+    </figure>
   );
 }
 
@@ -200,7 +376,7 @@ export function Pill({
 }) {
   const toneMap: Record<string, string> = {
     ink: "bg-[var(--color-surface-soft)] text-[var(--color-ink)]",
-    amber: "bg-[var(--color-accent-soft)] text-[var(--color-accent)]",
+    amber: "bg-[var(--color-gold-soft)] text-[var(--color-gold)]",
     mint: "bg-[var(--color-mint-soft)] text-[var(--color-mint)]",
     coral: "bg-[var(--color-coral-soft)] text-[var(--color-coral)]",
     sky: "bg-[var(--color-sky-soft)] text-[var(--color-sky)]",

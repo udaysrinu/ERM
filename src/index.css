@@ -1,63 +1,64 @@
-/* ERM Navigator — Runway-inspired aesthetic.
-   Source tokens extracted from runway.com via Playwright getComputedStyle() walk.
-   Warm cream base + rich brown ink + amber accent. FP&A-premium visual language.
+/* ERM Navigator — "Editorial Risk Atlas" aesthetic.
+   Warm-paper institutional-report feel. Fraunces display for editorial
+   gravitas, Inter body for operational clarity, JetBrains Mono for data
+   marginalia. Gold is the only chromatic signal; severity channels are
+   desaturated forest / brick / navy. Ink is the primary action color.
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@144,300;144,400;144,500;144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap&font-display=swap');
 @import "tailwindcss";
 
 @theme {
   /* ── Typography ─────────────────────────────────────
-     Runway uses proprietary Interphases Pro Variable.
-     Substitute: Inter (body) + Fraunces (display) from Google Fonts (OFL). */
+     Fraunces (display) → optical sizes 9-144, italic for marginalia.
+     Inter (body) → tabular numerics baked in.
+     JetBrains Mono (data) → editorial callouts. */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Inter", serif;
+  --font-display: "Fraunces", "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* ── Color palette — ink-primary, warm-neutral base ──
-     Minimal, premium, data-forward:
-     - Warm cream base (Runway-derived, slight green undertone retained)
-     - Deep forest-ink used as the PRIMARY action color (not green)
-     - Gold reserved for tasteful highlight moments (Saudi heritage)
-     - Severity channels: desaturated mint / brick / navy
-     Philosophy: ink is "safe", color is for signal. Data reads first. */
-  --color-bg: #F7F5F0;              /* warm paper */
-  --color-surface: #FFFFFF;
-  --color-surface-soft: #EFEDE6;
-  --color-surface-sunken: #E6E4DC;
+     Warm cream base, deep forest-ink as primary,
+     sparing gold for editorial highlight (Saudi heritage nod).
+     Desaturated severity channels. */
+  --color-bg: #F5F1E8;              /* warmer paper */
+  --color-bg-deep: #EEE8DB;         /* page edge */
+  --color-surface: #FFFDF8;         /* off-white card */
+  --color-surface-soft: #EDE7D8;    /* sunken surface */
+  --color-surface-sunken: #E4DDCC;
   --color-border: rgba(15, 42, 27, 0.10);
-  --color-border-strong: rgba(15, 42, 27, 0.18);
-  --color-ink: #0F2A1B;             /* deep forest-black — the primary */
-  --color-ink-soft: rgba(15, 42, 27, 0.70);
-  --color-ink-muted: rgba(15, 42, 27, 0.50);
+  --color-border-strong: rgba(15, 42, 27, 0.22);
+  --color-ink: #0F2A1B;             /* deep forest-black — primary */
+  --color-ink-soft: rgba(15, 42, 27, 0.72);
+  --color-ink-muted: rgba(15, 42, 27, 0.52);
   --color-ink-subtle: rgba(15, 42, 27, 0.35);
 
-  /* Accent = ink (primary action). Highlight = warm gold for ink-surface contrast. */
-  --color-accent: #0F2A1B;          /* ink — used for primary CTAs, borders, focus */
-  --color-accent-ink: #F7F5F0;      /* cream on ink */
+  /* Accent = ink. Gold = editorial highlight. */
+  --color-accent: #0F2A1B;
+  --color-accent-ink: #F5F1E8;
   --color-accent-soft: rgba(15, 42, 27, 0.06);
-  --color-highlight: #D4A84B;       /* warm gold — for accent-on-ink moments only */
-  --color-highlight-soft: rgba(212, 168, 75, 0.14);
-  --color-gold: #9C7E3C;            /* muted Saudi gold — display flourishes */
-  --color-gold-soft: rgba(156, 126, 60, 0.10);
-  --color-mint: #2E6B48;            /* aligned / nominal — desaturated forest */
+  --color-highlight: #C8A14B;       /* deeper gold reads cleaner on ink */
+  --color-highlight-soft: rgba(200, 161, 75, 0.14);
+  --color-gold: #9C7E3C;            /* muted Saudi gold — on surface */
+  --color-gold-soft: rgba(156, 126, 60, 0.12);
+  --color-gold-line: rgba(156, 126, 60, 0.40);
+  --color-mint: #2E6B48;
   --color-mint-soft: rgba(46, 107, 72, 0.10);
-  --color-coral: #A64226;           /* regression / critical — desaturated brick */
+  --color-coral: #A64226;
   --color-coral-soft: rgba(166, 66, 38, 0.09);
-  --color-sky: #1E4D73;             /* drift / informational — deep navy */
+  --color-sky: #1E4D73;
   --color-sky-soft: rgba(30, 77, 115, 0.09);
 
-  /* Radius scale (Runway uses 4,6,8,12 — tight & disciplined) */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  /* Shadow recipes — forest-tinted dual layer */
   --shadow-soft: 0 1px 2px rgba(15, 42, 27, 0.04), 0 2px 8px rgba(15, 42, 27, 0.04);
   --shadow-card: 0 1px 2px rgba(15, 42, 27, 0.04), 0 4px 12px rgba(15, 42, 27, 0.06);
   --shadow-floated: 0 2px 4px rgba(15, 42, 27, 0.06), 0 12px 32px rgba(15, 42, 27, 0.08);
+  --shadow-deep: 0 8px 24px rgba(15, 42, 27, 0.10), 0 24px 64px rgba(15, 42, 27, 0.12);
 }
 
 @layer base {
@@ -80,6 +81,28 @@
     line-height: 1.55;
     letter-spacing: -0.005em;
     font-variant-numeric: tabular-nums;
+    /* App-like feel: chrome is unselectable by default. Content opts back in
+       below so investors can still copy scores, IDs, and question text. */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Content that should remain copy-able. Keep this list tight — the rest
+     of the UI (headers, nav, buttons, pills, eyebrows, footers, keycaps)
+     stays unselectable for a deliberate operator-console feel. */
+  h1, h2, h3, h4, h5, h6,
+  p,
+  blockquote,
+  td, th,
+  input, textarea, select,
+  code, pre,
+  .display-num, .display-heading, .display-title, .folio-num,
+  .editorial-italic,
+  .tabular,
+  [data-selectable],
+  .selectable {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   ::selection {
@@ -88,29 +111,27 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-gold);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
 
-  /* Sharpen display-font rendering */
   h1, h2, h3 {
     font-feature-settings: "ss01", "ss02", "ss03";
   }
 
-  /* Tabular everywhere — instrument grade */
-  [data-numeric], .tabular, input, .font-mono, .display-num {
+  [data-numeric], .tabular, input, .font-mono, .display-num, .folio-num {
     font-variant-numeric: tabular-nums;
   }
 }
 
 @layer components {
-  /* ─── Labels + eyebrow text ───────────────────────── */
+  /* ─── Eyebrow labels ──────────────────────────────── */
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--color-ink-muted);
   }
@@ -119,7 +140,7 @@
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--color-gold);
   }
@@ -128,16 +149,16 @@
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
     color: var(--color-ink);
   }
 
-  /* ─── Display numbers — the signature element ─────── */
+  /* ─── Display + editorial typography ──────────────── */
   .display-num {
     font-family: var(--font-display);
     font-weight: 400;
-    font-feature-settings: "tnum", "ss01";
+    font-feature-settings: "tnum", "ss01", "lnum";
     letter-spacing: -0.03em;
     line-height: 1;
   }
@@ -145,8 +166,35 @@
   .display-heading {
     font-family: var(--font-display);
     font-weight: 400;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.022em;
     line-height: 1.02;
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  /* Editorial title with trailing italic marginalia (i, ii, iii) */
+  .display-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 0.98;
+    font-feature-settings: "ss01", "ss02", "dlig";
+  }
+
+  /* Roman numeral folio — large italic Fraunces */
+  .folio-num {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  /* Editorial italic running-text (subtitles, captions) */
+  .editorial-italic {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
 
   /* ─── Card / Panel primitives ─────────────────────── */
@@ -169,8 +217,7 @@
     border-radius: var(--radius-lg);
   }
 
-  /* Severity stripes — 2px top accent, echoing Runway's disciplined approach */
-  .stripe-amber { border-top: 2px solid var(--color-accent); }
+  .stripe-amber { border-top: 2px solid var(--color-gold); }
   .stripe-mint  { border-top: 2px solid var(--color-mint); }
   .stripe-coral { border-top: 2px solid var(--color-coral); }
   .stripe-ink   { border-top: 2px solid var(--color-ink); }
@@ -182,33 +229,50 @@
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 13px;
-    letter-spacing: 0;
-    padding: 10px 20px;
+    padding: 11px 22px;
     border-radius: var(--radius);
     border: 1px solid var(--color-ink);
-    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms;
     cursor: pointer;
   }
   .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(38, 27, 7, 0.18);
+    box-shadow: 0 6px 18px rgba(15, 42, 27, 0.22);
   }
 
   .btn-accent {
-    background: var(--color-accent);
-    color: var(--color-accent-ink);
+    background: var(--color-ink);
+    color: var(--color-bg);
     font-family: var(--font-sans);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 13px;
-    padding: 10px 20px;
+    padding: 11px 22px;
     border-radius: var(--radius);
-    border: 1px solid var(--color-accent);
+    border: 1px solid var(--color-ink);
     cursor: pointer;
-    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms;
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-accent::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 40%,
+      rgba(200, 161, 75, 0.18) 50%,
+      transparent 60%
+    );
+    transform: translateX(-100%);
+    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .btn-accent:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(249, 166, 0, 0.30);
+    box-shadow: 0 6px 18px rgba(15, 42, 27, 0.22);
+  }
+  .btn-accent:hover::after {
+    transform: translateX(100%);
   }
 
   .btn-ghost {
@@ -221,31 +285,30 @@
     border-radius: var(--radius);
     border: 1px solid var(--color-border);
     cursor: pointer;
-    transition: border-color 150ms, background 150ms;
+    transition: border-color 180ms, background 180ms;
   }
   .btn-ghost:hover {
     border-color: var(--color-border-strong);
     background: var(--color-surface-soft);
   }
 
-  /* ─── Status dots (severity indicators) ───────────── */
+  /* ─── Status dots ─────────────────────────────────── */
   .dot {
     width: 7px;
     height: 7px;
     border-radius: 999px;
     flex-shrink: 0;
   }
-  .dot-amber { background: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
-  .dot-mint  { background: var(--color-mint);  box-shadow: 0 0 0 3px var(--color-mint-soft); }
+  .dot-amber { background: var(--color-gold); box-shadow: 0 0 0 3px var(--color-gold-soft); }
+  .dot-mint  { background: var(--color-mint); box-shadow: 0 0 0 3px var(--color-mint-soft); }
   .dot-coral { background: var(--color-coral); box-shadow: 0 0 0 3px var(--color-coral-soft); }
   .dot-sky   { background: var(--color-sky);   box-shadow: 0 0 0 3px var(--color-sky-soft); }
   .dot-ink   { background: var(--color-ink); }
 
-  /* ─── Hairlines ───────────────────────────────────── */
   .hairline { border-color: var(--color-border); }
   .hairline-strong { border-color: var(--color-border-strong); }
+  .hairline-gold { border-color: var(--color-gold-line); }
 
-  /* ─── Delta pills ─────────────────────────────────── */
   .delta-up {
     color: var(--color-mint);
     font-family: var(--font-mono);
@@ -269,11 +332,11 @@
     font-size: 15px;
     color: var(--color-ink);
     outline: none;
-    transition: border-color 180ms;
+    transition: border-color 200ms;
     width: 100%;
   }
   .input-bare:focus {
-    border-bottom-color: var(--color-accent);
+    border-bottom-color: var(--color-gold);
   }
   .input-bare::placeholder {
     color: var(--color-ink-subtle);
@@ -293,16 +356,112 @@
   /* ─── Paper grain (subtle texture) ────────────────── */
   .paper-grain {
     background-image:
-      radial-gradient(circle at 1px 1px, rgba(38, 27, 7, 0.015) 1px, transparent 0);
-    background-size: 24px 24px;
+      radial-gradient(circle at 1px 1px, rgba(15, 42, 27, 0.022) 1px, transparent 0);
+    background-size: 22px 22px;
+    background-attachment: fixed;
+  }
+
+  /* Archival grid — printer's registration marks feel */
+  .archival-grid {
+    background-image:
+      linear-gradient(to right, rgba(15, 42, 27, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 42, 27, 0.03) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: -1px -1px;
+  }
+
+  /* ─── Pull quote ──────────────────────────────────── */
+  .pull-quote {
+    position: relative;
+    padding: 32px 40px 28px 40px;
+    border-left: 2px solid var(--color-gold);
+    background: transparent;
+  }
+  .pull-quote blockquote {
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+  }
+  .pull-quote-mark {
+    position: absolute;
+    top: -8px;
+    left: 16px;
+    font-family: var(--font-display);
+    font-size: 72px;
+    line-height: 1;
+    color: var(--color-gold);
+    opacity: 0.5;
+    user-select: none;
+  }
+
+  /* ─── Drop-cap — first letter of an editorial lede ── */
+  .drop-cap::first-letter {
+    font-family: var(--font-display);
+    font-weight: 400;
+    float: left;
+    font-size: 68px;
+    line-height: 0.82;
+    padding: 6px 10px 0 0;
+    color: var(--color-ink);
+  }
+
+  /* ─── Chapter mark — numeral + hairline rule ──────── */
+  .chapter-mark {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    color: var(--color-ink-muted);
+    font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+  .chapter-mark::before {
+    content: "";
+    width: 32px;
+    height: 1px;
+    background: var(--color-gold-line);
+  }
+
+  /* ─── Margin note — italic annotation block ───────── */
+  .margin-note {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color-ink-soft);
+    letter-spacing: 0.005em;
   }
 }
 
-/* ─── Motion — Runway-style ease-out-quint ──────────── */
 @layer utilities {
   .ease-premium {
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
+
+  /* Editorial mask — soft vignette from page edges */
+  .edge-vignette {
+    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, rgba(0,0,0,0.85) 100%);
+    mask-image: radial-gradient(ellipse at center, black 60%, rgba(0,0,0,0.85) 100%);
+  }
+}
+
+/* Noise overlay — subtle organic grain for a printed-paper feel */
+.noise-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0.25 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Reduced motion honored */
@@ -312,4 +471,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ─── Keyframes ───────────────────────────────────────── */
+@keyframes slow-drift {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  50% { transform: translate(2%, -1%) rotate(0.5deg); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.25; transform: scale(1.05); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
