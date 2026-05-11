@@ -1,262 +1,306 @@
-/* ERM Navigator — Instrumentation aesthetic.
-   Design language: precision monitoring equipment (Bloomberg Terminal / SCADA / NASA).
-   Not: SaaS dashboard, AI glassmorphism, generic fintech. */
+/* ERM Navigator — Runway-inspired aesthetic.
+   Source tokens extracted from runway.com via Playwright getComputedStyle() walk.
+   Warm cream base + rich brown ink + amber accent. FP&A-premium visual language.
+*/
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@144,400;144,500;144,600&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@144,300;144,400;144,500;144,600&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* Typography tokens */
-  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "IBM Plex Sans", serif;
+  /* ── Typography ─────────────────────────────────────
+     Runway uses proprietary Interphases Pro Variable.
+     Substitute: Inter (body) + Fraunces (display) from Google Fonts (OFL). */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Inter", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* Instrumentation palette — deep plasma base, three-channel severity */
-  --color-plasma-900: #050812;
-  --color-plasma-800: #0A0E1A;
-  --color-plasma-700: #0F1624;
-  --color-plasma-600: #151E30;
-  --color-plasma-500: #1C2740;
-  --color-hairline: rgba(255, 255, 255, 0.06);
-  --color-hairline-strong: rgba(255, 255, 255, 0.12);
+  /* ── Color palette — Runway extraction ──────────────
+     Body bg: rgb(248,247,245) → #F8F7F5 warm cream
+     Ink:     rgb(38,27,7)     → #261B07 rich brown-black
+     Accent:  rgb(249,166,0)   → #F9A600 warm amber
+     Card:    #FFFFFF
+     Soft:    rgb(227,223,213) → #E3DFD5 khaki */
+  --color-bg: #F8F7F5;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F1EFEA;
+  --color-surface-sunken: #EAE7DF;
+  --color-border: rgba(38, 27, 7, 0.10);
+  --color-border-strong: rgba(38, 27, 7, 0.18);
+  --color-ink: #261B07;
+  --color-ink-soft: rgba(38, 27, 7, 0.70);
+  --color-ink-muted: rgba(38, 27, 7, 0.50);
+  --color-ink-subtle: rgba(38, 27, 7, 0.35);
 
-  /* Severity channels (also used as accent hues) */
-  --color-signal-cyan: #00E5FF;      /* live / positive / current-reading */
-  --color-signal-amber: #FFAA00;     /* drift / watch / caution */
-  --color-signal-coral: #FF4D4D;     /* regression / critical / alert */
-  --color-signal-mint: #4ADE80;      /* nominal / aligned / stable */
+  /* Signal channels — amber is primary, mint for aligned, coral for regression */
+  --color-accent: #F9A600;          /* warm amber (Runway signature) */
+  --color-accent-ink: #3D2A00;      /* dark amber for accent-on-light text */
+  --color-accent-soft: rgba(249, 166, 0, 0.12);
+  --color-mint: #3E8E5A;            /* aligned / nominal */
+  --color-mint-soft: rgba(62, 142, 90, 0.12);
+  --color-coral: #C2462F;           /* regression / critical */
+  --color-coral-soft: rgba(194, 70, 47, 0.12);
+  --color-sky: #385F8C;             /* drift / informational */
+  --color-sky-soft: rgba(56, 95, 140, 0.10);
 
-  /* Text tiers */
-  --color-text-primary: #E8ECF4;
-  --color-text-secondary: #8A94A8;
-  --color-text-muted: #555F75;
-  --color-text-disabled: #353E52;
+  /* Radius scale (Runway uses 4,6,8,12 — tight & disciplined) */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadow recipes — warm-tinted dual layer, Runway-extracted */
+  --shadow-soft: 0 1px 2px rgba(38, 27, 7, 0.04), 0 2px 8px rgba(38, 27, 7, 0.04);
+  --shadow-card: 0 1px 2px rgba(38, 27, 7, 0.04), 0 4px 12px rgba(38, 27, 7, 0.06);
+  --shadow-floated: 0 2px 4px rgba(38, 27, 7, 0.06), 0 12px 32px rgba(38, 27, 7, 0.08);
 }
 
-/* Base */
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
   html {
-    background: var(--color-plasma-800);
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background: var(--color-bg);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   }
 
   body {
     @apply antialiased;
-    background:
-      /* subtle gradient wash */
-      radial-gradient(ellipse at top, rgba(0, 229, 255, 0.04) 0%, transparent 50%),
-      /* grid overlay */
-      linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-      var(--color-plasma-800);
-    background-size: 100% 100%, 48px 48px, 48px 48px;
-    color: var(--color-text-primary);
+    background: var(--color-bg);
+    color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 400;
+    font-size: 15px;
+    line-height: 1.55;
     letter-spacing: -0.005em;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Tabular numerals everywhere that shows data */
-  [data-numeric], .tabular, input, .font-mono {
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Selection */
   ::selection {
-    background: var(--color-signal-cyan);
-    color: var(--color-plasma-900);
+    background: var(--color-ink);
+    color: var(--color-bg);
   }
 
-  /* Focus */
   :focus-visible {
-    outline: 1px solid var(--color-signal-cyan);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Sharpen display-font rendering */
+  h1, h2, h3 {
+    font-feature-settings: "ss01", "ss02", "ss03";
+  }
+
+  /* Tabular everywhere — instrument grade */
+  [data-numeric], .tabular, input, .font-mono, .display-num {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Reusable instrumentation primitives */
 @layer components {
-  /* Hairline — the structural element of the aesthetic */
-  .hairline {
-    border-color: var(--color-hairline);
-  }
-  .hairline-strong {
-    border-color: var(--color-hairline-strong);
-  }
-
-  /* Label — the small caps monospace used everywhere */
+  /* ─── Labels + eyebrow text ───────────────────────── */
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-text-secondary);
+    color: var(--color-ink-muted);
   }
 
-  .eyebrow-cyan {
+  .eyebrow-amber {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-signal-cyan);
+    color: var(--color-accent-ink);
   }
 
-  /* Status LED — pulsing indicator used on every live metric */
-  .led {
-    position: relative;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .led::after {
-    content: "";
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    animation: led-pulse 2s ease-in-out infinite;
-  }
-  .led-mint { background: var(--color-signal-mint); box-shadow: 0 0 8px var(--color-signal-mint); }
-  .led-mint::after { background: radial-gradient(circle, rgba(74, 222, 128, 0.4) 0%, transparent 70%); }
-  .led-amber { background: var(--color-signal-amber); box-shadow: 0 0 8px var(--color-signal-amber); }
-  .led-amber::after { background: radial-gradient(circle, rgba(255, 170, 0, 0.4) 0%, transparent 70%); }
-  .led-coral { background: var(--color-signal-coral); box-shadow: 0 0 10px var(--color-signal-coral); }
-  .led-coral::after {
-    background: radial-gradient(circle, rgba(255, 77, 77, 0.5) 0%, transparent 70%);
-    animation: led-pulse 1s ease-in-out infinite;
-  }
-  .led-cyan { background: var(--color-signal-cyan); box-shadow: 0 0 8px var(--color-signal-cyan); }
-  .led-cyan::after { background: radial-gradient(circle, rgba(0, 229, 255, 0.4) 0%, transparent 70%); }
-
-  @keyframes led-pulse {
-    0%, 100% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.4); }
+  .eyebrow-ink {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-ink);
   }
 
-  /* Scan-line sweep — the distinctive flourish. Appears on chart refresh. */
-  .scan-sweep {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .scan-sweep::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent 0%, var(--color-signal-cyan) 50%, transparent 100%);
-    box-shadow: 0 0 12px var(--color-signal-cyan);
-    animation: scan 4s linear infinite;
-    opacity: 0.4;
-  }
-
-  @keyframes scan {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(100vh); }
-  }
-
-  /* Scoped scan line that stays within its container */
-  .scan-sweep-bounded::before {
-    animation: scan-bounded 4s linear infinite;
-  }
-
-  @keyframes scan-bounded {
-    0% { transform: translateY(-4px); opacity: 0; }
-    10% { opacity: 0.5; }
-    90% { opacity: 0.5; }
-    100% { transform: translateY(var(--scan-height, 400px)); opacity: 0; }
-  }
-
-  /* Panel — the atom of the layout. Sharp edges, hairline border. */
-  .panel {
-    background: var(--color-plasma-700);
-    border: 1px solid var(--color-hairline);
-    position: relative;
-  }
-  .panel-elevated {
-    background: linear-gradient(180deg, var(--color-plasma-700) 0%, var(--color-plasma-600) 100%);
-    border: 1px solid var(--color-hairline);
-  }
-
-  /* Severity stripe — 2px top accent */
-  .stripe-cyan { border-top: 2px solid var(--color-signal-cyan); }
-  .stripe-amber { border-top: 2px solid var(--color-signal-amber); }
-  .stripe-coral { border-top: 2px solid var(--color-signal-coral); }
-  .stripe-mint { border-top: 2px solid var(--color-signal-mint); }
-
-  /* Caret — the terminal cursor blink for login screen */
-  .caret::after {
-    content: "▊";
-    display: inline-block;
-    margin-left: 2px;
-    color: var(--color-signal-cyan);
-    animation: caret-blink 1s steps(2) infinite;
-  }
-
-  @keyframes caret-blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
-  }
-
-  /* Boot text effect — used on login screen */
-  .boot-line {
-    opacity: 0;
-    animation: boot-in 0.3s ease-out forwards;
-  }
-
-  @keyframes boot-in {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Hover — subtle, instrumentation-appropriate */
-  .hover-rise {
-    transition: border-color 120ms linear, background-color 120ms linear;
-  }
-  .hover-rise:hover {
-    border-color: var(--color-signal-cyan);
-    background-color: var(--color-plasma-600);
-  }
-
-  /* Scrollbar — monospace aesthetic */
-  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-hairline-strong); }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-signal-cyan); }
-
-  /* Data value — large display number */
+  /* ─── Display numbers — the signature element ─────── */
   .display-num {
     font-family: var(--font-display);
-    font-weight: 500;
-    font-feature-settings: "ss01", "tnum";
-    letter-spacing: -0.02em;
-    line-height: 0.95;
+    font-weight: 400;
+    font-feature-settings: "tnum", "ss01";
+    letter-spacing: -0.03em;
+    line-height: 1;
   }
 
-  /* Rising/falling delta pills */
+  .display-heading {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+  }
+
+  /* ─── Card / Panel primitives ─────────────────────── */
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-subtle {
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  .card-flat {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Severity stripes — 2px top accent, echoing Runway's disciplined approach */
+  .stripe-amber { border-top: 2px solid var(--color-accent); }
+  .stripe-mint  { border-top: 2px solid var(--color-mint); }
+  .stripe-coral { border-top: 2px solid var(--color-coral); }
+  .stripe-ink   { border-top: 2px solid var(--color-ink); }
+
+  /* ─── Buttons ──────────────────────────────────────── */
+  .btn-primary {
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-ink);
+    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(38, 27, 7, 0.18);
+  }
+
+  .btn-accent {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-accent);
+    cursor: pointer;
+    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms;
+  }
+  .btn-accent:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(249, 166, 0, 0.30);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: border-color 150ms, background 150ms;
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-soft);
+  }
+
+  /* ─── Status dots (severity indicators) ───────────── */
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .dot-amber { background: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-soft); }
+  .dot-mint  { background: var(--color-mint);  box-shadow: 0 0 0 3px var(--color-mint-soft); }
+  .dot-coral { background: var(--color-coral); box-shadow: 0 0 0 3px var(--color-coral-soft); }
+  .dot-sky   { background: var(--color-sky);   box-shadow: 0 0 0 3px var(--color-sky-soft); }
+  .dot-ink   { background: var(--color-ink); }
+
+  /* ─── Hairlines ───────────────────────────────────── */
+  .hairline { border-color: var(--color-border); }
+  .hairline-strong { border-color: var(--color-border-strong); }
+
+  /* ─── Delta pills ─────────────────────────────────── */
   .delta-up {
-    color: var(--color-signal-mint);
+    color: var(--color-mint);
     font-family: var(--font-mono);
     font-feature-settings: "tnum";
+    font-weight: 500;
   }
   .delta-down {
-    color: var(--color-signal-coral);
+    color: var(--color-coral);
     font-family: var(--font-mono);
     font-feature-settings: "tnum";
+    font-weight: 500;
+  }
+
+  /* ─── Inputs ──────────────────────────────────────── */
+  .input-bare {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--color-border-strong);
+    padding: 10px 0;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color 180ms;
+    width: 100%;
+  }
+  .input-bare:focus {
+    border-bottom-color: var(--color-accent);
+  }
+  .input-bare::placeholder {
+    color: var(--color-ink-subtle);
+  }
+
+  /* ─── Custom scrollbar ────────────────────────────── */
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 999px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-muted);
+  }
+
+  /* ─── Paper grain (subtle texture) ────────────────── */
+  .paper-grain {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(38, 27, 7, 0.015) 1px, transparent 0);
+    background-size: 24px 24px;
   }
 }
 
-/* Reduced motion */
+/* ─── Motion — Runway-style ease-out-quint ──────────── */
+@layer utilities {
+  .ease-premium {
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Reduced motion honored */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
