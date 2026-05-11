@@ -37,6 +37,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
+  // Shape the response array for a single batched multi-row INSERT.
+  // postgres.js will expand this to VALUES ($1,$2,...), ($N,...), ... in one round-trip.
+  const nowIso = new Date().toISOString();
+  const rows = responses.map((r: any) => ({
+    "assessmentId": assessmentId,
+    "questionId": r.questionId,
+    score: r.score,
+    note: r.note || "",
+    "evidenceName": r.evidenceName || "",
+    "answeredAt": r.answeredAt || nowIso,
+  }));
+
   try {
     await sql.begin(async tx => {
       // Lazy-upsert the parent row (idempotent across finalize retries).
@@ -45,16 +57,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         VALUES (${assessmentId}, ${entityId}, 'completed')
         ON CONFLICT (id) DO UPDATE SET status = 'completed'
       `;
-      // Clear any prior responses for this assessment, then insert fresh.
+      // Clear any prior responses for this assessment, then batch-insert fresh.
       await tx`DELETE FROM responses WHERE "assessmentId" = ${assessmentId}`;
-      for (const r of responses) {
-        await tx`
-          INSERT INTO responses ("assessmentId", "questionId", score, note, "evidenceName", "answeredAt")
-          VALUES (${assessmentId}, ${r.questionId}, ${r.score},
-                  ${r.note || ""}, ${r.evidenceName || ""},
-                  ${r.answeredAt || new Date().toISOString()})
-        `;
-      }
+      await tx`
+        INSERT INTO responses ${tx(rows, "assessmentId", "questionId", "score", "note", "evidenceName", "answeredAt")}
+      `;
     });
 
     return res.json({ success: true, count: responses.length, timestamp: new Date().toISOString() });
