@@ -4,13 +4,21 @@ import { sql } from "../_lib/db.js";
 
 // Strict integrity check mirrors server.ts:499-559: every question must have a
 // response in the submitted batch. Patent Claim 1 depends on complete vectors.
+//
+// Self-bootstrap: the frontend generates assessmentId client-side and posts
+// directly here at finalize time. We upsert the parent assessments row first
+// so the foreign key in responses has a target. This removes the click-BU
+// latency that an eager /api/assessments/create would have caused.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { assessmentId, responses } = req.body ?? {};
+  const { assessmentId, entityId, responses } = req.body ?? {};
   if (!assessmentId || !Array.isArray(responses)) {
     return res.status(400).json({ error: "Invalid Payload", message: "Responses must be an array." });
+  }
+  if (!entityId) {
+    return res.status(400).json({ error: "Invalid Payload", message: "entityId is required on finalize." });
   }
 
   const dbQuestions = await sql<{ id: number }[]>`SELECT id FROM questions`;
@@ -34,6 +42,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await sql.begin(async tx => {
+      // Upsert the parent assessment. ON CONFLICT keeps this safe if the user
+      // finalizes more than once (shouldn't happen, but defensive).
+      await tx`
+        INSERT INTO assessments (id, "entityId", "createdAt", status)
+        VALUES (${assessmentId}, ${entityId}, ${new Date().toISOString()}, 'draft')
+        ON CONFLICT (id) DO NOTHING
+      `;
+      // Idempotent: clear any prior responses for this assessment before re-inserting.
       await tx`DELETE FROM responses WHERE "assessmentId" = ${assessmentId}`;
       for (const r of responses) {
         await tx`

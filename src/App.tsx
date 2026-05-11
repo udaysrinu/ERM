@@ -54,6 +54,14 @@ import {
   SectionRule,
   StatusDot,
 } from "./components/primitives";
+import {
+  BENCHMARKS,
+  BENCHMARK_TYPES,
+  BUSINESS_UNITS,
+  PILLARS,
+  QUESTIONS,
+  WEIGHTS,
+} from "./data/static";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────
 
@@ -159,7 +167,7 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-12 h-12 bg-[var(--color-ink)] text-[var(--color-accent)] flex items-center justify-center rounded-full shadow-[0_8px_24px_rgba(38,27,7,0.2)] hover:scale-105 ease-premium transition-transform z-[100] cursor-pointer"
+        className="fixed bottom-6 right-6 w-12 h-12 bg-[var(--color-ink)] text-[var(--color-highlight)] flex items-center justify-center rounded-full shadow-[0_8px_24px_rgba(38,27,7,0.2)] hover:scale-105 ease-premium transition-transform z-[100] cursor-pointer"
         aria-label="Open assistant"
       >
         <Sparkles size={18} />
@@ -204,7 +212,7 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
                           setInput(p);
                           setTimeout(handleSend, 0);
                         }}
-                        className="px-3 py-1.5 border hairline rounded-full text-[11px] font-mono text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent-ink)] cursor-pointer ease-premium transition-colors"
+                        className="px-3 py-1.5 border hairline rounded-full text-[11px] font-mono text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink)] cursor-pointer ease-premium transition-colors"
                       >
                         {p}
                       </button>
@@ -243,7 +251,7 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
               />
               <button
                 onClick={handleSend}
-                className="text-[var(--color-accent-ink)] hover:opacity-70 cursor-pointer"
+                className="text-[var(--color-ink)] hover:opacity-70 cursor-pointer"
                 aria-label="Send"
               >
                 <Send size={16} />
@@ -429,7 +437,7 @@ const ScopeScreen = ({
               style={{ transitionDuration: "200ms" }}
             >
               <div className="flex items-start justify-between mb-8">
-                <div className="w-11 h-11 rounded-[10px] bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-ink)] group-hover:bg-[var(--color-ink)] group-hover:text-[var(--color-accent)] ease-premium transition-colors">
+                <div className="w-11 h-11 rounded-[10px] bg-[var(--color-surface-soft)] flex items-center justify-center text-[var(--color-ink)] group-hover:bg-[var(--color-ink)] group-hover:text-[var(--color-highlight)] ease-premium transition-colors">
                   <Icon size={18} />
                 </div>
                 <Pill tone="mint">Ready</Pill>
@@ -606,7 +614,7 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
           <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
               <Eyebrow>Progress</Eyebrow>
-              <span className="font-mono text-[11px] text-[var(--color-accent-ink)] tabular">
+              <span className="font-mono text-[11px] text-[var(--color-ink)] tabular">
                 {progress.toFixed(0)}%
               </span>
             </div>
@@ -752,7 +760,7 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
                   <span className="text-[13px] text-[var(--color-ink-soft)] group-hover:text-[var(--color-ink)] truncate">
                     {evidenceNames[currentQ.id] || "Attach supporting file"}
                   </span>
-                  <Upload size={14} className="text-[var(--color-accent-ink)] flex-shrink-0" />
+                  <Upload size={14} className="text-[var(--color-ink)] flex-shrink-0" />
                   <input
                     type="file"
                     className="hidden"
@@ -925,7 +933,7 @@ const RNOSCommandCenter = ({
                       onClick={() => onBenchmarkTypeChange(t)}
                       className={`px-3 py-1.5 rounded-full font-mono text-[11px] tracking-wide transition-colors cursor-pointer ${
                         benchmarkType === t
-                          ? "bg-[var(--color-ink)] text-[var(--color-accent)]"
+                          ? "bg-[var(--color-ink)] text-[var(--color-highlight)]"
                           : "border hairline text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)]"
                       }`}
                     >
@@ -1075,13 +1083,13 @@ const RNOSCommandCenter = ({
                       <span className="text-[13px] font-medium text-[var(--color-ink)]">
                         {d.name}
                       </span>
-                      <span className={`display-num text-[20px] ${above ? "text-[var(--color-accent-ink)]" : "text-[var(--color-ink)]"}`}>
+                      <span className={`display-num text-[20px] ${above ? "text-[var(--color-gold)]" : "text-[var(--color-ink)]"}`}>
                         {d.score.toFixed(2)}
                       </span>
                     </div>
                     <div className="h-[5px] bg-[var(--color-surface-soft)] rounded-full relative overflow-hidden">
                       <div
-                        className={`absolute inset-y-0 left-0 rounded-full ${above ? "bg-[var(--color-accent)]" : "bg-[var(--color-ink-subtle)]"}`}
+                        className={`absolute inset-y-0 left-0 rounded-full ${above ? "bg-[var(--color-mint)]" : "bg-[var(--color-ink)]"}`}
                         style={{ width: `${pct}%` }}
                       />
                       <div className="absolute inset-y-0 w-px bg-[var(--color-coral)]/40" style={{ left: "80%" }} />
@@ -1239,7 +1247,7 @@ const RNOSCommandCenter = ({
                         <td className="px-3 py-4 text-right font-mono text-[12px] tabular text-[var(--color-ink)]">
                           {item.priorityScore.toFixed(2)}
                         </td>
-                        <td className="px-7 py-4 text-right font-mono text-[12px] tabular text-[var(--color-accent-ink)]">
+                        <td className="px-7 py-4 text-right font-mono text-[12px] tabular text-[var(--color-gold)] font-semibold">
                           +{item.expectedUplift.toFixed(1)}
                         </td>
                       </tr>
@@ -1301,9 +1309,6 @@ const RNOSCommandCenter = ({
 export default function App() {
   const [screen, setScreen] = useState<"login" | "scope" | "assessment" | "navigator">("login");
   const [selectedBU, setSelectedBU] = useState<any>(null);
-  const [entities, setEntities] = useState<any[]>([]);
-  const [metadata, setMetadata] = useState<any>({ pillars: [], questions: [], weights: [] });
-  const [benchmarks, setBenchmarks] = useState<any[]>([]);
   const [benchmarkType, setBenchmarkType] = useState("target");
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -1311,16 +1316,12 @@ export default function App() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/entities").then(r => r.json()).then(setEntities).catch(console.error);
-    fetch("/api/metadata").then(r => r.json()).then(setMetadata).catch(console.error);
-    fetch("/api/benchmarks").then(r => r.json()).then(setBenchmarks).catch(console.error);
-  }, []);
-
-  const benchmarkTypes = useMemo(() => {
-    const types = Array.from(new Set(benchmarks.map((b: any) => b.type)));
-    return types.length ? (types as string[]) : ["target"];
-  }, [benchmarks]);
+  // Static reference data comes from the frontend bundle — no API calls on mount.
+  const entities = BUSINESS_UNITS;
+  const metadata = { pillars: PILLARS, questions: QUESTIONS, weights: WEIGHTS };
+  const benchmarkTypes = BENCHMARK_TYPES;
+  // benchmarks stays available for any UI that wants to show per-type scores without a DB call
+  void BENCHMARKS;
 
   const handleLogin = async (email: string, password: string) => {
     const normalized = email.trim().toLowerCase();
@@ -1353,43 +1354,22 @@ export default function App() {
     }
   };
 
-  const handleEntitySelect = async (bu: any) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/assessments/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entityId: bu.id }),
-      });
-      const data = await res.json();
-      setAssessmentId(data.id);
-      setSelectedBU(bu);
-      setScreen("assessment");
-    } finally {
-      setLoading(false);
-    }
+  // Client-side assessment ID — the parent row is upserted lazily by
+  // /api/responses/create at finalize time. This keeps BU click instant.
+  const generateAssessmentId = () =>
+    "TX" + Math.random().toString(36).substring(2, 11).toUpperCase();
+
+  const handleEntitySelect = (bu: any) => {
+    setAssessmentId(generateAssessmentId());
+    setSelectedBU(bu);
+    setScreen("assessment");
   };
 
-  const fetchAnalysis = async (aid: string, bType = benchmarkType, skipRecompute = false) => {
+  // Analysis endpoint runs all engines in-memory on every call — no separate
+  // compute steps needed, no cached engine output.
+  const fetchAnalysis = async (aid: string, bType = benchmarkType) => {
     setLoading(true);
     try {
-      if (!skipRecompute) {
-        await fetch("/api/compute-maturity-vector", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessmentId: aid }),
-        });
-        await fetch("/api/compute-drift", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessmentId: aid }),
-        });
-        await fetch("/api/generate-roadmap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessmentId: aid }),
-        });
-      }
       const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`);
       const data = await res.json();
       setAnalysis(data);
@@ -1419,7 +1399,11 @@ export default function App() {
       const save = await fetch("/api/responses/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assessmentId, responses: formatted }),
+        body: JSON.stringify({
+          assessmentId,
+          entityId: selectedBU?.id,
+          responses: formatted,
+        }),
       });
       if (!save.ok) {
         const err = await save.json();
@@ -1454,40 +1438,13 @@ export default function App() {
         )}
         {screen === "assessment" && (
           <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            {metadata.questions.length > 0 ? (
-              <VectorCapturePipeline
-                bu={selectedBU}
-                questions={metadata.questions}
-                pillars={metadata.pillars}
-                onBack={() => setScreen("scope")}
-                onComplete={handleAssessmentComplete}
-              />
-            ) : (
-              <div className="min-h-screen flex items-center justify-center p-8">
-                <div className="card max-w-md w-full p-8 text-center">
-                  <AlertCircle size={32} className="mx-auto text-[var(--color-coral)] mb-4" />
-                  <h2 className="display-heading text-[24px] text-[var(--color-ink)]">
-                    Questions failed to load
-                  </h2>
-                  <p className="mt-3 text-[14px] text-[var(--color-ink-soft)]">
-                    The question catalog couldn't be fetched from the server. This usually means a cold-start delay on the serverless function.
-                  </p>
-                  <div className="mt-6 flex gap-3">
-                    <button
-                      onClick={() => {
-                        fetch("/api/metadata").then(r => r.json()).then(setMetadata).catch(console.error);
-                      }}
-                      className="btn-accent flex-1"
-                    >
-                      Retry
-                    </button>
-                    <button onClick={() => setScreen("scope")} className="btn-ghost flex-1">
-                      Back
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <VectorCapturePipeline
+              bu={selectedBU}
+              questions={metadata.questions}
+              pillars={metadata.pillars}
+              onBack={() => setScreen("scope")}
+              onComplete={handleAssessmentComplete}
+            />
           </motion.div>
         )}
         {screen === "navigator" && analysis && (
@@ -1500,23 +1457,12 @@ export default function App() {
               benchmarkType={benchmarkType}
               onBenchmarkTypeChange={async (t: string) => {
                 setBenchmarkType(t);
-                if (assessmentId) await fetchAnalysis(assessmentId, t, true);
+                if (assessmentId) await fetchAnalysis(assessmentId, t);
               }}
-              onEntityChange={async (bu: any) => {
-                setLoading(true);
-                try {
-                  const res = await fetch("/api/assessments/create", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ entityId: bu.id }),
-                  });
-                  const data = await res.json();
-                  setAssessmentId(data.id);
-                  setSelectedBU(bu);
-                  setScreen("assessment");
-                } finally {
-                  setLoading(false);
-                }
+              onEntityChange={(bu: any) => {
+                setAssessmentId(generateAssessmentId());
+                setSelectedBU(bu);
+                setScreen("assessment");
               }}
               onBack={() => setScreen("scope")}
             />

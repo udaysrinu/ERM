@@ -14,36 +14,38 @@
   --font-display: "Fraunces", "Inter", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* ── Color palette — SEC-themed premium ────────────
-     Warm cream base (Runway structure) + Saudi visual identity:
-     - Deep emerald accent (SEC brand green, Saudi flag)
-     - Gold highlight (Saudi heritage, state-owned gravity)
-     - Ink becomes deep forest-black
-     Produces: "institutional Saudi premium" — reads correctly
-     to both tech VCs and SEC board. */
-  --color-bg: #F7F5F0;              /* warm paper, slight green undertone */
+  /* ── Color palette — ink-primary, warm-neutral base ──
+     Minimal, premium, data-forward:
+     - Warm cream base (Runway-derived, slight green undertone retained)
+     - Deep forest-ink used as the PRIMARY action color (not green)
+     - Gold reserved for tasteful highlight moments (Saudi heritage)
+     - Severity channels: desaturated mint / brick / navy
+     Philosophy: ink is "safe", color is for signal. Data reads first. */
+  --color-bg: #F7F5F0;              /* warm paper */
   --color-surface: #FFFFFF;
   --color-surface-soft: #EFEDE6;
   --color-surface-sunken: #E6E4DC;
   --color-border: rgba(15, 42, 27, 0.10);
   --color-border-strong: rgba(15, 42, 27, 0.18);
-  --color-ink: #0F2A1B;             /* deep forest-black (SEC-adjacent) */
+  --color-ink: #0F2A1B;             /* deep forest-black — the primary */
   --color-ink-soft: rgba(15, 42, 27, 0.70);
   --color-ink-muted: rgba(15, 42, 27, 0.50);
   --color-ink-subtle: rgba(15, 42, 27, 0.35);
 
-  /* Signal channels — SEC emerald primary, gold for highlight, coral for regression */
-  --color-accent: #006C35;          /* SEC / Saudi flag emerald */
-  --color-accent-ink: #FFFFFF;      /* light text on emerald */
-  --color-accent-soft: rgba(0, 108, 53, 0.10);
-  --color-gold: #C5A053;            /* Saudi state gold — display accents */
-  --color-gold-soft: rgba(197, 160, 83, 0.14);
-  --color-mint: #2E8B4E;            /* aligned / nominal (lighter emerald) */
-  --color-mint-soft: rgba(46, 139, 78, 0.12);
-  --color-coral: #B33A1F;           /* regression / critical — desaturated brick */
-  --color-coral-soft: rgba(179, 58, 31, 0.10);
+  /* Accent = ink (primary action). Highlight = warm gold for ink-surface contrast. */
+  --color-accent: #0F2A1B;          /* ink — used for primary CTAs, borders, focus */
+  --color-accent-ink: #F7F5F0;      /* cream on ink */
+  --color-accent-soft: rgba(15, 42, 27, 0.06);
+  --color-highlight: #D4A84B;       /* warm gold — for accent-on-ink moments only */
+  --color-highlight-soft: rgba(212, 168, 75, 0.14);
+  --color-gold: #9C7E3C;            /* muted Saudi gold — display flourishes */
+  --color-gold-soft: rgba(156, 126, 60, 0.10);
+  --color-mint: #2E6B48;            /* aligned / nominal — desaturated forest */
+  --color-mint-soft: rgba(46, 107, 72, 0.10);
+  --color-coral: #A64226;           /* regression / critical — desaturated brick */
+  --color-coral-soft: rgba(166, 66, 38, 0.09);
   --color-sky: #1E4D73;             /* drift / informational — deep navy */
-  --color-sky-soft: rgba(30, 77, 115, 0.10);
+  --color-sky-soft: rgba(30, 77, 115, 0.09);
 
   /* Radius scale (Runway uses 4,6,8,12 — tight & disciplined) */
   --radius-sm: 4px;
@@ -116,10 +118,10 @@
   .eyebrow-amber {
     font-family: var(--font-mono);
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--color-accent-ink);
+    color: var(--color-gold);
   }
 
   .eyebrow-ink {

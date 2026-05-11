@@ -1,162 +1,137 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors } from "../../_lib/cors.js";
 import { sql } from "../../_lib/db.js";
+import {
+  computeAnalytics,
+  computeDrift,
+  computeVectors,
+  generateRoadmap,
+  missionStatus,
+  type RawResponse,
+} from "../../_lib/engines.js";
+import { BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS } from "../../_lib/static.js";
 
-// Unified analysis endpoint — powers the RNOS Command Center dashboard.
-// Port of server.ts:751-875.
+/*
+ * Single unified endpoint — reads raw responses from the 2-table DB and
+ * runs ALL engines (scoring, drift, roadmap, analytics) in-memory per request.
+ * No cached engine-output tables. Always-fresh dashboard.
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   const id = req.query.id as string;
-  const benchmarkType =
-    typeof req.query.benchmarkType === "string" ? req.query.benchmarkType : "target";
+  const benchmarkType = (typeof req.query.benchmarkType === "string" ? req.query.benchmarkType : "target");
 
-  const [assessment] = await sql<{
-    id: string;
-    entityId: string;
-    createdAt: string;
-    status: string;
-    overallScore: number;
-  }[]>`SELECT id, "entityId", "createdAt", status, "overallScore" FROM assessments WHERE id = ${id}`;
+  try {
+    // Load current assessment + its raw responses.
+    const [assessment] = await sql<
+      { id: string; entityId: string; createdAt: string; status: string }[]
+    >`SELECT id, "entityId", "createdAt", status FROM assessments WHERE id = ${id}`;
+    if (!assessment) return res.status(404).json({ error: "Assessment not found" });
 
-  if (!assessment) return res.status(404).json({ error: "Assessment not found" });
+    const rawResponses = await sql<
+      { questionId: number; score: number; note: string; evidenceName: string; answeredAt: string }[]
+    >`
+      SELECT "questionId", score, note, "evidenceName", "answeredAt"
+      FROM responses WHERE "assessmentId" = ${id}
+    `;
 
-  const [pillars, vectors, dimensions, benchmarks, driftRecords, responseSummary, roadmap, entity] =
-    await Promise.all([
-      sql<{ id: string; name: string }[]>`SELECT id, name FROM pillars`,
-      sql<{ pillarId: string; pillarScore: number }[]>`
-        SELECT "pillarId", "pillarScore" FROM maturity_vectors
-        WHERE "assessmentId" = ${id} AND "dimensionId" = 'AGGREGATE'
-      `,
-      sql<{ dimensionId: string; score: number }[]>`
-        SELECT "dimensionId", "pillarScore" AS score FROM maturity_vectors
-        WHERE "assessmentId" = ${id} AND "pillarId" IS NULL
-      `,
-      sql<{ id: number; pillarId: string; score: number }[]>`
-        SELECT id, "pillarId", score FROM benchmarks WHERE type = ${benchmarkType}
-      `,
-      sql<{ pillarId: string; deltaScore: number; pillarName: string }[]>`
-        SELECT dr."pillarId", dr."deltaScore", p.name AS "pillarName"
-        FROM drift_records dr LEFT JOIN pillars p ON dr."pillarId" = p.id
-        WHERE dr."assessmentId" = ${id}
-      `,
-      sql<{
-        totalResponses: number;
-        evidenceCount: number;
-        noteCount: number;
-        lastAnsweredAt: string | null;
-      }[]>`
-        SELECT
-          COUNT(*)::int AS "totalResponses",
-          SUM(CASE WHEN "evidenceName" IS NOT NULL AND "evidenceName" != '' THEN 1 ELSE 0 END)::int AS "evidenceCount",
-          SUM(CASE WHEN note IS NOT NULL AND note != '' THEN 1 ELSE 0 END)::int AS "noteCount",
-          MAX("answeredAt") AS "lastAnsweredAt"
-        FROM responses WHERE "assessmentId" = ${id}
-      `,
-      sql<{
-        id: string;
-        pillarId: string;
-        dimensionId: string;
-        description: string;
-        expectedUplift: number;
-        costScore: number;
-        durationScore: number;
-        priorityScore: number;
-        phase: string;
-      }[]>`
-        SELECT ra.*, rfa."priorityScore", rfa.phase
-        FROM roadmap_for_assessment rfa
-        JOIN roadmap_actions ra ON rfa."actionId" = ra.id
-        WHERE rfa."assessmentId" = ${id}
-        ORDER BY rfa."priorityScore" DESC
-      `,
-      sql<{ name: string }[]>`SELECT name FROM business_units WHERE id = ${assessment.entityId}`,
-    ]);
+    // Current assessment — full engine pass.
+    const responses: RawResponse[] = rawResponses.map(r => ({
+      questionId: r.questionId,
+      score: r.score,
+      note: r.note,
+      evidenceName: r.evidenceName,
+      answeredAt: r.answeredAt,
+    }));
+    const { pillarScores, dimensionScores, overallScore } = computeVectors(responses);
+    const { analytics, benchmarkAverage, averageGap, systemIntegrity } = computeAnalytics(
+      pillarScores,
+      benchmarkType,
+    );
 
-  const bMap = new Map(benchmarks.map(b => [b.pillarId, b.score]));
-  const summary = responseSummary[0];
+    // Drift — compare to prior completed assessment for same entity.
+    const [prior] = await sql<{ id: string }[]>`
+      SELECT id FROM assessments
+      WHERE "entityId" = ${assessment.entityId}
+        AND id != ${id}
+        AND "createdAt" < ${assessment.createdAt}
+      ORDER BY "createdAt" DESC LIMIT 1
+    `;
+    let driftProfile: any[] = [];
+    let regressions: any[] = [];
+    if (prior) {
+      const priorResponses = await sql<
+        { questionId: number; score: number }[]
+      >`SELECT "questionId", score FROM responses WHERE "assessmentId" = ${prior.id}`;
+      const { pillarScores: priorScores } = computeVectors(
+        priorResponses.map(r => ({ questionId: r.questionId, score: r.score })),
+      );
+      const drift = computeDrift(pillarScores, priorScores);
+      driftProfile = drift.driftProfile;
+      regressions = drift.regressions;
+    }
 
-  const analytics = pillars.map(p => {
-    const v = vectors.find(x => x.pillarId === p.id);
-    const score = v ? v.pillarScore : 0;
-    const target = bMap.get(p.id) ?? 4.0;
-    const gap = Number(Math.max(0, target - score).toFixed(2));
-    return {
-      pillarId: p.id,
-      pillarName: p.name,
-      score: Number(score.toFixed(2)),
-      target,
-      gap,
-      status: score >= target ? "OPTIMIZED" : score >= target * 0.8 ? "ALIGNED" : "DEFICIENT",
-      percentOfTarget: Number(((score / target) * 100).toFixed(1)),
+    // Roadmap.
+    const roadmap = generateRoadmap(pillarScores, benchmarkType);
+
+    // Meta.
+    const criticalRegressionsCount = regressions.filter(r => r.severity === "CRITICAL").length;
+    const status = missionStatus({
+      criticalRegressionsCount,
+      overallScore,
+      benchmarkAverage,
+      regressionsCount: regressions.length,
+    });
+    const isSynced = systemIntegrity >= 80 && criticalRegressionsCount === 0;
+
+    const responseSummary = {
+      totalResponses: rawResponses.length,
+      evidenceCount: rawResponses.filter(r => r.evidenceName && r.evidenceName.length > 0).length,
+      noteCount: rawResponses.filter(r => r.note && r.note.length > 0).length,
+      lastAnsweredAt: rawResponses.reduce<string>(
+        (max, r) => (r.answeredAt && r.answeredAt > max ? r.answeredAt : max),
+        assessment.createdAt,
+      ),
     };
-  });
 
-  const regressions = driftRecords
-    .filter(d => d.deltaScore < 0)
-    .map(r => ({
-      pillarId: r.pillarId,
-      pillarName: r.pillarName || r.pillarId,
-      delta: Number(r.deltaScore.toFixed(3)),
-      severity: Math.abs(r.deltaScore) > 0.5 ? "CRITICAL" : "NOTICE",
+    const profile = BENCHMARKS[benchmarkType] ?? BENCHMARKS.target;
+    const benchmarkProfile = PILLAR_IDS.map(pid => ({
+      pillarId: pid,
+      score: Number((profile[pid] ?? 4.0).toFixed(2)),
     }));
 
-  const totalAchieved = analytics.reduce((acc, curr) => acc + (curr.score >= curr.target ? 1 : 0), 0);
-  const systemIntegrity = Number(((totalAchieved / Math.max(1, pillars.length)) * 100).toFixed(0));
-  const benchmarkAverage = Number(
-    (
-      benchmarks.reduce((sum, b) => sum + b.score, 0) / Math.max(1, benchmarks.length)
-    ).toFixed(2),
-  );
-  const averageGap = Number(
-    (analytics.reduce((sum, a) => sum + a.gap, 0) / Math.max(1, analytics.length)).toFixed(2),
-  );
-
-  const criticalRegressionsCount = regressions.filter(r => r.severity === "CRITICAL").length;
-  const maturityScore = Number((assessment.overallScore ?? 0).toFixed(2));
-  const targetBaseline = benchmarkAverage;
-  const isSynced = systemIntegrity >= 80 && criticalRegressionsCount === 0;
-
-  let missionStatus = "NOMINAL_SYNC";
-  if (criticalRegressionsCount > 0) missionStatus = "CRITICAL_GAP";
-  else if (maturityScore < targetBaseline * 0.75) missionStatus = "STRUCTURAL_WEAKNESS";
-  else if (regressions.length > 0) missionStatus = "VECTOR_DRIFT";
-
-  return res.json({
-    assessmentId: id,
-    entityId: assessment.entityId,
-    entityName: entity[0]?.name,
-    overallScore: maturityScore,
-    systemIntegrity,
-    status: assessment.status,
-    benchmarkType,
-    benchmarkAverage,
-    averageGap,
-    timestamp: assessment.createdAt,
-    criticalRegressionsCount,
-    activeRoadmapCount: roadmap.length,
-    targetBaseline,
-    missionStatus,
-    isSynced,
-    responseSummary: {
-      totalResponses: summary?.totalResponses ?? 0,
-      evidenceCount: summary?.evidenceCount ?? 0,
-      noteCount: summary?.noteCount ?? 0,
-      lastAnsweredAt: summary?.lastAnsweredAt ?? assessment.createdAt,
-    },
-    benchmarkProfile: benchmarks.map(b => ({
-      pillarId: b.pillarId,
-      score: Number(b.score.toFixed(2)),
-    })),
-    analytics,
-    dimensions: dimensions.map(d => ({
-      id: d.dimensionId,
-      name: d.dimensionId,
-      score: Number(d.score.toFixed(2)),
-    })),
-    driftProfile: driftRecords.map(d => ({ pillar: d.pillarName || d.pillarId, delta: d.deltaScore })),
-    regressions,
-    roadmap,
-  });
+    return res.json({
+      assessmentId: id,
+      entityId: assessment.entityId,
+      entityName: BUSINESS_UNIT_NAMES[assessment.entityId] ?? assessment.entityId,
+      overallScore: Number(overallScore.toFixed(2)),
+      systemIntegrity,
+      status: assessment.status,
+      benchmarkType,
+      benchmarkAverage,
+      averageGap,
+      timestamp: assessment.createdAt,
+      criticalRegressionsCount,
+      activeRoadmapCount: roadmap.length,
+      targetBaseline: benchmarkAverage,
+      missionStatus: status,
+      isSynced,
+      responseSummary,
+      benchmarkProfile,
+      analytics,
+      dimensions: [...dimensionScores.entries()].map(([id, score]) => ({
+        id,
+        name: id,
+        score: Number(score.toFixed(2)),
+      })),
+      driftProfile: driftProfile.map(d => ({ pillar: d.pillar, delta: Number(d.delta.toFixed(3)) })),
+      regressions,
+      roadmap,
+    });
+  } catch (error) {
+    console.error("analysis endpoint failed:", error);
+    return res.status(500).json({ error: "analysis failure", details: String(error) });
+  }
 }
