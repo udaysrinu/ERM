@@ -1,10 +1,8 @@
 import React, { ReactNode } from "react";
 
 /*
- * ERM Navigator primitives — "Editorial Risk Atlas" aesthetic.
- * Warm cream base, rich ink, gold highlight. Reads like an institutional
- * quarterly report: folio numerals, ornamental rules, editorial marginalia.
- * Every atom is sized for print-grade typography in a browser.
+ * ERM Navigator primitives — Runway working-surface aesthetic.
+ * White + ink + one gold accent. Inter everywhere. No editorial decoration.
  */
 
 type Severity = "none" | "amber" | "mint" | "coral" | "ink";
@@ -18,7 +16,7 @@ const stripeClass: Record<Severity, string> = {
   ink: "stripe-ink",
 };
 
-/* ── Card — the primary container atom ──────────────────── */
+/* ── Card ─────────────────────────────────────────────── */
 export function Card({
   children,
   severity = "none",
@@ -39,7 +37,7 @@ export function Card({
   );
 }
 
-/* ── Eyebrow — small mono uppercase label ───────────────── */
+/* ── Eyebrow ──────────────────────────────────────────── */
 export function Eyebrow({
   children,
   tone = "muted",
@@ -54,12 +52,46 @@ export function Eyebrow({
   return <span className={`${cls} ${className}`}>{children}</span>;
 }
 
-/* ── Status dot (severity indicator) ────────────────────── */
+/* ── Status dot ───────────────────────────────────────── */
 export function StatusDot({ color = "mint" }: { color?: Dot }) {
   return <span className={`dot dot-${color}`} />;
 }
 
-/* ── Metric — label + display number + optional delta ───── */
+/* ── AnimatedNumber — count-up for hero metrics ───────── */
+export function AnimatedNumber({
+  value,
+  decimals = 2,
+  duration = 380,
+  className = "",
+}: {
+  value: number;
+  decimals?: number;
+  duration?: number;
+  className?: string;
+}) {
+  const [display, setDisplay] = React.useState(value);
+  const fromRef = React.useRef(value);
+  React.useEffect(() => {
+    const from = fromRef.current;
+    const to = value;
+    if (from === to) { setDisplay(to); return; }
+    const start = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      // ease-out quart
+      const eased = 1 - Math.pow(1 - p, 4);
+      setDisplay(from + (to - from) * eased);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = to;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <span className={className}>{display.toFixed(decimals)}</span>;
+}
+
+/* ── Metric — label + number + optional delta ────────── */
 export function Metric({
   label,
   value,
@@ -67,6 +99,7 @@ export function Metric({
   delta,
   tone,
   size = "md",
+  animated = false,
 }: {
   label: string;
   value: string | number;
@@ -74,13 +107,9 @@ export function Metric({
   delta?: { value: number; suffix?: string };
   tone?: "amber" | "mint" | "coral" | "ink";
   size?: "sm" | "md" | "lg" | "xl";
+  animated?: boolean;
 }) {
-  const sizeMap = {
-    sm: "text-2xl",
-    md: "text-3xl",
-    lg: "text-5xl",
-    xl: "text-7xl",
-  };
+  const sizeMap = { sm: "text-xl", md: "text-2xl", lg: "text-4xl", xl: "text-6xl" };
   const toneMap: Record<string, string> = {
     amber: "text-[var(--color-gold)]",
     mint: "text-[var(--color-mint)]",
@@ -88,20 +117,22 @@ export function Metric({
     ink: "text-[var(--color-ink)]",
   };
   const toneClass = tone ? toneMap[tone] : "text-[var(--color-ink)]";
-
+  const isNum = typeof value === "number";
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-1.5">
       <Eyebrow>{label}</Eyebrow>
       <div className="flex items-baseline gap-2">
-        <span className={`display-num ${sizeMap[size]} ${toneClass}`}>{value}</span>
+        <span className={`display-num ${sizeMap[size]} ${toneClass}`}>
+          {isNum && animated ? <AnimatedNumber value={value as number} /> : value}
+        </span>
         {unit && (
-          <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tracking-wide">
+          <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tracking-wide">
             {unit}
           </span>
         )}
         {delta !== undefined && (
-          <span className={`font-mono text-[11px] ${delta.value >= 0 ? "delta-up" : "delta-down"}`}>
-            {delta.value >= 0 ? "▲" : "▼"} {Math.abs(delta.value).toFixed(2)}
+          <span className={`font-mono text-[10px] ${delta.value >= 0 ? "delta-up" : "delta-down"}`}>
+            {delta.value >= 0 ? "↑" : "↓"} {Math.abs(delta.value).toFixed(2)}
             {delta.suffix}
           </span>
         )}
@@ -110,64 +141,23 @@ export function Metric({
   );
 }
 
-/* ── Header bar — top of screens ─────────────────────────── */
-export function HeaderBar({ crumb, right }: { crumb?: ReactNode; right?: ReactNode }) {
-  return (
-    <header className="border-b hairline bg-[var(--color-bg)]/95 backdrop-blur sticky top-0 z-40">
-      <div className="max-w-[1600px] mx-auto px-8 py-4 flex items-center justify-between gap-8">
-        <div className="flex items-center gap-6">
-          <Brand />
-          {crumb && (
-            <div className="flex items-center gap-3 border-l hairline pl-6">{crumb}</div>
-          )}
-        </div>
-        {right}
-      </div>
-    </header>
-  );
-}
-
-/* ── Brand lockup ───────────────────────────────────────── */
-export function Brand({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <BrandMark />
-      {!compact && (
-        <div className="flex flex-col leading-none">
-          <span className="font-display text-[17px] tracking-tight text-[var(--color-ink)] font-medium">
-            ERM Navigator
-          </span>
-          <span className="font-mono text-[9px] tracking-[0.22em] text-[var(--color-ink-muted)] mt-1 uppercase">
-            SEC Risk Maturity Platform
-          </span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Brand mark — eight-point maturity compass ─────────────
-   Gold 8-point star on ink (Islamic-art heritage) with an
-   ascending stem (maturity trajectory). Fixed: uses highlight
-   token so the star reads as gold, not ink-on-ink. */
-export function BrandMark({ size = 24 }: { size?: number }) {
+/* ── Brand mark — 8-point compass star on ink ─────────── */
+export function BrandMark({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect x="1" y="1" width="22" height="22" rx="5" fill="var(--color-ink)" />
-      {/* 8-point star — governance compass */}
       <path
         d="M12 4 L13.5 8.2 L17.8 6.2 L16 10.5 L20.4 12 L16 13.5 L17.8 17.8 L13.5 15.8 L12 20 L10.5 15.8 L6.2 17.8 L8 13.5 L3.6 12 L8 10.5 L6.2 6.2 L10.5 8.2 Z"
         stroke="var(--color-highlight)"
-        strokeWidth="0.6"
+        strokeWidth="0.5"
         strokeLinejoin="round"
         fill="var(--color-highlight)"
-        fillOpacity="0.10"
+        fillOpacity="0.08"
       />
-      {/* Ascending stem — maturity trajectory */}
       <path
         d="M12 16.5 L12 8.8 M9.3 11.5 L12 8.8 L14.7 11.5"
         stroke="var(--color-highlight)"
-        strokeWidth="1.4"
+        strokeWidth="1.35"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -175,204 +165,114 @@ export function BrandMark({ size = 24 }: { size?: number }) {
   );
 }
 
-/* ── Section rule — horizontal divider with optional label ─ */
-export function SectionRule({ label }: { label?: string }) {
+/* ── Brand — wordmark lockup (only place Fraunces appears) ─ */
+export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-4 py-3">
-      <div className="flex-1 h-px bg-[var(--color-border)]" />
-      {label && <Eyebrow>{label}</Eyebrow>}
-      <div className="flex-1 h-px bg-[var(--color-border)]" />
+    <div className="flex items-center gap-2.5">
+      <BrandMark size={20} />
+      {!compact && (
+        <div className="flex flex-col leading-none">
+          <span className="wordmark text-[15px] text-[var(--color-ink)]">
+            ERM Navigator
+          </span>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ── Ornamental rule — art-deco divider for editorial moments ─
-   Double hairline with a small diamond in the center. Used to
-   anchor the top of a screen or separate chapters. */
-export function OrnamentalRule({ color = "ink" }: { color?: "ink" | "gold" }) {
-  const strokeVar = color === "gold" ? "var(--color-gold)" : "var(--color-border-strong)";
-  return (
-    <div className="flex items-center justify-center py-3" aria-hidden>
-      <div className="flex-1 flex flex-col gap-[3px]">
-        <div className="h-px" style={{ background: strokeVar }} />
-        <div className="h-px opacity-50" style={{ background: strokeVar }} />
-      </div>
-      <svg width="10" height="10" viewBox="0 0 10 10" className="mx-4">
-        <path d="M5 0 L10 5 L5 10 L0 5 Z" fill={strokeVar} opacity="0.7" />
-      </svg>
-      <div className="flex-1 flex flex-col gap-[3px]">
-        <div className="h-px opacity-50" style={{ background: strokeVar }} />
-        <div className="h-px" style={{ background: strokeVar }} />
-      </div>
-    </div>
-  );
-}
-
-/* ── Folio numeral — Roman chapter mark in display serif ─── */
-export function FolioNumeral({
-  numeral,
-  size = 64,
-}: {
-  numeral: string;
-  size?: number;
-}) {
-  return (
-    <span
-      className="folio-num text-[var(--color-ink)]"
-      style={{ fontSize: `${size}px`, lineHeight: 1 }}
-    >
-      {numeral}
-    </span>
-  );
-}
-
-/* ── BU glyph — commissioned illustration per business unit ─
-   Each operating unit gets its own editorial mark. Uses ink + gold
-   from the active theme. Renders at a fixed 28px viewBox. */
-export function BuGlyph({ id, size = 28 }: { id: string; size?: number }) {
-  const stroke = "var(--color-ink)";
-  const accent = "var(--color-gold)";
+/* ── BU glyph — per-unit editorial mark ────────────────── */
+export function BuGlyph({ id, size = 18 }: { id: string; size?: number }) {
+  const stroke = "currentColor";
   const common = {
     width: size,
     height: size,
     viewBox: "0 0 28 28",
     fill: "none",
-    strokeWidth: 1.4,
+    strokeWidth: 1.5,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
     "aria-hidden": true as const,
   };
-
   switch (id) {
-    case "gen": // Turbine blades + hub — power generation
+    case "gen":
       return (
         <svg {...common}>
           <circle cx="14" cy="14" r="2" stroke={stroke} />
           <path d="M14 12 L14 5 M13 5 Q14 2 15 5" stroke={stroke} />
           <path d="M15.7 15 L21.8 18.5 M21.8 17.5 Q24.3 18.5 22.8 20.2" stroke={stroke} />
           <path d="M12.3 15 L6.2 18.5 M6.2 17.5 Q3.7 18.5 5.2 20.2" stroke={stroke} />
-          <circle cx="14" cy="14" r="10" stroke={accent} opacity="0.35" />
         </svg>
       );
-    case "tra": // Grid nodes with arteries — transmission
+    case "tra":
       return (
         <svg {...common}>
-          <circle cx="5" cy="7" r="1.5" fill={stroke} />
-          <circle cx="23" cy="7" r="1.5" fill={stroke} />
-          <circle cx="14" cy="14" r="1.8" fill={accent} />
-          <circle cx="5" cy="21" r="1.5" fill={stroke} />
-          <circle cx="23" cy="21" r="1.5" fill={stroke} />
+          <circle cx="5" cy="7" r="1.2" fill={stroke} />
+          <circle cx="23" cy="7" r="1.2" fill={stroke} />
+          <circle cx="14" cy="14" r="1.4" fill={stroke} />
+          <circle cx="5" cy="21" r="1.2" fill={stroke} />
+          <circle cx="23" cy="21" r="1.2" fill={stroke} />
           <path d="M5 7 L14 14 L23 7 M5 21 L14 14 L23 21" stroke={stroke} />
         </svg>
       );
-    case "dis": // Distribution — substation + branch
+    case "dis":
       return (
         <svg {...common}>
           <rect x="11" y="4" width="6" height="8" stroke={stroke} />
           <path d="M14 12 L14 17" stroke={stroke} />
           <path d="M14 17 L6 17 L6 22 M14 17 L14 22 M14 17 L22 17 L22 22" stroke={stroke} />
-          <path d="M12.5 7.5 L15.5 7.5 M12.5 9 L15.5 9" stroke={accent} />
         </svg>
       );
-    case "corp": // Corporate — tiered column with gold capital
+    case "corp":
       return (
         <svg {...common}>
           <path d="M6 24 L6 10 L14 5 L22 10 L22 24" stroke={stroke} />
-          <path d="M6 10 L22 10" stroke={accent} />
           <path d="M10 24 L10 14 L14 14 L14 24 M18 24 L18 14" stroke={stroke} />
           <path d="M3 24 L25 24" stroke={stroke} />
         </svg>
       );
-    case "sub": // Subsidiaries — three stacked platforms
+    case "sub":
       return (
         <svg {...common}>
-          <path d="M4 9 L14 4 L24 9 L14 14 Z" stroke={stroke} fill="none" />
+          <path d="M4 9 L14 4 L24 9 L14 14 Z" stroke={stroke} />
           <path d="M4 14 L14 19 L24 14" stroke={stroke} />
-          <path d="M4 19 L14 24 L24 19" stroke={accent} />
+          <path d="M4 19 L14 24 L24 19" stroke={stroke} />
         </svg>
       );
-    case "jv": // Joint Ventures — interlocking partners
+    case "jv":
       return (
         <svg {...common}>
           <circle cx="10" cy="14" r="6" stroke={stroke} />
-          <circle cx="18" cy="14" r="6" stroke={accent} />
-          <path d="M10 11 L10 17 M7 14 L13 14 M18 11 L18 17 M15 14 L21 14" stroke={stroke} opacity="0.5" />
+          <circle cx="18" cy="14" r="6" stroke={stroke} />
         </svg>
       );
     default:
       return (
         <svg {...common}>
           <rect x="4" y="4" width="20" height="20" rx="2" stroke={stroke} />
-          <path d="M10 14 L13 17 L18 11" stroke={accent} strokeWidth="1.8" />
         </svg>
       );
   }
 }
 
-/* ── Running footer — editorial page chrome ─────────────── */
-export function RunningFooter({
-  folio,
-  left,
-  right,
-}: {
-  folio?: string;
-  left?: string;
-  right?: string;
-}) {
-  return (
-    <footer className="fixed bottom-0 left-0 right-0 pointer-events-none z-30">
-      <div className="max-w-[1600px] mx-auto px-8 pb-4">
-        <div className="flex items-end justify-between font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-          <span>{left || "ERM Navigator · SEC Risk Maturity"}</span>
-          {folio && (
-            <span className="font-display text-[13px] tracking-normal italic text-[var(--color-ink-soft)]">
-              {folio}
-            </span>
-          )}
-          <span>{right || "Folio · MMXXVI"}</span>
-        </div>
-      </div>
-    </footer>
-  );
-}
-
-/* ── Pull quote — editorial reference block ─────────────── */
-export function PullQuote({
-  children,
-  attribution,
-}: {
-  children: ReactNode;
-  attribution?: string;
-}) {
-  return (
-    <figure className="pull-quote">
-      <span className="pull-quote-mark" aria-hidden>“</span>
-      <blockquote>{children}</blockquote>
-      {attribution && (
-        <figcaption className="font-mono text-[10px] tracking-[0.18em] uppercase text-[var(--color-ink-muted)] mt-3">
-          — {attribution}
-        </figcaption>
-      )}
-    </figure>
-  );
-}
-
-/* ── Keycap — inline keyboard hint ──────────────────────── */
+/* ── Keycap — inline keyboard hint ────────────────────── */
 export function Keycap({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 border hairline rounded-[5px] bg-[var(--color-surface)] font-mono text-[10px] text-[var(--color-ink-soft)]">
+    <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 border hairline rounded-[4px] bg-[var(--color-surface)] font-mono text-[10px] text-[var(--color-ink-soft)]">
       {children}
     </span>
   );
 }
 
-/* ── Pill — small rounded tag ───────────────────────────── */
+/* ── Pill ─────────────────────────────────────────────── */
 export function Pill({
   children,
   tone = "ink",
+  size = "default",
 }: {
   children: ReactNode;
   tone?: "ink" | "amber" | "mint" | "coral" | "sky" | "gold";
+  size?: "default" | "sm";
 }) {
   const toneMap: Record<string, string> = {
     ink: "bg-[var(--color-surface-soft)] text-[var(--color-ink)]",
@@ -382,11 +282,64 @@ export function Pill({
     sky: "bg-[var(--color-sky-soft)] text-[var(--color-sky)]",
     gold: "bg-[var(--color-gold-soft)] text-[var(--color-gold)]",
   };
+  const sizeCls = size === "sm"
+    ? "px-2 py-0.5 text-[9px] tracking-[0.12em]"
+    : "px-2.5 py-1 text-[10px] tracking-[0.12em]";
   return (
     <span
-      className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[10px] font-mono font-medium uppercase tracking-[0.16em] ${toneMap[tone]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-mono font-medium uppercase ${sizeCls} ${toneMap[tone]}`}
     >
       {children}
     </span>
+  );
+}
+
+/* ── SectionRule — horizontal divider ─────────────────── */
+export function SectionRule({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-3 py-2">
+      <div className="flex-1 h-px bg-[var(--color-border)]" />
+      {label && <Eyebrow>{label}</Eyebrow>}
+      <div className="flex-1 h-px bg-[var(--color-border)]" />
+    </div>
+  );
+}
+
+/* ── Sparkline — tiny inline trend indicator ──────────── */
+export function Sparkline({
+  values,
+  width = 80,
+  height = 20,
+  color,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) {
+  if (!values.length) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const step = width / (values.length - 1 || 1);
+  const points = values
+    .map((v, i) => {
+      const x = i * step;
+      const y = height - ((v - min) / span) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const strokeColor = color || "var(--color-gold)";
+  return (
+    <svg width={width} height={height} aria-hidden>
+      <polyline
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
   );
 }

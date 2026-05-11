@@ -1,47 +1,40 @@
-/* ERM Navigator — "Editorial Risk Atlas" aesthetic.
-   Warm-paper institutional-report feel. Fraunces display for editorial
-   gravitas, Inter body for operational clarity, JetBrains Mono for data
-   marginalia. Gold is the only chromatic signal; severity channels are
-   desaturated forest / brick / navy. Ink is the primary action color.
+/* ERM Navigator — Runway-inspired working surface.
+   White + ink + one gold accent. Inter everywhere. No editorial decoration.
+   Dense, chart-first, signal-forward.
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap&font-display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:wght@400;500;600&display=swap&font-display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* ── Typography ─────────────────────────────────────
-     Fraunces (display) → optical sizes 9-144, italic for marginalia.
-     Inter (body) → tabular numerics baked in.
-     JetBrains Mono (data) → editorial callouts. */
+  /* Inter for product UI; Fraunces reserved for the product wordmark only. */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Times New Roman", serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Fraunces", "Times New Roman", serif;
 
-  /* ── Color palette — ink-primary, warm-neutral base ──
-     Warm cream base, deep forest-ink as primary,
-     sparing gold for editorial highlight (Saudi heritage nod).
-     Desaturated severity channels. */
-  --color-bg: #F5F1E8;              /* warmer paper */
-  --color-bg-deep: #EEE8DB;         /* page edge */
-  --color-surface: #FFFDF8;         /* off-white card */
-  --color-surface-soft: #EDE7D8;    /* sunken surface */
-  --color-surface-sunken: #E4DDCC;
-  --color-border: rgba(15, 42, 27, 0.10);
-  --color-border-strong: rgba(15, 42, 27, 0.22);
-  --color-ink: #0F2A1B;             /* deep forest-black — primary */
-  --color-ink-soft: rgba(15, 42, 27, 0.72);
-  --color-ink-muted: rgba(15, 42, 27, 0.52);
-  --color-ink-subtle: rgba(15, 42, 27, 0.35);
+  /* Runway-paper neutrals — extracted from runway.com via Playwright getComputedStyle() */
+  --color-bg: #F8F7F5;              /* body background (exact) */
+  --color-surface: #FFFFFF;         /* card / canvas */
+  --color-surface-soft: #E3DFD5;    /* sunken / sidebar — same as border color, warm beige */
+  --color-surface-hover: #EEEAE0;   /* halfway between surface-soft and bg */
+  --color-border: #E3DFD5;          /* hairline (1px solid, warm beige) */
+  --color-border-strong: rgba(38, 27, 7, 0.22);
 
-  /* Accent = ink. Gold = editorial highlight. */
-  --color-accent: #0F2A1B;
-  --color-accent-ink: #F5F1E8;
-  --color-accent-soft: rgba(15, 42, 27, 0.06);
-  --color-highlight: #C8A14B;       /* deeper gold reads cleaner on ink */
-  --color-highlight-soft: rgba(200, 161, 75, 0.14);
-  --color-gold: #9C7E3C;            /* muted Saudi gold — on surface */
-  --color-gold-soft: rgba(156, 126, 60, 0.12);
-  --color-gold-line: rgba(156, 126, 60, 0.40);
+  /* Ink scale — Runway's warm brown-black #261B07 */
+  --color-ink: #261B07;
+  --color-ink-soft: color-mix(in srgb, #261B07 78%, transparent);
+  --color-ink-muted: color-mix(in srgb, #261B07 55%, transparent);
+  --color-ink-subtle: color-mix(in srgb, #261B07 38%, transparent);
+
+  /* Runway punchy marigold CTA */
+  --color-accent: #261B07;          /* primary ink stays for text-on-surface */
+  --color-gold: #F9A600;            /* Runway exact — the hero CTA gold */
+  --color-gold-soft: rgba(249, 166, 0, 0.14);
+  --color-gold-line: rgba(232, 155, 0, 0.55);
+  --color-highlight: #F7B92E;       /* brighter gold for text on ink */
+
+  /* Severity — reserved for state, not decoration */
   --color-mint: #2E6B48;
   --color-mint-soft: rgba(46, 107, 72, 0.10);
   --color-coral: #A64226;
@@ -49,22 +42,46 @@
   --color-sky: #1E4D73;
   --color-sky-soft: rgba(30, 77, 115, 0.09);
 
+  /* BU tint palette — Runway-pastel, one tint per operating unit.
+     Used as soft card backgrounds on scope + sidebar category dots. */
+  --bu-tint-gen:  #F5E4C8;  /* warm peach — power generation */
+  --bu-tint-tra:  #D8E4EF;  /* mist blue — transmission */
+  --bu-tint-dis:  #D9E5D3;  /* sage — distribution */
+  --bu-tint-corp: #EEE6D7;  /* cream — corporate */
+  --bu-tint-sub:  #EBDEE0;  /* rose — subsidiaries */
+  --bu-tint-jv:   #DDD8E9;  /* violet — joint ventures */
+
+  --bu-dot-gen:  #D49E3C;
+  --bu-dot-tra:  #6B8FAE;
+  --bu-dot-dis:  #7B9A6B;
+  --bu-dot-corp: #A89673;
+  --bu-dot-sub:  #B08894;
+  --bu-dot-jv:   #8E82A8;
+
+  /* Tight radius scale */
   --radius-sm: 4px;
   --radius-md: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
-  --shadow-soft: 0 1px 2px rgba(15, 42, 27, 0.04), 0 2px 8px rgba(15, 42, 27, 0.04);
-  --shadow-card: 0 1px 2px rgba(15, 42, 27, 0.04), 0 4px 12px rgba(15, 42, 27, 0.06);
-  --shadow-floated: 0 2px 4px rgba(15, 42, 27, 0.06), 0 12px 32px rgba(15, 42, 27, 0.08);
-  --shadow-deep: 0 8px 24px rgba(15, 42, 27, 0.10), 0 24px 64px rgba(15, 42, 27, 0.12);
+  /* Runway's actual shadow recipe — warm brown-tinted. */
+  --shadow-soft: 0 4px 8px rgba(38, 27, 7, 0.06);
+  --shadow-card: 0 4px 8px rgba(38, 27, 7, 0.06);
+  /* Runway's signature CTA/floating shadow — 3 layers: inset highlight + outer soft + hairline ring */
+  --shadow-cta:
+    inset 0 2px 4px rgba(255, 255, 255, 0.56),
+    0 4px 8px rgba(38, 27, 7, 0.06),
+    0 1px 2px rgba(38, 27, 7, 0.36);
+  --shadow-floated:
+    inset 0 2px 4px rgba(255, 255, 255, 0.56),
+    0 4px 8px rgba(38, 27, 7, 0.06),
+    0 1px 2px rgba(38, 27, 7, 0.36);
+  --shadow-deep: 0 8px 24px rgba(38, 27, 7, 0.10), 0 24px 64px rgba(38, 27, 7, 0.10);
 }
 
 @layer base {
-  :root {
-    color-scheme: light;
-  }
+  :root { color-scheme: light; }
 
   html {
     background: var(--color-bg);
@@ -77,144 +94,98 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 400;
-    font-size: 15px;
-    line-height: 1.55;
-    letter-spacing: -0.005em;
+    /* Runway exact: 16px body, 20px leading, 1%-negative tracking */
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: -0.16px;
     font-variant-numeric: tabular-nums;
-    /* App-like feel: chrome is unselectable by default. Content opts back in
-       below so investors can still copy scores, IDs, and question text. */
     user-select: none;
     -webkit-user-select: none;
   }
 
-  /* Content that should remain copy-able. Keep this list tight — the rest
-     of the UI (headers, nav, buttons, pills, eyebrows, footers, keycaps)
-     stays unselectable for a deliberate operator-console feel. */
+  /* Content that should remain copy-able. */
   h1, h2, h3, h4, h5, h6,
-  p,
-  blockquote,
-  td, th,
+  p, blockquote, td, th,
   input, textarea, select,
   code, pre,
-  .display-num, .display-heading, .display-title, .folio-num,
-  .editorial-italic,
-  .tabular,
-  [data-selectable],
-  .selectable {
+  .display-num, .display-heading, .tabular,
+  [data-selectable], .selectable {
     user-select: text;
     -webkit-user-select: text;
   }
 
-  ::selection {
-    background: var(--color-ink);
-    color: var(--color-bg);
-  }
+  ::selection { background: var(--color-ink); color: var(--color-bg); }
 
   :focus-visible {
     outline: 2px solid var(--color-gold);
     outline-offset: 2px;
     border-radius: var(--radius-sm);
   }
-
-  h1, h2, h3 {
-    font-feature-settings: "ss01", "ss02", "ss03";
-  }
-
-  [data-numeric], .tabular, input, .font-mono, .display-num, .folio-num {
-    font-variant-numeric: tabular-nums;
-  }
 }
 
 @layer components {
-  /* ─── Eyebrow labels ──────────────────────────────── */
+  /* ─── Eyebrow — small mono uppercase label ──────────── */
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-ink-muted);
   }
-
   .eyebrow-amber {
     font-family: var(--font-mono);
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.22em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-gold);
   }
-
   .eyebrow-ink {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--color-ink);
   }
 
-  /* ─── Display + editorial typography ──────────────── */
+  /* ─── Display numerics — Inter tight, tabular ─────── */
   .display-num {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-feature-settings: "tnum", "ss01", "lnum";
-    letter-spacing: -0.03em;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-feature-settings: "tnum", "lnum", "ss01";
+    letter-spacing: -0.028em;
     line-height: 1;
   }
-
   .display-heading {
-    font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.022em;
-    line-height: 1.02;
-    font-feature-settings: "ss01", "ss02";
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    line-height: 1.1;
   }
-
-  /* Editorial title with trailing italic marginalia (i, ii, iii) */
-  .display-title {
-    font-family: var(--font-display);
-    font-weight: 400;
-    letter-spacing: -0.025em;
-    line-height: 0.98;
-    font-feature-settings: "ss01", "ss02", "dlig";
-  }
-
-  /* Roman numeral folio — large italic Fraunces */
-  .folio-num {
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-style: italic;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
-  /* Editorial italic running-text (subtitles, captions) */
-  .editorial-italic {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 400;
+  /* Wordmark exception — the ONLY place Fraunces appears */
+  .wordmark {
+    font-family: var(--font-serif);
+    font-weight: 500;
     letter-spacing: -0.01em;
   }
 
-  /* ─── Card / Panel primitives ─────────────────────── */
+  /* ─── Card primitives ──────────────────────────────── */
   .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
   }
-
   .card-subtle {
     background: var(--color-surface-soft);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
   }
-
   .card-flat {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius);
   }
 
   .stripe-amber { border-top: 2px solid var(--color-gold); }
@@ -222,92 +193,86 @@
   .stripe-coral { border-top: 2px solid var(--color-coral); }
   .stripe-ink   { border-top: 2px solid var(--color-ink); }
 
-  /* ─── Buttons ──────────────────────────────────────── */
+  /* ─── Buttons — Runway tactile recipe ─────────────── */
+  /* Primary — ink on cream, for most CTAs */
   .btn-primary {
     background: var(--color-ink);
     color: var(--color-bg);
     font-family: var(--font-sans);
     font-weight: 500;
-    font-size: 13px;
-    padding: 11px 22px;
-    border-radius: var(--radius);
+    font-size: 14px;
+    letter-spacing: -0.14px;
+    padding: 9px 18px;
+    border-radius: 8px;
     border: 1px solid var(--color-ink);
-    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms;
     cursor: pointer;
+    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), opacity 150ms;
   }
-  .btn-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(15, 42, 27, 0.22);
-  }
+  .btn-primary:hover { transform: translateY(-0.5px); opacity: 0.92; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+  /* Accent — Runway gold pill, ink text. The hero CTA. Has the tactile shadow. */
   .btn-accent {
-    background: var(--color-ink);
-    color: var(--color-bg);
+    background: var(--color-gold);
+    color: var(--color-ink);
     font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 13px;
-    padding: 11px 22px;
-    border-radius: var(--radius);
-    border: 1px solid var(--color-ink);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.14px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--color-gold) 70%, var(--color-ink));
     cursor: pointer;
-    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms;
-    position: relative;
-    overflow: hidden;
-  }
-  .btn-accent::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      105deg,
-      transparent 40%,
-      rgba(200, 161, 75, 0.18) 50%,
-      transparent 60%
-    );
-    transform: translateX(-100%);
-    transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: var(--shadow-cta);
+    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 150ms;
   }
   .btn-accent:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(15, 42, 27, 0.22);
+    box-shadow:
+      inset 0 2px 4px rgba(255, 255, 255, 0.7),
+      0 8px 14px rgba(38, 27, 7, 0.08),
+      0 1px 2px rgba(38, 27, 7, 0.4);
   }
-  .btn-accent:hover::after {
-    transform: translateX(100%);
-  }
+  .btn-accent:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
+  /* Ghost — white with tactile shadow, matches Runway's secondary button */
   .btn-ghost {
-    background: transparent;
+    background: var(--color-surface);
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-weight: 500;
-    font-size: 13px;
-    padding: 10px 16px;
-    border-radius: var(--radius);
+    font-size: 14px;
+    letter-spacing: -0.14px;
+    padding: 9px 18px;
+    border-radius: 8px;
     border: 1px solid var(--color-border);
     cursor: pointer;
-    transition: border-color 180ms, background 180ms;
+    box-shadow: var(--shadow-cta);
+    transition: transform 150ms, box-shadow 150ms;
   }
   .btn-ghost:hover {
-    border-color: var(--color-border-strong);
-    background: var(--color-surface-soft);
+    transform: translateY(-0.5px);
+    box-shadow:
+      inset 0 2px 4px rgba(255, 255, 255, 0.7),
+      0 6px 12px rgba(38, 27, 7, 0.07),
+      0 1px 2px rgba(38, 27, 7, 0.4);
   }
 
   /* ─── Status dots ─────────────────────────────────── */
   .dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 999px;
     flex-shrink: 0;
   }
-  .dot-amber { background: var(--color-gold); box-shadow: 0 0 0 3px var(--color-gold-soft); }
-  .dot-mint  { background: var(--color-mint); box-shadow: 0 0 0 3px var(--color-mint-soft); }
-  .dot-coral { background: var(--color-coral); box-shadow: 0 0 0 3px var(--color-coral-soft); }
-  .dot-sky   { background: var(--color-sky);   box-shadow: 0 0 0 3px var(--color-sky-soft); }
+  .dot-amber { background: var(--color-gold); }
+  .dot-mint  { background: var(--color-mint); }
+  .dot-coral { background: var(--color-coral); }
+  .dot-sky   { background: var(--color-sky); }
   .dot-ink   { background: var(--color-ink); }
 
   .hairline { border-color: var(--color-border); }
   .hairline-strong { border-color: var(--color-border-strong); }
-  .hairline-gold { border-color: var(--color-gold-line); }
 
   .delta-up {
     color: var(--color-mint);
@@ -329,18 +294,63 @@
     border-bottom: 1px solid var(--color-border-strong);
     padding: 10px 0;
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 14px;
     color: var(--color-ink);
     outline: none;
-    transition: border-color 200ms;
+    transition: border-color 180ms;
     width: 100%;
   }
-  .input-bare:focus {
-    border-bottom-color: var(--color-gold);
+  .input-bare:focus { border-bottom-color: var(--color-ink); }
+  .input-bare::placeholder { color: var(--color-ink-subtle); }
+
+  .input-field {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 9px 12px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-ink);
+    outline: none;
+    transition: border-color 180ms;
+    width: 100%;
   }
-  .input-bare::placeholder {
-    color: var(--color-ink-subtle);
+  .input-field:focus { border-color: var(--color-ink); }
+  .input-field::placeholder { color: var(--color-ink-subtle); }
+
+  /* ─── Sidebar nav item ─────────────────────────────── */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    color: var(--color-ink-soft);
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+    width: 100%;
+    text-align: left;
   }
+  .nav-item:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-ink);
+  }
+  .nav-item-active {
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-weight: 500;
+    box-shadow: inset 0 0 0 1px var(--color-border);
+  }
+
+  /* ─── Stat row (Runway's line-item pattern) ────────── */
+  .stat-row {
+    display: grid;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .stat-row:last-child { border-bottom: 0; }
 
   /* ─── Custom scrollbar ────────────────────────────── */
   .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -349,142 +359,17 @@
     background: var(--color-border-strong);
     border-radius: 999px;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--color-ink-muted);
-  }
-
-  /* ─── Paper grain (subtle texture) ────────────────── */
-  .paper-grain {
-    background-image:
-      radial-gradient(circle at 1px 1px, rgba(15, 42, 27, 0.022) 1px, transparent 0);
-    background-size: 22px 22px;
-    background-attachment: fixed;
-  }
-
-  /* Archival grid — printer's registration marks feel */
-  .archival-grid {
-    background-image:
-      linear-gradient(to right, rgba(15, 42, 27, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(15, 42, 27, 0.03) 1px, transparent 1px);
-    background-size: 64px 64px;
-    background-position: -1px -1px;
-  }
-
-  /* ─── Pull quote ──────────────────────────────────── */
-  .pull-quote {
-    position: relative;
-    padding: 32px 40px 28px 40px;
-    border-left: 2px solid var(--color-gold);
-    background: transparent;
-  }
-  .pull-quote blockquote {
-    font-family: var(--font-display);
-    font-weight: 300;
-    font-style: italic;
-    font-size: 22px;
-    line-height: 1.35;
-    letter-spacing: -0.015em;
-    color: var(--color-ink);
-  }
-  .pull-quote-mark {
-    position: absolute;
-    top: -8px;
-    left: 16px;
-    font-family: var(--font-display);
-    font-size: 72px;
-    line-height: 1;
-    color: var(--color-gold);
-    opacity: 0.5;
-    user-select: none;
-  }
-
-  /* ─── Drop-cap — first letter of an editorial lede ── */
-  .drop-cap::first-letter {
-    font-family: var(--font-display);
-    font-weight: 400;
-    float: left;
-    font-size: 68px;
-    line-height: 0.82;
-    padding: 6px 10px 0 0;
-    color: var(--color-ink);
-  }
-
-  /* ─── Chapter mark — numeral + hairline rule ──────── */
-  .chapter-mark {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 300;
-    color: var(--color-ink-muted);
-    font-size: 15px;
-    letter-spacing: 0.02em;
-  }
-  .chapter-mark::before {
-    content: "";
-    width: 32px;
-    height: 1px;
-    background: var(--color-gold-line);
-  }
-
-  /* ─── Margin note — italic annotation block ───────── */
-  .margin-note {
-    font-family: var(--font-display);
-    font-style: italic;
-    font-weight: 300;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--color-ink-soft);
-    letter-spacing: 0.005em;
-  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-ink-muted); }
 }
 
 @layer utilities {
-  .ease-premium {
-    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  /* Editorial mask — soft vignette from page edges */
-  .edge-vignette {
-    -webkit-mask-image: radial-gradient(ellipse at center, black 60%, rgba(0,0,0,0.85) 100%);
-    mask-image: radial-gradient(ellipse at center, black 60%, rgba(0,0,0,0.85) 100%);
-  }
+  .ease-premium { transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
 }
 
-/* Noise overlay — subtle organic grain for a printed-paper feel */
-.noise-overlay::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.35;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0.25 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Reduced motion honored */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-/* ─── Keyframes ───────────────────────────────────────── */
-@keyframes slow-drift {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  50% { transform: translate(2%, -1%) rotate(0.5deg); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.15; transform: scale(1); }
-  50% { opacity: 0.25; transform: scale(1.05); }
-}
-
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
