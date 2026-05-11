@@ -581,68 +581,98 @@ const ScopeScreen = ({
         </div>
       </motion.div>
 
-      {/* Archive — past sessions for this operator */}
-      {(history.length > 0 || historyLoading) && (
-        <div className="mt-14 mb-12">
-          <div className="flex items-baseline justify-between mb-6">
-            <h2 className="display-heading text-[22px] text-[var(--color-ink)]">
-              <span className="editorial-italic text-[var(--color-ink-muted)] mr-3">From the</span>
-              Archive
-            </h2>
-            <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-              {historyLoading ? "loading…" : `${history.length} session${history.length === 1 ? "" : "s"} · newest first`}
+      {/* Archive — past sessions for this operator. Always rendered so first-time
+          users can see where their history will appear. */}
+      <div className="mt-14 mb-12">
+        <div className="flex items-baseline justify-between mb-6">
+          <h2 className="display-heading text-[22px] text-[var(--color-ink)]">
+            <span className="editorial-italic text-[var(--color-ink-muted)] mr-3">From the</span>
+            Archive
+          </h2>
+          <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+            {historyLoading
+              ? "loading…"
+              : history.length === 0
+                ? "no sessions yet"
+                : `${history.length} session${history.length === 1 ? "" : "s"} · newest first`}
+          </div>
+        </div>
+
+        {historyLoading ? (
+          <div className="border-t border-b hairline py-12 text-center">
+            <p className="editorial-italic text-[14px] text-[var(--color-ink-muted)]">
+              Retrieving your past sessions…
+            </p>
+          </div>
+        ) : history.length === 0 ? (
+          <div className="border-t border-b hairline py-12 px-6 flex items-start gap-6">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="flex-shrink-0 mt-1" aria-hidden>
+              <rect x="6" y="8" width="28" height="24" rx="2" stroke="var(--color-gold)" strokeWidth="1" opacity="0.6" />
+              <path d="M6 14 L34 14" stroke="var(--color-gold)" strokeWidth="1" opacity="0.6" />
+              <path d="M12 20 L28 20 M12 24 L24 24" stroke="var(--color-ink-muted)" strokeWidth="1" />
+            </svg>
+            <div className="flex-1">
+              <p className="display-heading text-[18px] text-[var(--color-ink)]">
+                <span className="editorial-italic text-[var(--color-ink-muted)]">A blank page,</span> for now.
+              </p>
+              <p className="mt-2 text-[13px] text-[var(--color-ink-soft)] leading-relaxed max-w-[560px]">
+                Your completed assessments will stamp here — each one with its score, operating unit, and a transaction ID. Complete an assessment below to begin your archive and unlock drift detection across future runs.
+              </p>
             </div>
           </div>
-          <div className="border-t hairline">
-            {history.slice(0, 8).map((item, idx) => {
-              const d = new Date(item.createdAt);
-              const when = d.toLocaleString(undefined, {
-                month: "short", day: "numeric", year: "numeric",
-                hour: "numeric", minute: "2-digit",
-              });
-              const score = typeof item.overallScore === "number" ? item.overallScore.toFixed(2) : "—";
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onOpenHistorical(item)}
-                  className="w-full border-b hairline py-5 px-2 flex items-center gap-6 text-left group cursor-pointer hover:bg-[var(--color-surface-soft)]/60 transition-colors"
-                >
-                  <div className="w-[80px] flex-shrink-0">
-                    <div className="folio-num text-[32px] text-[var(--color-ink)] leading-none">
-                      {score}
+        ) : (
+          <>
+            <div className="border-t hairline">
+              {history.slice(0, 8).map(item => {
+                const d = new Date(item.createdAt);
+                const when = d.toLocaleString(undefined, {
+                  month: "short", day: "numeric", year: "numeric",
+                  hour: "numeric", minute: "2-digit",
+                });
+                const score = typeof item.overallScore === "number" ? item.overallScore.toFixed(2) : "—";
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onOpenHistorical(item)}
+                    className="w-full border-b hairline py-5 px-2 flex items-center gap-6 text-left group cursor-pointer hover:bg-[var(--color-surface-soft)]/60 transition-colors"
+                  >
+                    <div className="w-[80px] flex-shrink-0">
+                      <div className="folio-num text-[32px] text-[var(--color-ink)] leading-none">
+                        {score}
+                      </div>
+                      <div className="mt-1 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+                        / 5.00
+                      </div>
                     </div>
-                    <div className="mt-1 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                      / 5.00
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-3">
+                        <h3 className="display-heading text-[20px] text-[var(--color-ink)]">
+                          {item.entityName}
+                        </h3>
+                        <span className="font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+                          {item.entityId}
+                        </span>
+                      </div>
+                      <p className="mt-1 editorial-italic text-[12px] text-[var(--color-ink-muted)]">
+                        {when} · transaction <span className="font-mono tracking-wide">{item.id}</span>
+                      </p>
                     </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-3">
-                      <h3 className="display-heading text-[20px] text-[var(--color-ink)]">
-                        {item.entityName}
-                      </h3>
-                      <span className="font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                        {item.entityId}
-                      </span>
+                    <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)] transition-colors">
+                      <span>Open</span>
+                      <ArrowUpRight size={12} className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                     </div>
-                    <p className="mt-1 editorial-italic text-[12px] text-[var(--color-ink-muted)]">
-                      {when} · transaction <span className="font-mono tracking-wide">{item.id}</span>
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)] transition-colors">
-                    <span>Open</span>
-                    <ArrowUpRight size={12} className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {history.length > 8 && (
-            <p className="mt-3 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-subtle)]">
-              showing 8 of {history.length} · older entries available via command palette
-            </p>
-          )}
-        </div>
-      )}
+                  </button>
+                );
+              })}
+            </div>
+            {history.length > 8 && (
+              <p className="mt-3 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-subtle)]">
+                showing 8 of {history.length} · older entries available via command palette
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       <OrnamentalRule color="gold" />
 
@@ -870,9 +900,10 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
         <div className="p-6 border-b hairline">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-[var(--color-ink-muted)] hover:text-[var(--color-coral)] font-mono text-[10px] uppercase tracking-[0.22em] transition-colors mb-5 cursor-pointer"
+            className="flex items-center gap-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] font-mono text-[10px] uppercase tracking-[0.22em] transition-colors mb-5 cursor-pointer"
+            aria-label="Back to operating scope"
           >
-            <RotateCcw size={12} /> Cancel
+            <ArrowLeft size={12} /> Back to scope
           </button>
           <Eyebrow>Assessing</Eyebrow>
           <p className="display-heading text-[22px] text-[var(--color-ink)] mt-2">{bu.name}</p>
@@ -1621,8 +1652,34 @@ const RNOSCommandCenter = ({
 
 // ─── APP SHELL ─────────────────────────────────────────────────────────────
 
+type Screen = "login" | "scope" | "assessment" | "navigator";
+
 export default function App() {
-  const [screen, setScreen] = useState<"login" | "scope" | "assessment" | "navigator">("login");
+  const [screen, setScreenState] = useState<Screen>("login");
+
+  // Browser-history sync: each screen transition pushes a history entry so
+  // the browser Back button walks backward through our SPA instead of
+  // leaving the app entirely.
+  const suppressPushRef = useRef(false);
+  const setScreen = (next: Screen) => {
+    setScreenState(next);
+    if (!suppressPushRef.current && typeof window !== "undefined") {
+      window.history.pushState({ screen: next }, "");
+    }
+    suppressPushRef.current = false;
+  };
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Seed the initial entry so popping from login doesn't escape the app.
+    window.history.replaceState({ screen: "login" }, "");
+    const onPop = (e: PopStateEvent) => {
+      const target: Screen = (e.state && (e.state as any).screen) || "login";
+      suppressPushRef.current = true;
+      setScreenState(target);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const [selectedBU, setSelectedBU] = useState<any>(null);
   const [benchmarkType, setBenchmarkType] = useState("target");
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
