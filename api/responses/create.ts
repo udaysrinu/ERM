@@ -1,68 +1,65 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors } from "../_lib/cors.js";
 import { sql } from "../_lib/db.js";
+import { QUESTIONS_BY_ID } from "../_lib/static.js";
 
-// Strict integrity check mirrors server.ts:499-559: every question must have a
-// response in the submitted batch. Patent Claim 1 depends on complete vectors.
-//
-// Self-bootstrap: the frontend generates assessmentId client-side and posts
-// directly here at finalize time. We upsert the parent assessments row first
-// so the foreign key in responses has a target. This removes the click-BU
-// latency that an eager /api/assessments/create would have caused.
+/*
+ * The only endpoint that mutates. Frontend posts:
+ *   { assessmentId, entityId, responses: [{questionId, score, note?, evidenceName?, answeredAt?}] }
+ * We upsert the assessment row then insert the 100 responses in one transaction.
+ * No eager /api/assessments/create; no separate engine-compute calls afterward —
+ * the analysis endpoint derives everything from this raw data.
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { assessmentId, entityId, responses } = req.body ?? {};
-  if (!assessmentId || !Array.isArray(responses)) {
-    return res.status(400).json({ error: "Invalid Payload", message: "Responses must be an array." });
-  }
-  if (!entityId) {
-    return res.status(400).json({ error: "Invalid Payload", message: "entityId is required on finalize." });
+  if (!assessmentId || !entityId || !Array.isArray(responses)) {
+    return res.status(400).json({ error: "Invalid payload" });
   }
 
-  const dbQuestions = await sql<{ id: number }[]>`SELECT id FROM questions`;
-  const expectedIds = new Set(dbQuestions.map(q => q.id));
-  const receivedIds = new Set(responses.map((r: any) => r.questionId));
-
-  if (receivedIds.size !== expectedIds.size) {
+  // Integrity check: every known question has a response, no extras, no duplicates.
+  // Uses the bundled QUESTIONS_BY_ID constant — no DB roundtrip for validation.
+  const receivedIds = new Set<number>(responses.map((r: any) => r.questionId));
+  if (receivedIds.size !== responses.length) {
+    return res.status(400).json({ error: "Integrity violation", message: "Duplicate questionIds" });
+  }
+  if (receivedIds.size !== QUESTIONS_BY_ID.size) {
     return res.status(400).json({
-      error: "Integrity Violation",
-      message: `Unique question count mismatch. Expected ${expectedIds.size}, received ${receivedIds.size}.`,
+      error: "Integrity violation",
+      message: `Expected ${QUESTIONS_BY_ID.size} responses, got ${receivedIds.size}`,
     });
   }
-  for (const id of expectedIds) {
-    if (!receivedIds.has(id)) {
-      return res.status(400).json({
-        error: "Integrity Violation",
-        message: `Missing vector for Question ID ${id}.`,
-      });
+  for (const qid of QUESTIONS_BY_ID.keys()) {
+    if (!receivedIds.has(qid)) {
+      return res.status(400).json({ error: "Integrity violation", message: `Missing question ${qid}` });
     }
   }
 
   try {
     await sql.begin(async tx => {
-      // Upsert the parent assessment. ON CONFLICT keeps this safe if the user
-      // finalizes more than once (shouldn't happen, but defensive).
+      // Lazy-upsert the parent row (idempotent across finalize retries).
       await tx`
-        INSERT INTO assessments (id, "entityId", "createdAt", status)
-        VALUES (${assessmentId}, ${entityId}, ${new Date().toISOString()}, 'draft')
-        ON CONFLICT (id) DO NOTHING
+        INSERT INTO assessments (id, "entityId", status)
+        VALUES (${assessmentId}, ${entityId}, 'completed')
+        ON CONFLICT (id) DO UPDATE SET status = 'completed'
       `;
-      // Idempotent: clear any prior responses for this assessment before re-inserting.
+      // Clear any prior responses for this assessment, then insert fresh.
       await tx`DELETE FROM responses WHERE "assessmentId" = ${assessmentId}`;
       for (const r of responses) {
         await tx`
-          INSERT INTO responses ("assessmentId", "questionId", score, "weightedScore", note, "evidenceName", "answeredAt")
-          SELECT ${assessmentId}, id, ${r.score}, ${r.score} * weight, ${r.note || ""}, ${r.evidenceName || ""}, ${r.answeredAt || new Date().toISOString()}
-          FROM questions WHERE id = ${r.questionId}
+          INSERT INTO responses ("assessmentId", "questionId", score, note, "evidenceName", "answeredAt")
+          VALUES (${assessmentId}, ${r.questionId}, ${r.score},
+                  ${r.note || ""}, ${r.evidenceName || ""},
+                  ${r.answeredAt || new Date().toISOString()})
         `;
       }
     });
 
     return res.json({ success: true, count: responses.length, timestamp: new Date().toISOString() });
   } catch (error) {
-    console.error("Critical DB Write Failure:", error);
-    return res.status(500).json({ error: "Storage Failure", details: String(error) });
+    console.error("responses/create failed:", error);
+    return res.status(500).json({ error: "Storage failure", details: String(error) });
   }
 }
