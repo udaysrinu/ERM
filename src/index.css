@@ -14,33 +14,36 @@
   --font-display: "Fraunces", "Inter", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* ── Color palette — Runway extraction ──────────────
-     Body bg: rgb(248,247,245) → #F8F7F5 warm cream
-     Ink:     rgb(38,27,7)     → #261B07 rich brown-black
-     Accent:  rgb(249,166,0)   → #F9A600 warm amber
-     Card:    #FFFFFF
-     Soft:    rgb(227,223,213) → #E3DFD5 khaki */
-  --color-bg: #F8F7F5;
+  /* ── Color palette — SEC-themed premium ────────────
+     Warm cream base (Runway structure) + Saudi visual identity:
+     - Deep emerald accent (SEC brand green, Saudi flag)
+     - Gold highlight (Saudi heritage, state-owned gravity)
+     - Ink becomes deep forest-black
+     Produces: "institutional Saudi premium" — reads correctly
+     to both tech VCs and SEC board. */
+  --color-bg: #F7F5F0;              /* warm paper, slight green undertone */
   --color-surface: #FFFFFF;
-  --color-surface-soft: #F1EFEA;
-  --color-surface-sunken: #EAE7DF;
-  --color-border: rgba(38, 27, 7, 0.10);
-  --color-border-strong: rgba(38, 27, 7, 0.18);
-  --color-ink: #261B07;
-  --color-ink-soft: rgba(38, 27, 7, 0.70);
-  --color-ink-muted: rgba(38, 27, 7, 0.50);
-  --color-ink-subtle: rgba(38, 27, 7, 0.35);
+  --color-surface-soft: #EFEDE6;
+  --color-surface-sunken: #E6E4DC;
+  --color-border: rgba(15, 42, 27, 0.10);
+  --color-border-strong: rgba(15, 42, 27, 0.18);
+  --color-ink: #0F2A1B;             /* deep forest-black (SEC-adjacent) */
+  --color-ink-soft: rgba(15, 42, 27, 0.70);
+  --color-ink-muted: rgba(15, 42, 27, 0.50);
+  --color-ink-subtle: rgba(15, 42, 27, 0.35);
 
-  /* Signal channels — amber is primary, mint for aligned, coral for regression */
-  --color-accent: #F9A600;          /* warm amber (Runway signature) */
-  --color-accent-ink: #3D2A00;      /* dark amber for accent-on-light text */
-  --color-accent-soft: rgba(249, 166, 0, 0.12);
-  --color-mint: #3E8E5A;            /* aligned / nominal */
-  --color-mint-soft: rgba(62, 142, 90, 0.12);
-  --color-coral: #C2462F;           /* regression / critical */
-  --color-coral-soft: rgba(194, 70, 47, 0.12);
-  --color-sky: #385F8C;             /* drift / informational */
-  --color-sky-soft: rgba(56, 95, 140, 0.10);
+  /* Signal channels — SEC emerald primary, gold for highlight, coral for regression */
+  --color-accent: #006C35;          /* SEC / Saudi flag emerald */
+  --color-accent-ink: #FFFFFF;      /* light text on emerald */
+  --color-accent-soft: rgba(0, 108, 53, 0.10);
+  --color-gold: #C5A053;            /* Saudi state gold — display accents */
+  --color-gold-soft: rgba(197, 160, 83, 0.14);
+  --color-mint: #2E8B4E;            /* aligned / nominal (lighter emerald) */
+  --color-mint-soft: rgba(46, 139, 78, 0.12);
+  --color-coral: #B33A1F;           /* regression / critical — desaturated brick */
+  --color-coral-soft: rgba(179, 58, 31, 0.10);
+  --color-sky: #1E4D73;             /* drift / informational — deep navy */
+  --color-sky-soft: rgba(30, 77, 115, 0.10);
 
   /* Radius scale (Runway uses 4,6,8,12 — tight & disciplined) */
   --radius-sm: 4px;
@@ -49,10 +52,10 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  /* Shadow recipes — warm-tinted dual layer, Runway-extracted */
-  --shadow-soft: 0 1px 2px rgba(38, 27, 7, 0.04), 0 2px 8px rgba(38, 27, 7, 0.04);
-  --shadow-card: 0 1px 2px rgba(38, 27, 7, 0.04), 0 4px 12px rgba(38, 27, 7, 0.06);
-  --shadow-floated: 0 2px 4px rgba(38, 27, 7, 0.06), 0 12px 32px rgba(38, 27, 7, 0.08);
+  /* Shadow recipes — forest-tinted dual layer */
+  --shadow-soft: 0 1px 2px rgba(15, 42, 27, 0.04), 0 2px 8px rgba(15, 42, 27, 0.04);
+  --shadow-card: 0 1px 2px rgba(15, 42, 27, 0.04), 0 4px 12px rgba(15, 42, 27, 0.06);
+  --shadow-floated: 0 2px 4px rgba(15, 42, 27, 0.06), 0 12px 32px rgba(15, 42, 27, 0.08);
 }
 
 @layer base {

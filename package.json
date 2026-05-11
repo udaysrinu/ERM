@@ -7,7 +7,8 @@
     "node": "22.x"
   },
   "scripts": {
-    "dev": "vercel dev --yes",
+    "dev": "vite",
+    "dev:full": "vercel dev --yes",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit"

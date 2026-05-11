@@ -137,7 +137,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
             ERM Navigator
           </span>
           <span className="font-mono text-[9px] tracking-[0.22em] text-[var(--color-ink-muted)] mt-1 uppercase">
-            Maturity Platform · v0.1
+            SEC Risk Maturity Platform
           </span>
         </div>
       )}
@@ -145,22 +145,24 @@ export function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-/* ── Brand mark — elegant geometric glyph ───────────────── */
+/* ── Brand mark — maturity compass glyph ─────────────────
+   Eight-point geometric star (Islamic-art heritage) with a
+   central ascending arrow-stem. Reads as: "measurement across
+   all directions, trending upward toward maturity."
+   Colors use the primary-on-ink pairing from the active theme. */
 export function BrandMark({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect
-        x="1"
-        y="1"
-        width="22"
-        height="22"
-        rx="5"
-        fill="var(--color-ink)"
-      />
+      <rect x="1" y="1" width="22" height="22" rx="5" fill="var(--color-ink)" />
+      {/* 8-point star outline — governance compass */}
+      <g stroke="var(--color-accent)" strokeWidth="1" opacity="0.35">
+        <path d="M12 4 L14 8 L18 6 L16 10 L20 12 L16 14 L18 18 L14 16 L12 20 L10 16 L6 18 L8 14 L4 12 L8 10 L6 6 L10 8 Z" />
+      </g>
+      {/* Ascending stem — maturity trajectory */}
       <path
-        d="M7 16L7 8L12 13L17 8L17 16"
+        d="M12 17 L12 9 M9 12 L12 9 L15 12"
         stroke="var(--color-accent)"
-        strokeWidth="1.75"
+        strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -194,14 +196,15 @@ export function Pill({
   tone = "ink",
 }: {
   children: ReactNode;
-  tone?: "ink" | "amber" | "mint" | "coral" | "sky";
+  tone?: "ink" | "amber" | "mint" | "coral" | "sky" | "gold";
 }) {
   const toneMap: Record<string, string> = {
     ink: "bg-[var(--color-surface-soft)] text-[var(--color-ink)]",
-    amber: "bg-[var(--color-accent-soft)] text-[var(--color-accent-ink)]",
+    amber: "bg-[var(--color-accent-soft)] text-[var(--color-accent)]",
     mint: "bg-[var(--color-mint-soft)] text-[var(--color-mint)]",
     coral: "bg-[var(--color-coral-soft)] text-[var(--color-coral)]",
     sky: "bg-[var(--color-sky-soft)] text-[var(--color-sky)]",
+    gold: "bg-[var(--color-gold-soft)] text-[var(--color-gold)]",
   };
   return (
     <span

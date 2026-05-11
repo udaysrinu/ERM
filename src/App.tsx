@@ -288,7 +288,7 @@ const LoginScreen = ({
             ERM Navigator
           </h1>
           <p className="mt-4 text-[14px] text-[var(--color-ink-soft)] leading-relaxed max-w-[360px]">
-            The maturity platform for enterprise risk programs. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
+            The risk maturity platform for Saudi Electricity Company. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
           </p>
         </motion.div>
 
@@ -1452,15 +1452,42 @@ export default function App() {
             />
           </motion.div>
         )}
-        {screen === "assessment" && metadata.questions.length > 0 && (
+        {screen === "assessment" && (
           <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-            <VectorCapturePipeline
-              bu={selectedBU}
-              questions={metadata.questions}
-              pillars={metadata.pillars}
-              onBack={() => setScreen("scope")}
-              onComplete={handleAssessmentComplete}
-            />
+            {metadata.questions.length > 0 ? (
+              <VectorCapturePipeline
+                bu={selectedBU}
+                questions={metadata.questions}
+                pillars={metadata.pillars}
+                onBack={() => setScreen("scope")}
+                onComplete={handleAssessmentComplete}
+              />
+            ) : (
+              <div className="min-h-screen flex items-center justify-center p-8">
+                <div className="card max-w-md w-full p-8 text-center">
+                  <AlertCircle size={32} className="mx-auto text-[var(--color-coral)] mb-4" />
+                  <h2 className="display-heading text-[24px] text-[var(--color-ink)]">
+                    Questions failed to load
+                  </h2>
+                  <p className="mt-3 text-[14px] text-[var(--color-ink-soft)]">
+                    The question catalog couldn't be fetched from the server. This usually means a cold-start delay on the serverless function.
+                  </p>
+                  <div className="mt-6 flex gap-3">
+                    <button
+                      onClick={() => {
+                        fetch("/api/metadata").then(r => r.json()).then(setMetadata).catch(console.error);
+                      }}
+                      className="btn-accent flex-1"
+                    >
+                      Retry
+                    </button>
+                    <button onClick={() => setScreen("scope")} className="btn-ghost flex-1">
+                      Back
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
         {screen === "navigator" && analysis && (
