@@ -1,181 +1,137 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { 
-  ShieldCheck, 
-  LayoutDashboard, 
-  ListChecks, 
-  AlertCircle, 
-  Activity, 
-  Target, 
-  ChevronRight, 
-  ChevronLeft, 
-  RotateCcw, 
-  FileText, 
-  ArrowUpRight, 
-  Shield, 
-  TrendingUp, 
-  CheckCircle2, 
-  Lock, 
-  Globe, 
-  MessageSquare, 
-  Send, 
-  Users, 
-  Building2, 
-  Network, 
-  Cpu, 
-  Boxes, 
-  BarChart3, 
-  LogOut,
-  Zap,
-  Check,
-  X,
-  PlusCircle,
-  Database,
-  Bot,
-  Minimize2,
-  Maximize2,
-  Settings,
+import {
   ArrowLeft,
-  Navigation,
+  ArrowRight,
+  ArrowUpRight,
+  Activity,
+  AlertTriangle,
+  Bot,
+  CheckCircle2,
+  ChevronRight,
+  Database,
+  Minimize2,
+  RotateCcw,
+  Send,
+  ShieldCheck,
+  Upload,
+  X,
+  Zap,
+  Network,
+  Building2,
+  Users,
   Layers,
-  History,
-  Map,
-  Filter,
-  List
+  Boxes,
+  Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ResponsiveContainer, 
-  Radar, 
-  RadarChart, 
-  PolarGrid, 
-  PolarAngleAxis, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  BarChart, 
-  Bar, 
+import {
+  ResponsiveContainer,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  BarChart,
+  Bar,
   Cell,
-  Legend,
   ReferenceLine,
-  PolarRadiusAxis
 } from "recharts";
+import {
+  Brand,
+  BrandMark,
+  Eyebrow,
+  HeaderBar,
+  Keycap,
+  Metric,
+  Panel,
+  SectionRule,
+  StatusLED,
+} from "./components/primitives";
 
-// ── CONSTANTS ───────────────────────────────────────────────────────
+// ─── CONSTANTS ─────────────────────────────────────────────────────────────
 
-const STYLES = {
-  mono: "font-mono tracking-tight",
-  heading: "font-mono font-bold uppercase tracking-[0.2em] text-[11px] text-sky-700",
-  card: "bg-white border border-sky-100 rounded-2xl p-6 relative group overflow-hidden shadow-[0_18px_50px_rgba(37,99,235,0.08)]",
-  gridLine: "absolute inset-0 border border-sky-50 pointer-events-none rounded-2xl",
+const BENCHMARK_LABEL: Record<string, string> = {
+  target: "TARGET",
+  industry: "INDUSTRY",
+  peer: "PEER",
+  external: "EXTERNAL",
 };
 
-const formatLabel = (value: string) => {
-  const normalized = value.trim().toLowerCase();
-  const labelMap: Record<string, string> = {
-    target: "Target",
-    industry: "Industry",
-    peer: "Peers",
-    peers: "Peers",
-    external: "External Reference",
-  };
-
-  if (labelMap[normalized]) {
-    return labelMap[normalized];
-  }
-
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+const getEntityIcon = (entityId: string) => {
+  if (entityId === "gen") return Zap;
+  if (entityId === "tra") return Network;
+  if (entityId === "dis") return Boxes;
+  if (entityId === "corp") return Building2;
+  if (entityId === "sub") return Layers;
+  if (entityId === "jv") return Users;
+  return Shield;
 };
 
-// ── COMPONENTS ──────────────────────────────────────────────────────
-
-const Card = ({ children, className = "", noPadding = false, ...props }: any) => (
-  <div className={`${STYLES.card} ${noPadding ? 'p-0' : 'p-6'} ${className}`} {...props}>
-    <div className={STYLES.gridLine} />
-    {children}
-  </div>
-);
-
-const Badge = ({ children, color = "blue" }: { children: React.ReactNode, color?: "blue" | "emerald" | "rose" | "orange" }) => {
-  const colors = {
-    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-    orange: "bg-orange-500/10 text-orange-400 border-orange-500/20",
-  };
-  return (
-    <span className={`px-2 py-0.5 rounded-sm border text-[9px] font-bold uppercase tracking-wider ${colors[color]}`}>
-      {children}
-    </span>
-  );
+// Chart theme — applied per-chart, avoids touching Recharts global config
+const CHART_COLORS = {
+  grid: "rgba(255, 255, 255, 0.06)",
+  axis: "#555F75",
+  axisLabel: "#8A94A8",
+  primary: "#00E5FF",
+  benchmark: "#FFAA00",
+  critical: "#FF4D4D",
+  nominal: "#4ADE80",
 };
 
-// ── RISKXAI ASSISTANT ─────────────────────────────────────────────
+const TOOLTIP_STYLE = {
+  backgroundColor: "#0A0E1A",
+  border: "1px solid rgba(255,255,255,0.12)",
+  borderRadius: 2,
+  padding: "8px 12px",
+  fontFamily: "JetBrains Mono, monospace",
+  fontSize: "11px",
+  color: "#E8ECF4",
+} as const;
 
-const getAssistantReply = (prompt: string, analysis: any) => {
-  const normalized = prompt.toLowerCase();
+// ─── ASSISTANT ─────────────────────────────────────────────────────────────
+
+const getAssistantReply = (prompt: string, analysis: any): string => {
+  const n = prompt.toLowerCase();
 
   if (!analysis) {
-    if (normalized.includes("weight") || normalized.includes("score")) {
-      return "RISK X AI uses a two-dimensional weighting model: dimension-weighted scoring inside each pillar, then a pillar-weighted rollup into the overall maturity score.";
-    }
-
-    if (normalized.includes("benchmark") || normalized.includes("peer") || normalized.includes("industry") || normalized.includes("external")) {
-      return "Benchmarking compares the selected business unit against target, industry, peers, or external reference baselines across all 10 pillars.";
-    }
-
-    if (normalized.includes("roadmap") || normalized.includes("action")) {
-      return "Roadmap actions are prioritized by expected uplift versus delivery cost and duration, then sequenced into Phase 1, Phase 2, and Phase 3.";
-    }
-
-    return "This RISK X AI demo captures questionnaire responses, computes weighted maturity scores, detects drift, compares benchmarks, and generates a phased improvement roadmap.";
+    if (n.includes("weight") || n.includes("score"))
+      return "Weighted scoring operates on a 10×4 pillar-by-dimension matrix. Each pillar rolls up via Σ(cell × weight) ÷ Σ(weight); overall score is Σ(pillar × pillar-weight).";
+    if (n.includes("benchmark") || n.includes("peer") || n.includes("industry"))
+      return "Four benchmark profiles are seeded: TARGET (4.0 floor), INDUSTRY utility average (~3.5), PEER operator average (~3.3), EXTERNAL reference (~4.1). Switch profile in the top-right of the command center.";
+    if (n.includes("roadmap") || n.includes("action"))
+      return "Roadmap sequencing ranks by expectedUplift ÷ (costScore × durationScore). Top 3 land in Phase 1, next 3 in Phase 2, residual in Phase 3.";
+    return "ERM Navigator captures 100 standards-aligned responses, computes a weighted maturity vector, detects drift against prior baselines, and sequences improvement actions by uplift-per-effort.";
   }
 
-  const weakestPillar = [...analysis.analytics].sort((a: any, b: any) => b.gap - a.gap)[0];
-  const topRoadmap = analysis.roadmap?.[0];
+  const weakest = [...analysis.analytics].sort((a: any, b: any) => b.gap - a.gap)[0];
+  const top = analysis.roadmap?.[0];
 
-  if (normalized.includes("weak") || normalized.includes("gap")) {
-    if (!weakestPillar) {
-      return "All pillars are currently aligned with the selected benchmark.";
-    }
-
-    return `${weakestPillar.pillarName} is the primary gap at ${weakestPillar.score.toFixed(2)}/5 versus a ${weakestPillar.target.toFixed(2)} ${formatLabel(analysis.benchmarkType)} benchmark. The gap is ${weakestPillar.gap.toFixed(2)} points.`;
-  }
-
-  if (normalized.includes("benchmark") || normalized.includes("target") || normalized.includes("peer") || normalized.includes("industry")) {
-    return `The current benchmark profile is ${formatLabel(analysis.benchmarkType)} with an average reference score of ${analysis.benchmarkAverage.toFixed(2)}. ${analysis.systemIntegrity}% of pillars are currently meeting or exceeding that baseline.`;
-  }
-
-  if (normalized.includes("drift") || normalized.includes("regression")) {
-    if (!analysis.regressions?.length) {
-      return "No negative drift is currently detected across the assessed pillars.";
-    }
-
-    return `${analysis.regressions.length} regression signal(s) are active. The most severe is ${analysis.regressions[0].pillarName} at ${analysis.regressions[0].delta.toFixed(3)}.`;
-  }
-
-  if (normalized.includes("roadmap") || normalized.includes("action") || normalized.includes("phase")) {
-    if (!topRoadmap) {
-      return "No roadmap actions are required because the selected business unit is already aligned with the benchmark profile.";
-    }
-
-    return `Top priority is ${topRoadmap.description} in ${topRoadmap.phase}, with an expected uplift of ${topRoadmap.expectedUplift.toFixed(1)} and a priority score of ${topRoadmap.priorityScore.toFixed(2)}.`;
-  }
-
-  if (normalized.includes("evidence") || normalized.includes("note")) {
-    return `${analysis.responseSummary.evidenceCount} responses include evidence and ${analysis.responseSummary.noteCount} include analyst notes. Last response timestamp: ${new Date(analysis.responseSummary.lastAnsweredAt).toLocaleString()}.`;
-  }
-
-  return `Overall maturity is ${analysis.overallScore.toFixed(2)} with mission status ${analysis.missionStatus.replaceAll("_", " ")}. Ask about gaps, benchmarks, drift, roadmap actions, or response coverage.`;
+  if (n.includes("weak") || n.includes("gap"))
+    return weakest
+      ? `${weakest.pillarName} is the primary gap. Current ${weakest.score.toFixed(2)} vs ${BENCHMARK_LABEL[analysis.benchmarkType]} ${weakest.target.toFixed(2)} — deficit ${weakest.gap.toFixed(2)}.`
+      : "All pillars are at or above the selected benchmark.";
+  if (n.includes("benchmark"))
+    return `Active profile: ${BENCHMARK_LABEL[analysis.benchmarkType]} (avg ${analysis.benchmarkAverage.toFixed(2)}). ${analysis.systemIntegrity}% of pillars meeting or exceeding baseline.`;
+  if (n.includes("drift") || n.includes("regression"))
+    return analysis.regressions?.length
+      ? `${analysis.regressions.length} regression signal(s) detected. Most severe: ${analysis.regressions[0].pillarName} at Δ${analysis.regressions[0].delta.toFixed(3)}.`
+      : "No negative drift detected across the assessed pillars.";
+  if (n.includes("roadmap") || n.includes("action"))
+    return top
+      ? `Priority action: ${top.description}. ${top.phase}. Priority score ${top.priorityScore.toFixed(2)}, expected uplift +${top.expectedUplift.toFixed(1)}.`
+      : "No roadmap actions required — selected BU aligned with benchmark.";
+  return `Overall maturity ${analysis.overallScore.toFixed(2)}. Mission status: ${analysis.missionStatus.replaceAll("_", " ")}. Ask about gaps, drift, benchmarks, or roadmap sequencing.`;
 };
 
 const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -188,50 +144,105 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
-
     window.setTimeout(() => {
-      setMessages(prev => [...prev, { role: 'assistant', content: getAssistantReply(userMsg, analysis) }]);
+      setMessages(prev => [...prev, { role: "assistant", content: getAssistantReply(userMsg, analysis) }]);
       setLoading(false);
-    }, 250);
+    }, 220);
   };
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-all z-[100] border border-blue-200">
-        <Bot size={24} />
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 w-11 h-11 bg-[var(--color-plasma-700)] border hairline-strong flex items-center justify-center text-[var(--color-signal-cyan)] hover:border-[var(--color-signal-cyan)] transition-colors z-[100] cursor-pointer"
+        aria-label="Open assistant"
+      >
+        <Bot size={18} />
       </button>
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="fixed bottom-24 right-6 w-[360px] h-[500px] bg-white border border-sky-100 shadow-2xl z-[101] flex flex-col font-mono text-[11px] overflow-hidden rounded-2xl">
-            <div className="p-4 bg-sky-50 border-b border-sky-100 flex items-center justify-between">
-              <div className="flex items-center gap-2"><Bot size={16} className="text-blue-600" /><span className="font-bold uppercase tracking-widest text-slate-900">RISK X AI Assistant</span></div>
-              <button onClick={() => setIsOpen(false)}><Minimize2 size={16} /></button>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.15, ease: "linear" }}
+            className="fixed bottom-20 right-6 w-[380px] h-[520px] panel z-[101] flex flex-col"
+          >
+            <div className="px-5 py-4 border-b hairline flex items-center justify-between bg-[var(--color-plasma-800)]">
+              <div className="flex items-center gap-3">
+                <StatusLED color="cyan" />
+                <span className="eyebrow-cyan">RNOS Assistant</span>
+              </div>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
+                aria-label="Close assistant"
+              >
+                <Minimize2 size={14} />
+              </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
               {messages.length === 0 && (
                 <div className="space-y-4">
-                  <div className="text-center py-8 opacity-40 uppercase tracking-[0.2em]">Ready for queries</div>
-                  <div className="p-3 bg-sky-50 border border-sky-100 text-slate-700 leading-relaxed rounded-xl">
-                    Ask about the scoring matrix, benchmark logic, drift detection, roadmap sequencing, or evidence coverage.
+                  <Eyebrow>Query Interface</Eyebrow>
+                  <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">
+                    Ask about scoring matrix, benchmark profile, drift signals, roadmap sequencing, or response coverage.
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {["weakest gap", "drift status", "top action"].map(p => (
+                      <button
+                        key={p}
+                        onClick={() => {
+                          setInput(p);
+                          setTimeout(handleSend, 0);
+                        }}
+                        className="px-3 py-1.5 border hairline text-[10px] font-mono uppercase tracking-widest text-[var(--color-text-secondary)] hover:border-[var(--color-signal-cyan)] hover:text-[var(--color-signal-cyan)] cursor-pointer transition-colors"
+                      >
+                        {p}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
               {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3 max-w-[85%] rounded-2xl ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-sky-50 border border-sky-100 text-slate-700'}`}>
+                <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div
+                    className={`px-3 py-2 max-w-[85%] text-xs leading-relaxed ${
+                      m.role === "user"
+                        ? "bg-[var(--color-signal-cyan)] text-[var(--color-plasma-900)] font-medium"
+                        : "border hairline text-[var(--color-text-primary)]"
+                    }`}
+                  >
                     {m.content}
                   </div>
                 </div>
               ))}
-              {loading && <div className="text-blue-600 animate-pulse uppercase tracking-widest">Processing...</div>}
+              {loading && (
+                <div className="flex items-center gap-2">
+                  <StatusLED color="cyan" />
+                  <span className="eyebrow-cyan">computing</span>
+                </div>
+              )}
               <div ref={chatEndRef} />
             </div>
-            <div className="p-4 border-t border-sky-100 bg-white flex gap-2">
-              <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} className="flex-1 bg-transparent outline-none text-slate-900 border-b border-sky-200 text-[11px] font-mono" placeholder="Ask about gaps, drift, or benchmarks..." />
-              <button onClick={handleSend} className="text-blue-600"><Send size={18} /></button>
+            <div className="p-4 border-t hairline flex gap-2">
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleSend()}
+                className="flex-1 bg-transparent outline-none text-[var(--color-text-primary)] border-b hairline focus:border-[var(--color-signal-cyan)] text-xs font-mono py-2 transition-colors"
+                placeholder="Query…"
+              />
+              <button
+                onClick={handleSend}
+                className="text-[var(--color-signal-cyan)] hover:opacity-80 cursor-pointer"
+                aria-label="Send"
+              >
+                <Send size={16} />
+              </button>
             </div>
           </motion.div>
         )}
@@ -240,9 +251,254 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
   );
 };
 
-// ── VECTOR CAPTURE PIPELINE ───────────────────────────────────────────
+// ─── LOGIN (Terminal boot) ─────────────────────────────────────────────────
 
-const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: any) => {
+const LoginScreen = ({
+  onLogin,
+  loading,
+  error,
+}: {
+  onLogin: (email: string, password: string) => void;
+  loading: boolean;
+  error: string | null;
+}) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  return (
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Ambient background scan */}
+      <div className="scan-sweep" />
+
+      <div className="relative w-full max-w-md px-6">
+        {/* Boot sequence header */}
+        <div className="mb-14 space-y-2 font-mono text-[10px] text-[var(--color-text-muted)] tracking-wider leading-loose">
+          <div className="boot-line" style={{ animationDelay: "0ms" }}>
+            <span className="text-[var(--color-signal-cyan)]">▸</span> RNOS boot sequence initiated
+          </div>
+          <div className="boot-line" style={{ animationDelay: "180ms" }}>
+            <span className="text-[var(--color-signal-mint)]">▸</span> scoring engine :: online
+          </div>
+          <div className="boot-line" style={{ animationDelay: "300ms" }}>
+            <span className="text-[var(--color-signal-mint)]">▸</span> benchmark profiles :: 4 loaded
+          </div>
+          <div className="boot-line" style={{ animationDelay: "420ms" }}>
+            <span className="text-[var(--color-signal-mint)]">▸</span> drift detector :: armed
+          </div>
+          <div className="boot-line" style={{ animationDelay: "540ms" }}>
+            <span className="text-[var(--color-signal-amber)]">▸</span> awaiting operator credentials
+            <span className="caret" />
+          </div>
+        </div>
+
+        {/* Brand lockup */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.3 }}
+          className="mb-12"
+        >
+          <div className="flex items-center gap-4 mb-6">
+            <BrandMark size={40} />
+            <div className="flex flex-col leading-none">
+              <span className="font-display text-3xl text-[var(--color-text-primary)] font-medium tracking-tight">
+                ERM Navigator
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.3em] text-[var(--color-text-muted)] mt-2">
+                RISK NAVIGATION OPERATING SYSTEM
+              </span>
+            </div>
+          </div>
+          <div className="h-px bg-[var(--color-hairline-strong)]" />
+        </motion.div>
+
+        {/* Credential prompt */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.3 }}
+          className="space-y-6"
+        >
+          <div>
+            <label className="eyebrow block mb-3">Operator Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && onLogin(email, password)}
+              placeholder="analyst@gmail.com"
+              className="w-full bg-transparent border-b hairline-strong focus:border-[var(--color-signal-cyan)] py-3 font-mono text-sm text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-disabled)]"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="eyebrow block mb-3">Credential</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && onLogin(email, password)}
+              placeholder="••••••••"
+              className="w-full bg-transparent border-b hairline-strong focus:border-[var(--color-signal-cyan)] py-3 font-mono text-sm text-[var(--color-text-primary)] outline-none transition-colors placeholder:text-[var(--color-text-disabled)]"
+            />
+          </div>
+
+          {error && (
+            <div className="border hairline stripe-coral py-3 px-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle size={14} className="text-[var(--color-signal-coral)]" />
+                <span className="font-mono text-[11px] text-[var(--color-signal-coral)]">{error}</span>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => onLogin(email, password)}
+            disabled={loading}
+            className="w-full py-4 border hairline-strong hover:border-[var(--color-signal-cyan)] hover:bg-[var(--color-plasma-700)] text-[var(--color-text-primary)] font-mono text-xs tracking-[0.3em] uppercase transition-colors flex items-center justify-between group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span>{loading ? "authorizing" : "authorize session"}</span>
+            <ArrowRight
+              size={14}
+              className="text-[var(--color-signal-cyan)] group-hover:translate-x-1 transition-transform"
+            />
+          </button>
+
+          <div className="pt-4 flex items-center justify-between text-[10px] font-mono text-[var(--color-text-muted)] tracking-widest">
+            <span>DEMO MODE · any @gmail address</span>
+            <div className="flex items-center gap-2">
+              <StatusLED color="mint" />
+              <span>SECURE</span>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// ─── BUSINESS UNIT SELECTION ───────────────────────────────────────────────
+
+const ScopeScreen = ({
+  entities,
+  onSelect,
+  operatorEmail,
+  onLogout,
+}: {
+  entities: any[];
+  onSelect: (bu: any) => void;
+  operatorEmail: string;
+  onLogout: () => void;
+}) => {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <HeaderBar
+        crumb={<Eyebrow tone="cyan">Select Business Unit</Eyebrow>}
+        right={
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end leading-tight">
+              <span className="font-mono text-xs text-[var(--color-text-primary)]">{operatorEmail}</span>
+              <span className="eyebrow mt-0.5">Operator</span>
+            </div>
+            <button
+              onClick={onLogout}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-signal-coral)] cursor-pointer transition-colors"
+              aria-label="Log out"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        }
+      />
+
+      <div className="flex-1 max-w-[1400px] w-full mx-auto px-8 py-16">
+        <div className="mb-12 flex items-end justify-between gap-8">
+          <div>
+            <Eyebrow>Acquisition · Scope</Eyebrow>
+            <h1 className="font-display text-5xl text-[var(--color-text-primary)] tracking-tight mt-4 max-w-2xl leading-[1.05]">
+              Select the operating unit to begin maturity acquisition.
+            </h1>
+            <p className="mt-6 text-sm text-[var(--color-text-secondary)] max-w-xl leading-relaxed">
+              Each unit captures an independent 100-vector assessment. Vectors roll up into a weighted
+              pillar-dimension matrix and are benchmarked against TARGET, INDUSTRY, PEER, and EXTERNAL profiles.
+            </p>
+          </div>
+          <div className="hidden lg:flex flex-col items-end gap-2 font-mono text-[10px] text-[var(--color-text-muted)]">
+            <div className="flex items-center gap-2">
+              <StatusLED color="mint" /> <span>6 UNITS ONLINE</span>
+            </div>
+            <div>100 VECTORS · 10 PILLARS · 4 DIMENSIONS</div>
+          </div>
+        </div>
+
+        <SectionRule label="Operating Units" />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+          {entities.map((bu, idx) => {
+            const Icon = getEntityIcon(bu.id);
+            return (
+              <motion.button
+                key={bu.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.04, duration: 0.25, ease: "easeOut" }}
+                onClick={() => onSelect(bu)}
+                className="group text-left panel hover-rise p-6 cursor-pointer"
+              >
+                <div className="flex items-start justify-between mb-8">
+                  <div className="w-10 h-10 border hairline-strong flex items-center justify-center text-[var(--color-signal-cyan)] group-hover:border-[var(--color-signal-cyan)] transition-colors">
+                    <Icon size={18} />
+                  </div>
+                  <StatusLED color="mint" />
+                </div>
+
+                <Eyebrow>Unit Code · {bu.id.toUpperCase()}</Eyebrow>
+                <h3 className="font-display text-2xl text-[var(--color-text-primary)] mt-2 tracking-tight">
+                  {bu.name}
+                </h3>
+                <p className="mt-1 text-xs text-[var(--color-text-muted)] font-mono tracking-wide">
+                  {bu.industry}
+                </p>
+
+                <div className="h-px bg-[var(--color-hairline)] my-6" />
+
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest uppercase">
+                    Begin acquisition
+                  </span>
+                  <ArrowUpRight
+                    size={16}
+                    className="text-[var(--color-text-muted)] group-hover:text-[var(--color-signal-cyan)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all"
+                  />
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </div>
+
+      <footer className="border-t hairline px-8 py-5">
+        <div className="max-w-[1400px] mx-auto flex items-center justify-between text-[10px] font-mono text-[var(--color-text-muted)] tracking-widest">
+          <span>RNOS · CORE · VERIFIED</span>
+          <div className="flex items-center gap-3">
+            <Keycap>↵</Keycap>
+            <span>SELECT</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+// ─── QUESTIONNAIRE (Vector Capture Pipeline) ───────────────────────────────
+
+const VectorCapturePipeline = ({
+  questions,
+  pillars,
+  bu,
+  onComplete,
+  onBack,
+}: any) => {
   const [currIdx, setCurrIdx] = useState(0);
   const [responses, setResponses] = useState<Record<number, number>>({});
   const [notes, setNotes] = useState<Record<number, string>>({});
@@ -250,654 +506,885 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
   const [answeredAt, setAnsweredAt] = useState<Record<number, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  
+
   const currentQ = questions[currIdx];
-  const currentPillar = pillars.find((p: any) => p.id === currentQ.pillarId);
+  const currentPillar = pillars.find((p: any) => p.id === currentQ?.pillarId);
   const progress = (Object.keys(responses).length / questions.length) * 100;
-  const isAnswered = responses[currentQ.id] !== undefined;
+  const isAnswered = responses[currentQ?.id] !== undefined;
   const allAnswered = Object.keys(responses).length === questions.length;
   const noteCount = Object.values(notes).filter(Boolean).length;
   const evidenceCount = Object.values(evidenceNames).filter(Boolean).length;
-  const lastAnsweredAt = Object.values(answeredAt).sort().at(-1) as string | undefined;
+
+  const pillarsProgress = useMemo(() => {
+    return pillars.map((p: any) => {
+      const pQs = questions.filter((q: any) => q.pillarId === p.id);
+      const answered = pQs.filter((q: any) => responses[q.id] !== undefined).length;
+      return { ...p, answered, total: pQs.length };
+    });
+  }, [pillars, questions, responses]);
 
   const handleAnswer = (score: number) => {
-    const timestamp = new Date().toISOString();
-    const newResponses = { ...responses, [currentQ.id]: score };
-    setResponses(newResponses);
-    setAnsweredAt((prev) => ({ ...prev, [currentQ.id]: timestamp }));
-    
+    const ts = new Date().toISOString();
+    const newR = { ...responses, [currentQ.id]: score };
+    setResponses(newR);
+    setAnsweredAt(prev => ({ ...prev, [currentQ.id]: ts }));
     if (currIdx < questions.length - 1) {
-      setTimeout(() => setCurrIdx(currIdx + 1), 200);
-    } else {
-      if (Object.keys(newResponses).length === questions.length) {
-        setShowSummary(true);
-      }
+      setTimeout(() => setCurrIdx(currIdx + 1), 180);
+    } else if (Object.keys(newR).length === questions.length) {
+      setShowSummary(true);
     }
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-        await onComplete({ responses, notes, evidenceNames, answeredAt });
-    } catch (e) {
-        alert("Assessment submission failed. Please verify all required responses.");
+      await onComplete({ responses, notes, evidenceNames, answeredAt });
+    } catch {
+      alert("Assessment submission failed. Please verify all required responses.");
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const pillarsProgress = useMemo(() => {
-    return pillars.map((p: any) => {
-      const pQuestions = questions.filter((q: any) => q.pillarId === p.id);
-      const answered = pQuestions.filter((q: any) => responses[q.id] !== undefined).length;
-      return { ...p, answered, total: pQuestions.length };
-    });
-  }, [pillars, questions, responses]);
-
+  // ─── Summary screen ───────────────────────────────────────────────────
   if (showSummary) {
     return (
-      <div className="max-w-4xl mx-auto p-12 min-h-screen">
-        <header className="mb-12">
-           <p className={STYLES.heading}>Assessment Summary</p>
-           <h1 className="text-4xl font-black text-slate-900 tracking-widest mt-4 uppercase">Assessment Completion Check</h1>
-        </header>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-           {pillarsProgress.map((p: any) => (
-             <Card key={p.id} className="flex justify-between items-center bg-sky-50 border-sky-100">
-                <div>
-                   <p className="text-[10px] font-mono uppercase text-slate-500 mb-1">{p.name}</p>
-                   <p className="text-slate-900 font-mono font-bold">{p.answered} / {p.total} Questions</p>
-                </div>
-                {p.answered === p.total ? <CheckCircle2 className="text-blue-600" size={20} /> : <AlertCircle className="text-rose-500" size={20} />}
-             </Card>
-           ))}
-        </div>
+      <div className="min-h-screen">
+        <HeaderBar
+          crumb={
+            <div className="flex items-center gap-3">
+              <Eyebrow>Unit</Eyebrow>
+              <span className="font-mono text-xs text-[var(--color-text-primary)]">{bu.name}</span>
+              <ChevronRight size={12} className="text-[var(--color-text-muted)]" />
+              <Eyebrow tone="cyan">Finalization</Eyebrow>
+            </div>
+          }
+        />
+        <div className="max-w-5xl mx-auto px-8 py-16">
+          <Eyebrow>Acquisition Summary</Eyebrow>
+          <h1 className="font-display text-5xl text-[var(--color-text-primary)] mt-4 tracking-tight">
+            Vectors captured. Ready to compute.
+          </h1>
+          <p className="mt-4 text-sm text-[var(--color-text-secondary)] max-w-xl">
+            Review per-pillar coverage below. Submission triggers the weighted scoring engine,
+            drift detector, and roadmap generator in sequence.
+          </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-          <Card className="bg-sky-50 border-sky-100">
-            <p className={STYLES.heading}>Analyst Notes</p>
-            <p className="mt-3 text-3xl font-black text-slate-900 font-mono">{noteCount}</p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Responses with supporting commentary</p>
-          </Card>
-          <Card className="bg-sky-50 border-sky-100">
-            <p className={STYLES.heading}>Evidence References</p>
-            <p className="mt-3 text-3xl font-black text-slate-900 font-mono">{evidenceCount}</p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Uploaded proof references captured</p>
-          </Card>
-          <Card className="bg-sky-50 border-sky-100">
-            <p className={STYLES.heading}>Last Timestamp</p>
-            <p className="mt-3 text-sm font-bold text-slate-900">{lastAnsweredAt ? new Date(lastAnsweredAt).toLocaleString() : "Pending"}</p>
-            <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Autogenerated on each score selection</p>
-          </Card>
-        </div>
+          <SectionRule label="Per-Pillar Coverage" />
 
-        <div className="flex gap-4">
-           <button onClick={() => setShowSummary(false)} className="flex-1 py-4 border border-sky-200 text-slate-900 font-mono uppercase text-[12px] hover:bg-sky-50 tracking-widest rounded-2xl">Back to Questionnaire</button>
-           <button 
-             onClick={handleSubmit} 
-             disabled={!allAnswered || isSubmitting} 
-             className="flex-1 py-4 bg-blue-600 text-white font-mono font-black uppercase text-[12px] tracking-widest hover:bg-blue-500 disabled:opacity-30 disabled:cursor-not-allowed rounded-2xl"
-           >
-             {isSubmitting ? "Calculating Scores..." : "Finalize Assessment"}
-           </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-12">
+            {pillarsProgress.map((p: any) => {
+              const complete = p.answered === p.total;
+              return (
+                <Panel
+                  key={p.id}
+                  severity={complete ? "cyan" : "coral"}
+                  className="p-5 flex items-center justify-between"
+                >
+                  <div>
+                    <Eyebrow>{p.name}</Eyebrow>
+                    <p className="mt-2 font-mono text-sm text-[var(--color-text-primary)]">
+                      {p.answered} / {p.total}
+                      <span className="text-[var(--color-text-muted)]"> vectors</span>
+                    </p>
+                  </div>
+                  {complete ? (
+                    <CheckCircle2 size={18} className="text-[var(--color-signal-cyan)]" />
+                  ) : (
+                    <AlertTriangle size={18} className="text-[var(--color-signal-coral)]" />
+                  )}
+                </Panel>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-12">
+            <Panel className="p-5">
+              <Metric label="Analyst Notes" value={noteCount} unit="entries" size="md" />
+            </Panel>
+            <Panel className="p-5">
+              <Metric label="Evidence Linked" value={evidenceCount} unit="files" size="md" />
+            </Panel>
+            <Panel className="p-5">
+              <Metric label="Vector Count" value={Object.keys(responses).length} unit="/ 100" size="md" />
+            </Panel>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowSummary(false)}
+              className="flex-1 py-4 border hairline-strong hover:border-[var(--color-signal-cyan)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] font-mono text-xs tracking-[0.3em] uppercase transition-colors cursor-pointer"
+            >
+              ← Revise responses
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!allAnswered || isSubmitting}
+              className="flex-1 py-4 bg-[var(--color-signal-cyan)] text-[var(--color-plasma-900)] font-mono text-xs tracking-[0.3em] uppercase font-semibold hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-3"
+            >
+              {isSubmitting ? "computing maturity vector…" : "compute & finalize"}
+              {!isSubmitting && <ArrowRight size={14} />}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // ─── Capture screen ───────────────────────────────────────────────────
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar Navigation */}
-      <aside className="w-80 bg-white/80 border-r border-sky-100 p-6 flex flex-col overflow-hidden backdrop-blur-sm">
-        <div className="mb-8">
-           <p className={STYLES.heading}>Pillar Overview</p>
-           <div className="mt-4 h-1 bg-sky-100 rounded-full overflow-hidden">
-              <motion.div animate={{ width: `${progress}%` }} className="h-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.35)]" />
-           </div>
-           <p className="text-[9px] font-mono text-slate-500 mt-2 uppercase tracking-widest">{progress.toFixed(0)}% Assessment Completion</p>
+      {/* Sidebar — Acquisition panel */}
+      <aside className="w-80 border-r hairline bg-[var(--color-plasma-900)] flex flex-col">
+        <div className="p-6 border-b hairline">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-[var(--color-text-muted)] hover:text-[var(--color-signal-coral)] font-mono text-[10px] uppercase tracking-widest transition-colors mb-6 cursor-pointer"
+          >
+            <RotateCcw size={12} /> Abort
+          </button>
+          <Eyebrow>Acquiring</Eyebrow>
+          <p className="font-display text-lg text-[var(--color-text-primary)] mt-2 tracking-tight">{bu.name}</p>
+
+          <div className="mt-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="eyebrow">Progress</span>
+              <span className="font-mono text-[11px] text-[var(--color-signal-cyan)]">{progress.toFixed(0)}%</span>
+            </div>
+            <div className="h-[2px] bg-[var(--color-hairline-strong)] relative">
+              <motion.div
+                className="absolute left-0 top-0 h-full bg-[var(--color-signal-cyan)]"
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.25, ease: "linear" }}
+                style={{ boxShadow: "0 0 8px var(--color-signal-cyan)" }}
+              />
+            </div>
+            <div className="mt-2 flex justify-between font-mono text-[10px] text-[var(--color-text-muted)]">
+              <span>{Object.keys(responses).length}/100</span>
+              <span>
+                Q{currIdx + 1}/{questions.length}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-1 pr-2 custom-scrollbar">
-           {pillarsProgress.map((p: any) => (
-             <button 
-               key={p.id} 
-               onClick={() => {
-                 const firstQIdx = questions.findIndex((q: any) => q.pillarId === p.id);
-                 setCurrIdx(firstQIdx);
-               }}
-               className={`w-full p-3 text-left border rounded-2xl ${currentPillar.id === p.id ? 'bg-blue-50 border-blue-200' : 'bg-transparent border-transparent hover:bg-sky-50'} transition-all group`}
-             >
-               <div className="flex justify-between items-center mb-1">
-                 <span className={`text-[9px] font-mono font-bold uppercase tracking-widest ${currentPillar.id === p.id ? 'text-blue-700' : 'text-slate-500'}`}>
-                   {p.name}
-                 </span>
-                 <span className="text-[8px] font-mono text-slate-600">{p.answered}/{p.total}</span>
-               </div>
-               <div className="h-0.5 w-full bg-sky-100">
-                  <div className="h-full bg-blue-500/60" style={{ width: `${(p.answered / p.total) * 100}%` }} />
-               </div>
-             </button>
-           ))}
+        <div className="flex-1 overflow-y-auto p-3 custom-scrollbar">
+          <Eyebrow className="px-3 block mb-3">Pillars</Eyebrow>
+          <div className="space-y-0.5">
+            {pillarsProgress.map((p: any) => {
+              const isCurrent = currentPillar?.id === p.id;
+              const pct = (p.answered / p.total) * 100;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    const i = questions.findIndex((q: any) => q.pillarId === p.id);
+                    if (i !== -1) setCurrIdx(i);
+                  }}
+                  className={`w-full px-3 py-3 text-left transition-colors group cursor-pointer ${
+                    isCurrent
+                      ? "bg-[var(--color-plasma-700)] border-l-2 border-[var(--color-signal-cyan)]"
+                      : "border-l-2 border-transparent hover:bg-[var(--color-plasma-800)]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`font-mono text-[11px] ${
+                        isCurrent ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-secondary)]"
+                      } tracking-wide truncate`}
+                    >
+                      {p.name}
+                    </span>
+                    <span className="font-mono text-[10px] text-[var(--color-text-muted)] tabular flex-shrink-0">
+                      {p.answered}/{p.total}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-[1px] bg-[var(--color-hairline)] relative">
+                    <div
+                      className={`absolute inset-y-0 left-0 ${
+                        pct === 100
+                          ? "bg-[var(--color-signal-mint)]"
+                          : isCurrent
+                            ? "bg-[var(--color-signal-cyan)]"
+                            : "bg-[var(--color-text-muted)]"
+                      }`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <button onClick={onBack} className="mt-8 flex items-center gap-2 text-slate-500 hover:text-blue-700 font-mono uppercase text-[10px] tracking-widest border-t border-sky-100 pt-8">
-          <RotateCcw size={14} /> Reset Pipeline
-        </button>
+        <div className="p-4 border-t hairline flex items-center justify-between font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest">
+          <span>
+            <Keycap>1</Keycap>–<Keycap>5</Keycap> score
+          </span>
+          <span>
+            <Keycap>←</Keycap>
+            <Keycap>→</Keycap> nav
+          </span>
+        </div>
       </aside>
 
-      {/* Main Questionnaire Stage */}
-      <main className="flex-1 p-16 flex flex-col items-center justify-center relative bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12)_0%,rgba(239,246,255,0.95)_72%)]">
-        <div className="max-w-2xl w-full">
-           <div className="mb-12">
-              <div className="flex gap-3 mb-6">
-                 <Badge color="blue">{currentPillar.name}</Badge>
-                 <Badge color="orange">{currentQ.dimensionId}</Badge>
-              </div>
-              <h2 className="text-4xl font-black text-slate-900 leading-[1.1] tracking-tight">{currentQ.text}</h2>
-              <p className="mt-6 text-slate-500 font-mono text-[10px] uppercase tracking-[0.3em]">Question {currIdx + 1} of {questions.length}</p>
-           </div>
+      {/* Main — measurement stage */}
+      <main className="flex-1 overflow-y-auto relative">
+        {/* subtle ambient scan overlay */}
+        <div className="scan-sweep opacity-30 pointer-events-none" />
 
-           <div className="grid grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map(score => (
-                <button 
-                  key={score} 
-                  onClick={() => handleAnswer(score)} 
-                  className={`aspect-square flex flex-col items-center justify-center border rounded-2xl transition-all ${responses[currentQ.id] === score ? 'bg-blue-600 border-blue-500 shadow-[0_0_24px_rgba(37,99,235,0.25)]' : 'bg-white border-sky-100 hover:border-blue-400'}`}
-                >
-                   <span className={`text-2xl font-black ${responses[currentQ.id] === score ? 'text-white' : 'text-slate-900'}`}>{score}</span>
-                   <span className={`text-[7px] uppercase font-mono tracking-widest mt-1 ${responses[currentQ.id] === score ? 'text-blue-100' : 'text-slate-400'}`}>Lvl</span>
-                </button>
-              ))}
-           </div>
+        <div className="max-w-3xl mx-auto px-12 py-16 relative">
+          <div className="flex items-center gap-3 mb-6">
+            <Eyebrow tone="cyan">{currentPillar?.name}</Eyebrow>
+            <span className="text-[var(--color-text-muted)]">·</span>
+            <Eyebrow>{currentQ.dimensionId}</Eyebrow>
+            <span className="text-[var(--color-text-muted)]">·</span>
+            <Eyebrow>
+              Vector {currIdx + 1}/{questions.length}
+            </Eyebrow>
+          </div>
 
-           <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <p className={STYLES.heading}>Analyst Note</p>
-                <textarea
-                  value={notes[currentQ.id] || ""}
-                  onChange={(e) => setNotes((prev) => ({ ...prev, [currentQ.id]: e.target.value }))}
-                  className="w-full min-h-32 bg-white border border-sky-100 p-4 text-slate-900 text-sm outline-none focus:border-blue-500 resize-none rounded-2xl"
-                  placeholder="Capture context, assumptions, or control observations for this question..."
-                />
+          <motion.h2
+            key={currentQ.id}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="font-display text-4xl text-[var(--color-text-primary)] leading-[1.15] tracking-tight"
+          >
+            {currentQ.text}
+          </motion.h2>
+
+          <div className="mt-12">
+            <Eyebrow>Maturity Level · 1 — Ad-hoc / 5 — Optimized</Eyebrow>
+            <div className="grid grid-cols-5 gap-2 mt-4">
+              {[1, 2, 3, 4, 5].map(score => {
+                const selected = responses[currentQ.id] === score;
+                const labels = ["Ad-hoc", "Partial", "Defined", "Managed", "Optimized"];
+                return (
+                  <button
+                    key={score}
+                    onClick={() => handleAnswer(score)}
+                    className={`aspect-[4/3] flex flex-col items-center justify-center border transition-all cursor-pointer group ${
+                      selected
+                        ? "bg-[var(--color-signal-cyan)] border-[var(--color-signal-cyan)] text-[var(--color-plasma-900)]"
+                        : "hairline hover:border-[var(--color-signal-cyan)] hover:bg-[var(--color-plasma-700)]"
+                    }`}
+                  >
+                    <span className={`display-num text-3xl ${selected ? "" : "text-[var(--color-text-primary)]"}`}>
+                      {score}
+                    </span>
+                    <span
+                      className={`font-mono text-[9px] uppercase tracking-widest mt-1 ${
+                        selected ? "text-[var(--color-plasma-900)]" : "text-[var(--color-text-muted)]"
+                      }`}
+                    >
+                      {labels[score - 1]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <Eyebrow>Analyst Note</Eyebrow>
+              <textarea
+                value={notes[currentQ.id] || ""}
+                onChange={e => setNotes(prev => ({ ...prev, [currentQ.id]: e.target.value }))}
+                placeholder="Context, assumptions, control observations…"
+                className="w-full mt-3 min-h-32 bg-transparent border hairline focus:border-[var(--color-signal-cyan)] p-3 text-sm text-[var(--color-text-primary)] font-sans outline-none resize-none placeholder:text-[var(--color-text-disabled)] transition-colors"
+              />
+            </div>
+            <div className="space-y-4">
+              <div>
+                <Eyebrow>Evidence Reference</Eyebrow>
+                <label className="mt-3 flex items-center justify-between gap-3 border hairline hover:border-[var(--color-signal-cyan)] px-4 py-3 cursor-pointer transition-colors group">
+                  <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] truncate">
+                    {evidenceNames[currentQ.id] || "Attach supporting file"}
+                  </span>
+                  <Upload size={14} className="text-[var(--color-signal-cyan)] flex-shrink-0" />
+                  <input
+                    type="file"
+                    className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0];
+                      setEvidenceNames(prev => ({ ...prev, [currentQ.id]: f?.name || "" }));
+                    }}
+                  />
+                </label>
               </div>
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <p className={STYLES.heading}>Evidence Reference</p>
-                  <label className="flex items-center justify-between gap-4 border border-dashed border-sky-200 bg-white px-4 py-4 cursor-pointer hover:border-blue-500/50 transition-colors rounded-2xl">
-                    <span className="text-sm text-slate-900">{evidenceNames[currentQ.id] || "Attach supporting file reference"}</span>
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-blue-600">Select File</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        setEvidenceNames((prev) => ({ ...prev, [currentQ.id]: file?.name || "" }));
-                      }}
-                    />
-                  </label>
-                </div>
-                <div className="border border-sky-100 bg-sky-50 p-4 rounded-2xl">
-                  <p className={STYLES.heading}>Response Details</p>
-                  <div className="mt-4 space-y-2 text-[11px] text-slate-700">
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500 uppercase tracking-widest text-[9px] font-mono">Score</span>
-                      <span>{isAnswered ? `${responses[currentQ.id]}/5` : "Pending"}</span>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500 uppercase tracking-widest text-[9px] font-mono">Timestamp</span>
-                      <span>{answeredAt[currentQ.id] ? new Date(answeredAt[currentQ.id]).toLocaleString() : "Autogenerated on answer"}</span>
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <span className="text-slate-500 uppercase tracking-widest text-[9px] font-mono">Evidence</span>
-                      <span>{evidenceNames[currentQ.id] || "None attached"}</span>
-                    </div>
+              <div className="border hairline p-4 space-y-2">
+                <Eyebrow>Vector Metadata</Eyebrow>
+                {[
+                  ["Score", isAnswered ? `${responses[currentQ.id]} / 5` : "—"],
+                  ["Stamped", answeredAt[currentQ.id] ? new Date(answeredAt[currentQ.id]).toLocaleTimeString() : "pending"],
+                  ["Evidence", evidenceNames[currentQ.id] ? "linked" : "none"],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex justify-between font-mono text-[11px]">
+                    <span className="text-[var(--color-text-muted)]">{k}</span>
+                    <span className="text-[var(--color-text-primary)]">{v}</span>
                   </div>
-                </div>
+                ))}
               </div>
-           </div>
+            </div>
+          </div>
 
-           <div className="mt-16 flex items-center justify-between">
-              <button 
-                onClick={() => setCurrIdx(Math.max(0, currIdx - 1))} 
-                disabled={currIdx === 0} 
-                className="p-4 border border-sky-200 text-slate-500 hover:text-blue-700 disabled:opacity-0 transition-all rounded-2xl"
+          <div className="mt-12 flex items-center justify-between">
+            <button
+              onClick={() => setCurrIdx(Math.max(0, currIdx - 1))}
+              disabled={currIdx === 0}
+              className="p-3 border hairline text-[var(--color-text-secondary)] hover:border-[var(--color-signal-cyan)] hover:text-[var(--color-signal-cyan)] disabled:opacity-0 transition-colors cursor-pointer"
+              aria-label="Previous"
+            >
+              <ArrowLeft size={16} />
+            </button>
+
+            {allAnswered && (
+              <button
+                onClick={() => setShowSummary(true)}
+                className="px-8 py-3 bg-[var(--color-signal-cyan)] text-[var(--color-plasma-900)] font-mono text-xs tracking-[0.3em] uppercase font-semibold hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-3"
               >
-                <ChevronLeft size={20} />
+                Review vectors <ArrowRight size={14} />
               </button>
+            )}
 
-              {allAnswered && (
-                <button 
-                  onClick={() => setShowSummary(true)} 
-                  className="px-10 py-4 bg-blue-600 text-white font-mono font-black uppercase text-[12px] tracking-widest hover:bg-blue-500 transition-all shadow-xl rounded-2xl"
-                >
-                   Review Responses
-                </button>
-              )}
-
-              <button 
-                onClick={() => setCurrIdx(Math.min(questions.length - 1, currIdx + 1))} 
-                disabled={!isAnswered || currIdx === questions.length - 1} 
-                className="p-4 border border-sky-200 text-slate-900 hover:border-blue-400 disabled:opacity-20 transition-all rounded-2xl"
-              >
-                <ChevronRight size={20} />
-              </button>
-           </div>
+            <button
+              onClick={() => setCurrIdx(Math.min(questions.length - 1, currIdx + 1))}
+              disabled={!isAnswered || currIdx === questions.length - 1}
+              className="p-3 border hairline text-[var(--color-text-secondary)] hover:border-[var(--color-signal-cyan)] hover:text-[var(--color-signal-cyan)] disabled:opacity-20 transition-colors cursor-pointer"
+              aria-label="Next"
+            >
+              <ArrowRight size={16} />
+            </button>
+          </div>
         </div>
       </main>
     </div>
   );
 };
 
-// ── RNOS COMMAND CENTER ───────────────────────────────────────────
+// ─── RNOS COMMAND CENTER ───────────────────────────────────────────────────
 
-const RNOSCommandCenter = ({ analysis, bu, allBUs, benchmarkTypes, benchmarkType, onBenchmarkTypeChange, onEntityChange, onBack }: any) => {
-  const { 
-    analytics, 
-    dimensions, 
-    driftProfile, 
-    regressions, 
-    roadmap, 
-    overallScore, 
-    systemIntegrity, 
+const RNOSCommandCenter = ({
+  analysis,
+  bu,
+  allBUs,
+  benchmarkTypes,
+  benchmarkType,
+  onBenchmarkTypeChange,
+  onEntityChange,
+  onBack,
+}: any) => {
+  const {
+    analytics,
+    dimensions,
+    driftProfile,
+    regressions,
+    roadmap,
+    overallScore,
+    systemIntegrity,
     entityName,
     criticalRegressionsCount,
     activeRoadmapCount,
-    targetBaseline,
     benchmarkAverage,
     averageGap,
     responseSummary,
     missionStatus,
-    isSynced
   } = analysis;
-  
-  const radarData = useMemo(() => analytics.map((a: any) => ({
-    pillar: a.pillarName,
-    score: a.score,
-    target: a.target,
-    fullMark: 5
-  })), [analytics]);
 
-  const benchmarkComparisonData = useMemo(() => analytics.map((item: any) => ({
-    pillar: item.pillarName,
-    score: item.score,
-    benchmark: item.target,
-    gap: item.gap,
-  })), [analytics]);
+  const radarData = useMemo(
+    () => analytics.map((a: any) => ({ pillar: a.pillarName, score: a.score, target: a.target, fullMark: 5 })),
+    [analytics],
+  );
+  const barData = useMemo(
+    () =>
+      analytics.map((a: any) => ({
+        pillar: a.pillarName.split(/[\s&]+/)[0],
+        score: a.score,
+        benchmark: a.target,
+      })),
+    [analytics],
+  );
+  const alignedCount = analytics.filter((a: any) => a.score >= a.target).length;
 
-  const alignedPillarCount = analytics.filter((item: any) => item.score >= item.target).length;
-
-  const StatusDisplay = ({ status }: { status: string }) => {
-    const colors: any = {
-      NOMINAL_SYNC: "text-blue-700 border-blue-200 bg-blue-50",
-      CRITICAL_GAP: "text-rose-500 border-rose-200 bg-rose-50",
-      VECTOR_DRIFT: "text-amber-600 border-amber-200 bg-amber-50",
-      STRUCTURAL_WEAKNESS: "text-rose-600 border-rose-200 bg-rose-50"
-    };
-    return (
-      <div className={`px-4 py-2 border rounded-2xl font-mono text-[10px] font-black tracking-[0.3em] flex items-center gap-3 ${colors[status] || "text-slate-500 border-sky-100"}`}>
-        <Activity size={14} className={status !== 'NOMINAL_SYNC' ? 'animate-pulse' : ''} />
-        {status.replaceAll('_', ' ')}
-      </div>
-    );
+  const statusMeta: Record<string, { color: "mint" | "amber" | "coral" | "cyan"; severity: "nominal" | "cyan" | "amber" | "coral"; label: string }> = {
+    NOMINAL_SYNC: { color: "mint", severity: "cyan", label: "Nominal sync" },
+    VECTOR_DRIFT: { color: "amber", severity: "amber", label: "Vector drift" },
+    CRITICAL_GAP: { color: "coral", severity: "coral", label: "Critical gap" },
+    STRUCTURAL_WEAKNESS: { color: "coral", severity: "coral", label: "Structural weakness" },
   };
+  const status = statusMeta[missionStatus] || statusMeta.NOMINAL_SYNC;
 
   return (
-    <div className="p-8 space-y-6 max-w-[1600px] mx-auto pb-24">
-      {/* ── TOP TIER: SYSTEM HUD ─────────────────────────────────── */}
-      <header className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-white border border-sky-100 p-8 relative overflow-hidden rounded-[28px] shadow-[0_24px_50px_rgba(37,99,235,0.08)]">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-            <Activity size={120} className="text-blue-600" />
-        </div>
-        
-        <div className="flex gap-8 items-center relative z-10 w-full xl:w-auto">
-            <button onClick={onBack} className="w-12 h-12 flex items-center justify-center border border-sky-100 hover:bg-sky-50 transition-all text-slate-500 hover:text-blue-700 rounded-2xl"><ArrowLeft size={18} /></button>
-            <div className="space-y-3 flex-1">
-                <div className="flex items-center gap-4">
-                    <p className="text-blue-600 font-mono text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2">
-                        <Navigation size={12} className="animate-pulse" /> RNOS Command Center
-                    </p>
-                    <StatusDisplay status={missionStatus} />
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <select 
-                            value={bu.id} 
-                            onChange={(e) => onEntityChange(allBUs.find((b: any) => b.id === e.target.value))}
-                            className="bg-transparent border-b-2 border-sky-100 text-slate-900 font-mono font-black py-1 pr-10 outline-none appearance-none hover:border-blue-500 transition-all cursor-pointer text-3xl uppercase tracking-tighter"
-                        >
-                            {allBUs.map((b: any) => (
-                                <option key={b.id} value={b.id} className="bg-white">{b.name}</option>
-                            ))}
-                        </select>
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-blue-600">
-                             <ChevronRight size={20} className="rotate-90" />
-                        </div>
-                    </div>
-                    <div className="h-10 w-px bg-sky-100" />
-                    <div>
-                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">Selected Business Unit</p>
-                        <p className="text-slate-900 font-mono font-bold text-[12px]">{entityName} // {isSynced ? 'Verified' : 'Action Required'}</p>
-                    </div>
-                    <div className="h-10 w-px bg-sky-100 hidden xl:block" />
-                    <div className="min-w-[180px] hidden xl:block">
-                        <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mb-2">Benchmark Profile</p>
-                        <select
-                          value={benchmarkType}
-                          onChange={(e) => onBenchmarkTypeChange(e.target.value)}
-                          className="w-full bg-sky-50 border border-sky-100 px-3 py-2 text-slate-900 text-[11px] font-mono uppercase tracking-widest outline-none hover:border-blue-500 transition-colors rounded-2xl"
-                        >
-                          {benchmarkTypes.map((type: string) => (
-                            <option key={type} value={type} className="bg-white">
-                              {formatLabel(type)}
-                            </option>
-                          ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div className="flex flex-wrap gap-8 xl:gap-12 relative z-10">
-            <div className="text-right">
-                <p className={STYLES.heading}>Benchmark Alignment</p>
-                <div className="text-3xl font-black text-blue-600 font-mono tracking-tighter">{systemIntegrity}%</div>
-            </div>
-            <div className="text-right">
-                <p className={STYLES.heading}>Maturity Score</p>
-                <p className="text-5xl font-black text-slate-900 font-mono leading-none tracking-tighter">{overallScore.toFixed(2)}</p>
-            </div>
-            <div className="text-right">
-                <p className={STYLES.heading}>Benchmark Summary</p>
-                <p className="text-2xl font-black text-blue-600 font-mono leading-none tracking-tighter">{alignedPillarCount}/10</p>
-                <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">At or above {formatLabel(benchmarkType)}</p>
-            </div>
-        </div>
-      </header>
-
-      <div className="xl:hidden">
-        <Card className="bg-sky-50 border-sky-100">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className={STYLES.heading}>Benchmark Profile</p>
-              <p className="mt-2 text-[10px] font-mono uppercase tracking-widest text-slate-500">Switch comparison context</p>
-            </div>
+    <div className="min-h-screen">
+      <HeaderBar
+        crumb={
+          <div className="flex items-center gap-3">
+            <Eyebrow>Unit</Eyebrow>
             <select
-              value={benchmarkType}
-              onChange={(e) => onBenchmarkTypeChange(e.target.value)}
-              className="bg-white border border-sky-100 px-3 py-2 text-slate-900 text-[11px] font-mono uppercase tracking-widest outline-none hover:border-blue-500 transition-colors rounded-2xl"
+              value={bu.id}
+              onChange={e => onEntityChange(allBUs.find((b: any) => b.id === e.target.value))}
+              className="bg-transparent font-mono text-xs text-[var(--color-text-primary)] outline-none border-b hairline hover:border-[var(--color-signal-cyan)] cursor-pointer py-1 pr-4 appearance-none transition-colors"
+              style={{ backgroundImage: "none" }}
             >
-              {benchmarkTypes.map((type: string) => (
-                <option key={type} value={type} className="bg-white">
-                  {formatLabel(type)}
+              {allBUs.map((b: any) => (
+                <option key={b.id} value={b.id} className="bg-[var(--color-plasma-800)]">
+                  {b.name}
                 </option>
               ))}
             </select>
+            <ChevronRight size={12} className="text-[var(--color-text-muted)]" />
+            <Eyebrow tone="cyan">RNOS Command Center</Eyebrow>
           </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-        {analytics.map((item: any) => (
-          <Card key={item.pillarId} className="bg-sky-50 border-sky-100">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-[9px] font-mono uppercase tracking-[0.2em] text-slate-500">{item.pillarName}</p>
-              <Badge color={item.score >= item.target ? "emerald" : "rose"}>{item.score >= item.target ? "Above" : "Below"}</Badge>
-            </div>
-            <p className="mt-4 text-lg font-black text-slate-900">{item.score.toFixed(2)}</p>
-            <div className="mt-3 flex items-center justify-between text-[10px] font-mono">
-              <span className="text-slate-500 uppercase tracking-widest">{formatLabel(benchmarkType)}</span>
-              <span className="text-slate-900">{item.target.toFixed(2)}</span>
-            </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] font-mono">
-              <span className="text-slate-500 uppercase tracking-widest">Gap</span>
-              <span className={item.gap > 0 ? "text-rose-400" : "text-emerald-400"}>
-                {item.gap > 0 ? `-${item.gap.toFixed(2)}` : "Aligned"}
+        }
+        right={
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 px-4 py-2 border hairline">
+              <StatusLED color={status.color} />
+              <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-[var(--color-text-primary)]">
+                {status.label}
               </span>
             </div>
-          </Card>
-        ))}
-      </div>
+            <button
+              onClick={onBack}
+              className="text-[var(--color-text-muted)] hover:text-[var(--color-signal-coral)] cursor-pointer transition-colors"
+              aria-label="Back"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        }
+      />
 
-      {/* ── MIDDLE TIER: UNIFIED OPERATIONS SURFACE ──────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Core Vector Visualizations */}
-        <div className="lg:col-span-8 flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-                <Card className="flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <p className={STYLES.heading}>Pillar Comparison</p>
-                            <h4 className="text-[10px] font-mono text-slate-500 mt-1">Current maturity score against benchmark by pillar</h4>
-                        </div>
-                        <Badge color="blue">Weighted Scoring Engine</Badge>
-                    </div>
-                    <div className="flex-1 min-h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                <PolarGrid stroke="rgba(148,163,184,0.25)" />
-                                <PolarAngleAxis dataKey="pillar" stroke="#64748b" fontSize={9} />
-                                <Radar name="Current" dataKey="score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.4} />
-                                <Radar name={formatLabel(benchmarkType)} dataKey="target" stroke="#ec4899" fill="transparent" strokeDasharray="4 4" />
-                                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(125,211,252,0.7)', fontSize: '10px' }} />
-                                <Legend verticalAlign="bottom" height={36} content={({ payload }) => (
-                                    <div className="flex justify-center gap-6 mt-4">
-                                        {payload?.map((entry: any, index: number) => (
-                                            <div key={index} className="flex items-center gap-2">
-                                                <div className="w-2 h-2" style={{ backgroundColor: entry.color }} />
-                                                <span className="text-[8px] font-mono uppercase text-slate-500 tracking-widest">{entry.value}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )} />
-                            </RadarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Card>
-
-                <Card className="flex flex-col">
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <p className={STYLES.heading}>Operating Dimension Scores</p>
-                            <h4 className="text-[10px] font-mono text-slate-500 mt-1">People, Process, Technology, and Governance performance</h4>
-                        </div>
-                    </div>
-                    <div className="space-y-6 mt-4">
-                        {dimensions.map((d: any, i: number) => (
-                            <div key={i} className="space-y-2">
-                                <div className="flex justify-between items-center text-[9px] uppercase font-mono tracking-widest leading-none">
-                                    <span className={d.score >= targetBaseline ? 'text-slate-900 font-bold' : 'text-slate-500'}>{d.name.toUpperCase()}</span>
-                                    <span className="text-slate-900 font-black">{d.score.toFixed(2)}</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-sky-100 rounded-none overflow-hidden relative">
-                                    <motion.div 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(d.score / 5) * 100}%` }}
-                                        className={`h-full absolute left-0 ${d.score >= targetBaseline ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.3)]' : 'bg-slate-400'}`}
-                                    />
-                                    <div className="absolute top-0 bottom-0 left-[80%] w-px bg-rose-300" />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    <div className="mt-8 pt-8 border-t border-sky-100">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl">
-                                <p className="text-[8px] font-mono text-slate-500 uppercase mb-1">Remaining Gap</p>
-                                <p className="text-xl font-black text-slate-900 font-mono">{((1 - (overallScore / 5)) * 100).toFixed(1)}%</p>
-                            </div>
-                            <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl">
-                                <p className="text-[8px] font-mono text-slate-500 uppercase mb-1">Stability Index</p>
-                                <p className="text-xl font-black text-blue-600 font-mono">{(100 - regressions.length * 5).toFixed(0)}%</p>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
+      <div className="max-w-[1600px] mx-auto px-8 py-8 space-y-6 pb-24">
+        {/* ─── TOP HUD: mission metrics ─── */}
+        <Panel severity={status.severity} elevated className="p-8">
+          <div className="flex items-start justify-between gap-8">
+            <div className="flex-1">
+              <Eyebrow>Active Unit</Eyebrow>
+              <div className="flex items-baseline gap-3 mt-3">
+                <h1 className="font-display text-4xl text-[var(--color-text-primary)] tracking-tight">
+                  {entityName}
+                </h1>
+                <span className="font-mono text-xs text-[var(--color-text-muted)] tracking-wide">
+                  ID · {bu.id.toUpperCase()}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mt-5">
+                <Eyebrow>Profile</Eyebrow>
+                <div className="flex gap-1.5">
+                  {benchmarkTypes.map((t: string) => (
+                    <button
+                      key={t}
+                      onClick={() => onBenchmarkTypeChange(t)}
+                      className={`px-3 py-1.5 border font-mono text-[10px] tracking-[0.2em] uppercase transition-colors cursor-pointer ${
+                        benchmarkType === t
+                          ? "border-[var(--color-signal-cyan)] bg-[var(--color-signal-cyan)]/10 text-[var(--color-signal-cyan)]"
+                          : "hairline text-[var(--color-text-secondary)] hover:border-[var(--color-signal-cyan)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      {BENCHMARK_LABEL[t] || t}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            
-            <Card className="flex flex-col">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <p className={STYLES.heading}>Benchmark Comparison</p>
-                        <h4 className="text-[10px] font-mono text-slate-500 mt-1">Current vs {formatLabel(benchmarkType)} profile by pillar</h4>
-                    </div>
-                    <Badge color="blue">AVG {benchmarkAverage.toFixed(2)}</Badge>
+
+            <div className="flex items-stretch gap-12">
+              <div className="flex flex-col justify-between">
+                <Eyebrow>Maturity Score</Eyebrow>
+                <div className="display-num text-[84px] text-[var(--color-signal-cyan)] leading-none mt-2">
+                  {overallScore.toFixed(2)}
                 </div>
-                <div className="min-h-[280px]">
-                    <ResponsiveContainer width="100%" height={280}>
-                        <BarChart data={benchmarkComparisonData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" vertical={false} />
-                            <XAxis dataKey="pillar" stroke="#64748b" fontSize={8} />
-                            <YAxis domain={[0, 5]} axisLine={false} tickLine={false} stroke="#64748b" fontSize={8} />
-                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(125,211,252,0.7)', fontSize: '10px' }} />
-                            <Legend />
-                            <Bar dataKey="score" name="Current" fill="#6366f1" radius={[2, 2, 0, 0]} />
-                            <Bar dataKey="benchmark" name={formatLabel(benchmarkType)} fill="#38bdf8" radius={[2, 2, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl">
-                        <p className="text-[8px] font-mono text-slate-500 uppercase mb-1">Aligned Pillars</p>
-                        <p className="text-xl font-black text-slate-900 font-mono">{alignedPillarCount}</p>
-                    </div>
-                    <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl">
-                        <p className="text-[8px] font-mono text-slate-500 uppercase mb-1">Average Gap</p>
-                        <p className="text-xl font-black text-rose-400 font-mono">{averageGap.toFixed(2)}</p>
-                    </div>
-                </div>
-            </Card>
-            
-            {/* Action Roadmap - Integrated as Operational Queue */}
-            <Card noPadding className="flex-1 border-sky-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-sky-100 bg-sky-50 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <List size={14} className="text-blue-600" />
-                        <p className={STYLES.heading}>Improvement Roadmap</p>
-                    </div>
-                    <Badge color="blue">{activeRoadmapCount} Actions Active</Badge>
-                </div>
-                <div className="overflow-auto max-h-[350px]">
-                    <table className="w-full text-left font-mono">
-                        <thead className="bg-sky-50 text-[8px] uppercase tracking-[0.3em] text-slate-500">
-                            <tr>
-                                <th className="p-4 font-normal">Action</th>
-                                <th className="p-4 font-normal">Phase</th>
-                                <th className="p-4 font-normal text-right">Priority</th>
-                                <th className="p-4 font-normal text-right">Uplift</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-sky-100">
-                            {roadmap.map((item: any, idx: number) => (
-                                <tr key={idx} className="hover:bg-sky-50 transition-colors border-l-2 border-transparent hover:border-blue-500">
-                                    <td className="p-4">
-                                        <div className="text-[11px] text-slate-900 font-bold uppercase tracking-tight mb-1">{item.description}</div>
-                                        <div className="flex gap-4 text-[8px] uppercase tracking-widest text-slate-500">
-                                            <span>{analytics.find((entry: any) => entry.pillarId === item.pillarId)?.pillarName || item.pillarId}</span>
-                                            <span className="text-blue-600/70">{item.dimensionId}</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className={`text-[9px] font-black uppercase tracking-widest ${item.phase === 'Phase 1' ? 'text-blue-600' : 'text-amber-600'}`}>
-                                            {item.phase}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <span className="text-slate-900 text-xs font-black">{item.priorityScore.toFixed(2)}</span>
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        <span className="text-blue-600 text-xs font-black">+{item.expectedUplift.toFixed(1)}</span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+                <span className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest">
+                  / 5.00 · overall
+                </span>
+              </div>
+              <div className="w-px bg-[var(--color-hairline-strong)]" />
+              <div className="flex flex-col gap-5 justify-between">
+                <Metric label="Benchmark Avg" value={benchmarkAverage.toFixed(2)} unit="/ 5" size="sm" />
+                <Metric
+                  label="Aligned Pillars"
+                  value={`${alignedCount}`}
+                  unit="/ 10"
+                  size="sm"
+                  severity={alignedCount >= 7 ? "cyan" : alignedCount >= 4 ? "amber" : "coral"}
+                />
+                <Metric
+                  label="Active Roadmap"
+                  value={activeRoadmapCount}
+                  unit="actions"
+                  size="sm"
+                />
+              </div>
+            </div>
+          </div>
+        </Panel>
+
+        {/* ─── PILLAR GRID ─── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <Eyebrow>Pillar Vectors · 10</Eyebrow>
+            <span className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest">
+              CURRENT vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType.toUpperCase()}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {analytics.map((a: any) => {
+              const above = a.score >= a.target;
+              const nearMiss = a.score >= a.target * 0.8;
+              const severity = above ? "cyan" : nearMiss ? "amber" : "coral";
+              const ledColor = above ? "mint" : nearMiss ? "amber" : "coral";
+              return (
+                <Panel key={a.pillarId} severity={severity} className="p-4">
+                  <div className="flex items-start justify-between mb-4">
+                    <Eyebrow>{a.pillarName.split(/[\s&]+/)[0].slice(0, 6).toUpperCase()}</Eyebrow>
+                    <StatusLED color={ledColor} />
+                  </div>
+                  <p className="text-[10px] text-[var(--color-text-muted)] font-mono tracking-wide leading-tight mb-3 h-8">
+                    {a.pillarName}
+                  </p>
+                  <div className="display-num text-2xl text-[var(--color-text-primary)]">
+                    {a.score.toFixed(2)}
+                  </div>
+                  <div className="mt-2 flex justify-between font-mono text-[10px]">
+                    <span className="text-[var(--color-text-muted)]">Δ</span>
+                    <span className={a.gap > 0 ? "delta-down" : "delta-up"}>
+                      {a.gap > 0 ? `-${a.gap.toFixed(2)}` : "ALIGNED"}
+                    </span>
+                  </div>
+                </Panel>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Temporal & Alert Lateral Panel */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-            <Card className="h-[280px]">
-                <div className="flex items-center justify-between mb-6">
-                    <p className={STYLES.heading}>Drift Analysis</p>
-                    <Badge color="rose">DELTA</Badge>
-                </div>
-                <div className="h-[180px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={driftProfile}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.2)" vertical={false} />
-                            <XAxis dataKey="pillar" hide />
-                            <YAxis axisLine={false} tickLine={false} stroke="#64748b" fontSize={8} />
-                            <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(125,211,252,0.7)', fontSize: '10px' }} />
-                            <Line type="step" dataKey="delta" stroke="#6366f1" strokeWidth={3} dot={{ fill: '#6366f1', r: 4 }} />
-                            <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </Card>
+        {/* ─── CHARTS ROW ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Radar — pillar vector scope */}
+          <Panel className="lg:col-span-5 p-6 relative">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <Eyebrow tone="cyan">Pillar Vector Scope</Eyebrow>
+                <h3 className="mt-2 font-display text-xl text-[var(--color-text-primary)] tracking-tight">
+                  Maturity vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType.toUpperCase()}
+                </h3>
+              </div>
+              <span className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest">
+                10 × 5
+              </span>
+            </div>
+            <div className="h-[340px] mt-4 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
+                  <PolarGrid stroke={CHART_COLORS.grid} strokeDasharray="2 4" />
+                  <PolarAngleAxis
+                    dataKey="pillar"
+                    stroke={CHART_COLORS.axis}
+                    tick={{ fill: CHART_COLORS.axisLabel, fontSize: 9, fontFamily: "JetBrains Mono" }}
+                  />
+                  <PolarRadiusAxis stroke={CHART_COLORS.axis} tick={false} axisLine={false} angle={90} domain={[0, 5]} />
+                  <Radar
+                    name="Current"
+                    dataKey="score"
+                    stroke={CHART_COLORS.primary}
+                    fill={CHART_COLORS.primary}
+                    fillOpacity={0.15}
+                    strokeWidth={1.5}
+                    dot={{ fill: CHART_COLORS.primary, r: 2 }}
+                  />
+                  <Radar
+                    name="Benchmark"
+                    dataKey="target"
+                    stroke={CHART_COLORS.benchmark}
+                    fill="transparent"
+                    strokeDasharray="3 3"
+                    strokeWidth={1}
+                  />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={false} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center gap-5 pt-4 border-t hairline">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-0.5 bg-[var(--color-signal-cyan)]" />
+                <span className="font-mono text-[10px] text-[var(--color-text-secondary)] tracking-widest uppercase">
+                  Current
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-0.5 border-t border-dashed border-[var(--color-signal-amber)]" />
+                <span className="font-mono text-[10px] text-[var(--color-text-secondary)] tracking-widest uppercase">
+                  {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
+                </span>
+              </div>
+            </div>
+          </Panel>
 
-            <Card className="flex-1 bg-white border-sky-100">
-                <div className="flex items-center justify-between mb-6">
-                    <p className={STYLES.heading}>Regression Alerts</p>
-                    <AlertCircle size={14} className="text-rose-500 animate-pulse" />
-                </div>
-                <div className="space-y-2">
-                    {regressions.length > 0 ? regressions.map((r: any, i: number) => (
-                        <div key={i} className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex justify-between items-center group hover:border-rose-200 transition-all">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-1 h-3 ${r.severity === 'CRITICAL' ? 'bg-rose-500' : 'bg-orange-500'}`} />
-                                <div>
-                                    <p className="text-[10px] font-mono font-black text-slate-900 uppercase tracking-widest">{r.pillarName}</p>
-                                    <p className="text-[8px] font-mono text-slate-500 uppercase">{r.severity} THRESHOLD</p>
-                                </div>
-                            </div>
-                            <div className="text-rose-400 font-mono font-black text-sm">
-                                {r.delta.toFixed(3)}
-                            </div>
-                        </div>
-                    )) : (
-                        <div className="text-center py-20 opacity-40">
-                            <ShieldCheck size={40} className="mx-auto mb-4 text-blue-600" />
-                            <p className="text-[8px] font-mono uppercase tracking-[0.4em] text-slate-500">No regressions detected</p>
-                        </div>
-                    )}
-                </div>
-                <div className="mt-8 pt-8 border-t border-sky-100">
-                    <div className="bg-sky-50 p-6 border border-sky-100 rounded-2xl">
-                        <div className="flex items-center gap-3 mb-2">
-                            <Database size={16} className="text-blue-600" />
-                            <p className="text-[10px] font-mono font-black text-slate-900 uppercase tracking-widest">Assessment Evidence Summary</p>
-                        </div>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-center">
-                                <span className="text-[8px] font-mono text-slate-500 uppercase">Responses Captured</span>
-                                <span className="text-[10px] font-mono text-slate-900">{responseSummary.totalResponses}/100</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[8px] font-mono text-slate-500 uppercase">Evidence Linked</span>
-                                <span className="text-[10px] font-mono text-blue-600">{responseSummary.evidenceCount}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[8px] font-mono text-slate-500 uppercase">Notes Logged</span>
-                                <span className="text-[10px] font-mono text-slate-900">{responseSummary.noteCount}</span>
-                            </div>
-                            <div className="flex justify-between items-center">
-                                <span className="text-[8px] font-mono text-slate-500 uppercase">Last Response</span>
-                                <span className="text-[10px] font-mono text-slate-900">{new Date(responseSummary.lastAnsweredAt).toLocaleString()}</span>
-                            </div>
-                        </div>
+          {/* Dimension bars — operating dimension scores */}
+          <Panel className="lg:col-span-4 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <Eyebrow tone="cyan">Operating Dimensions</Eyebrow>
+                <h3 className="mt-2 font-display text-xl text-[var(--color-text-primary)] tracking-tight">
+                  People · Process · Technology · Governance
+                </h3>
+              </div>
+            </div>
+            <div className="space-y-5 mt-6">
+              {dimensions.map((d: any) => {
+                const pct = (d.score / 5) * 100;
+                const targetPct = 80; // 4.0 benchmark / 5.0 max
+                const above = d.score >= 4.0;
+                return (
+                  <div key={d.id} className="space-y-2">
+                    <div className="flex justify-between items-baseline">
+                      <span className="font-mono text-[11px] text-[var(--color-text-primary)] tracking-wide uppercase">
+                        {d.name}
+                      </span>
+                      <span className={`display-num text-xl ${above ? "text-[var(--color-signal-cyan)]" : "text-[var(--color-text-primary)]"}`}>
+                        {d.score.toFixed(2)}
+                      </span>
                     </div>
-                </div>
-            </Card>
+                    <div className="h-1 bg-[var(--color-plasma-500)] relative">
+                      <div
+                        className={`absolute inset-y-0 left-0 ${above ? "bg-[var(--color-signal-cyan)]" : "bg-[var(--color-signal-amber)]"}`}
+                        style={{
+                          width: `${pct}%`,
+                          boxShadow: above ? "0 0 8px var(--color-signal-cyan)" : undefined,
+                        }}
+                      />
+                      <div
+                        className="absolute inset-y-0 w-px bg-[var(--color-signal-coral)]/60"
+                        style={{ left: `${targetPct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-6 pt-4 border-t hairline grid grid-cols-2 gap-3">
+              <div>
+                <Eyebrow>Avg Gap</Eyebrow>
+                <p className="mt-1 font-mono text-base text-[var(--color-signal-coral)]">
+                  {averageGap.toFixed(2)}
+                </p>
+              </div>
+              <div>
+                <Eyebrow>Integrity</Eyebrow>
+                <p className="mt-1 font-mono text-base text-[var(--color-signal-cyan)]">
+                  {systemIntegrity}%
+                </p>
+              </div>
+            </div>
+          </Panel>
+
+          {/* Drift + Regression Alerts */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
+            <Panel severity={regressions.length > 0 ? "coral" : "cyan"} className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <Eyebrow tone={regressions.length > 0 ? "cyan" : "muted"}>Drift Signal</Eyebrow>
+                <StatusLED color={regressions.length > 0 ? "coral" : "mint"} />
+              </div>
+              <div className="h-[140px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={driftProfile}>
+                    <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="2 4" vertical={false} />
+                    <XAxis dataKey="pillar" hide />
+                    <YAxis stroke={CHART_COLORS.axis} tick={{ fontSize: 9, fontFamily: "JetBrains Mono", fill: CHART_COLORS.axisLabel }} />
+                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={false} />
+                    <ReferenceLine y={0} stroke={CHART_COLORS.axis} strokeDasharray="2 2" />
+                    <Line
+                      type="step"
+                      dataKey="delta"
+                      stroke={CHART_COLORS.primary}
+                      strokeWidth={1.5}
+                      dot={{ r: 3, fill: CHART_COLORS.primary }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="pt-3 border-t hairline flex justify-between font-mono text-[10px]">
+                <span className="text-[var(--color-text-muted)]">vs prior baseline</span>
+                <span className={regressions.length > 0 ? "text-[var(--color-signal-coral)]" : "text-[var(--color-signal-mint)]"}>
+                  {regressions.length} signals
+                </span>
+              </div>
+            </Panel>
+
+            <Panel className="p-5 flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <Eyebrow>Response Coverage</Eyebrow>
+                <Database size={12} className="text-[var(--color-text-muted)]" />
+              </div>
+              <div className="space-y-3">
+                {[
+                  ["Vectors", `${responseSummary.totalResponses}/100`],
+                  ["Evidence", String(responseSummary.evidenceCount)],
+                  ["Notes", String(responseSummary.noteCount)],
+                ].map(([k, v]) => (
+                  <div key={k} className="flex justify-between font-mono text-[11px] pb-2 border-b hairline last:border-0 last:pb-0">
+                    <span className="text-[var(--color-text-muted)] uppercase tracking-widest text-[9px]">{k}</span>
+                    <span className="text-[var(--color-text-primary)]">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
+        </div>
+
+        {/* ─── BENCHMARK COMPARISON ─── */}
+        <Panel className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Eyebrow tone="cyan">Pillar Delta Analysis</Eyebrow>
+              <h3 className="mt-2 font-display text-xl text-[var(--color-text-primary)] tracking-tight">
+                Current vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType} by pillar
+              </h3>
+            </div>
+            <span className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest">
+              AVG {benchmarkAverage.toFixed(2)}
+            </span>
+          </div>
+          <div className="h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="2 4" vertical={false} />
+                <XAxis
+                  dataKey="pillar"
+                  stroke={CHART_COLORS.axis}
+                  tick={{ fontSize: 9, fontFamily: "JetBrains Mono", fill: CHART_COLORS.axisLabel }}
+                  tickLine={false}
+                  axisLine={{ stroke: CHART_COLORS.grid }}
+                />
+                <YAxis
+                  domain={[0, 5]}
+                  stroke={CHART_COLORS.axis}
+                  tick={{ fontSize: 9, fontFamily: "JetBrains Mono", fill: CHART_COLORS.axisLabel }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(0,229,255,0.05)" }} />
+                <Bar dataKey="score" fill={CHART_COLORS.primary} radius={0} />
+                <Bar dataKey="benchmark" fill={CHART_COLORS.benchmark} opacity={0.4} radius={0} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Panel>
+
+        {/* ─── ROADMAP + REGRESSIONS ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Panel className="lg:col-span-2 p-0 overflow-hidden">
+            <div className="px-6 py-4 border-b hairline flex items-center justify-between">
+              <div>
+                <Eyebrow tone="cyan">Improvement Sequencing · Phase 1-3</Eyebrow>
+                <h3 className="mt-2 font-display text-xl text-[var(--color-text-primary)] tracking-tight">
+                  Uplift Roadmap
+                </h3>
+              </div>
+              <span className="font-mono text-[11px] text-[var(--color-signal-cyan)]">
+                {activeRoadmapCount} actions
+              </span>
+            </div>
+            <div className="overflow-auto max-h-[360px] custom-scrollbar">
+              <table className="w-full text-left">
+                <thead className="bg-[var(--color-plasma-800)] border-b hairline sticky top-0">
+                  <tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[var(--color-text-muted)]">
+                    <th className="px-6 py-3 font-normal">Action</th>
+                    <th className="px-3 py-3 font-normal">Phase</th>
+                    <th className="px-3 py-3 font-normal text-right">Priority</th>
+                    <th className="px-6 py-3 font-normal text-right">Uplift</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {roadmap.slice(0, 12).map((item: any, idx: number) => {
+                    const pName =
+                      analytics.find((e: any) => e.pillarId === item.pillarId)?.pillarName || item.pillarId;
+                    const phaseColor =
+                      item.phase === "Phase 1"
+                        ? "text-[var(--color-signal-cyan)]"
+                        : item.phase === "Phase 2"
+                          ? "text-[var(--color-signal-amber)]"
+                          : "text-[var(--color-text-muted)]";
+                    return (
+                      <tr
+                        key={idx}
+                        className="border-b hairline hover:bg-[var(--color-plasma-700)]/40 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <p className="text-xs text-[var(--color-text-primary)] font-medium">
+                            {item.description}
+                          </p>
+                          <p className="mt-1 font-mono text-[10px] text-[var(--color-text-muted)] tracking-wide">
+                            {pName} · {item.dimensionId}
+                          </p>
+                        </td>
+                        <td className={`px-3 py-4 font-mono text-[10px] tracking-widest uppercase ${phaseColor}`}>
+                          {item.phase}
+                        </td>
+                        <td className="px-3 py-4 text-right font-mono text-xs text-[var(--color-text-primary)]">
+                          {item.priorityScore.toFixed(2)}
+                        </td>
+                        <td className="px-6 py-4 text-right font-mono text-xs text-[var(--color-signal-cyan)]">
+                          +{item.expectedUplift.toFixed(1)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+
+          <Panel severity={criticalRegressionsCount > 0 ? "coral" : "nominal"} className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <Eyebrow tone={criticalRegressionsCount > 0 ? "cyan" : "muted"}>Regression Alerts</Eyebrow>
+              {criticalRegressionsCount > 0 && <StatusLED color="coral" />}
+            </div>
+            {regressions.length > 0 ? (
+              <div className="space-y-2">
+                {regressions.slice(0, 6).map((r: any, i: number) => (
+                  <div
+                    key={i}
+                    className="border hairline p-3 flex items-center justify-between hover:border-[var(--color-signal-coral)] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`w-0.5 h-4 ${r.severity === "CRITICAL" ? "bg-[var(--color-signal-coral)]" : "bg-[var(--color-signal-amber)]"}`}
+                      />
+                      <div>
+                        <p className="text-[11px] text-[var(--color-text-primary)] font-medium tracking-wide">
+                          {r.pillarName}
+                        </p>
+                        <p className="font-mono text-[9px] text-[var(--color-text-muted)] uppercase tracking-widest">
+                          {r.severity} threshold
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-xs text-[var(--color-signal-coral)]">
+                      {r.delta.toFixed(3)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 border hairline">
+                <ShieldCheck size={24} className="mx-auto text-[var(--color-signal-mint)] mb-3" />
+                <p className="font-mono text-[10px] text-[var(--color-text-muted)] tracking-widest uppercase">
+                  All Pillars Nominal
+                </p>
+              </div>
+            )}
+          </Panel>
         </div>
       </div>
     </div>
   );
 };
 
-// ── MAIN APPLICATION ───────────────────────────────────────────────
+// ─── APP SHELL ─────────────────────────────────────────────────────────────
 
 export default function App() {
   const [screen, setScreen] = useState<"login" | "scope" | "assessment" | "navigator">("login");
@@ -909,9 +1396,7 @@ export default function App() {
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-
   const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -921,51 +1406,36 @@ export default function App() {
   }, []);
 
   const benchmarkTypes = useMemo(() => {
-    const types = Array.from(new Set(benchmarks.map((entry: any) => entry.type)));
-    return types.length ? types : ["target"];
+    const types = Array.from(new Set(benchmarks.map((b: any) => b.type)));
+    return types.length ? (types as string[]) : ["target"];
   }, [benchmarks]);
 
-  const getEntityIcon = (entityId: string) => {
-    if (entityId === "gen") return Zap;
-    if (entityId === "tra") return Network;
-    if (entityId === "dis") return Boxes;
-    if (entityId === "corp") return Building2;
-    if (entityId === "sub") return Layers;
-    if (entityId === "jv") return Users;
-    return Shield;
-  };
-
-  const handleLogin = async () => {
-    const normalizedEmail = loginEmail.trim().toLowerCase();
-
-    if (!/^[^@\s]+@gmail\.com$/i.test(normalizedEmail)) {
-      setLoginError("Use any Gmail address to enter the demo.");
+  const handleLogin = async (email: string, password: string) => {
+    const normalized = email.trim().toLowerCase();
+    if (!/^[^@\s]+@gmail\.com$/i.test(normalized)) {
+      setLoginError("Use any @gmail.com address to enter the demo.");
       return;
     }
-
-    if (!loginPassword.trim()) {
-      setLoginError("Enter any password to continue.");
+    if (!password.trim()) {
+      setLoginError("Any password. Fake auth is intentional for the demo.");
       return;
     }
-
     setLoading(true);
     setLoginError(null);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail, password: loginPassword })
+        body: JSON.stringify({ email: normalized, password }),
       });
-
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Unable to enter the platform.");
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.error || "Unable to authorize.");
       }
-
-      setLoginEmail(normalizedEmail);
+      setLoginEmail(normalized);
       setScreen("scope");
     } catch (e: any) {
-      setLoginError(e.message || "Unable to enter the platform.");
+      setLoginError(e.message || "Unable to authorize.");
     } finally {
       setLoading(false);
     }
@@ -977,7 +1447,7 @@ export default function App() {
       const res = await fetch("/api/assessments/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entityId: bu.id })
+        body: JSON.stringify({ entityId: bu.id }),
       });
       const data = await res.json();
       setAssessmentId(data.id);
@@ -988,189 +1458,132 @@ export default function App() {
     }
   };
 
-  const handleFetchCommandCenterData = async (assessmentId: string, activeBenchmarkType = benchmarkType, skipRecompute = false) => {
+  const fetchAnalysis = async (aid: string, bType = benchmarkType, skipRecompute = false) => {
     setLoading(true);
     try {
       if (!skipRecompute) {
-        await fetch("/api/compute-maturity-vector", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assessmentId }) });
-        await fetch("/api/compute-drift", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assessmentId }) });
-        await fetch("/api/generate-roadmap", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ assessmentId }) });
+        await fetch("/api/compute-maturity-vector", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assessmentId: aid }),
+        });
+        await fetch("/api/compute-drift", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assessmentId: aid }),
+        });
+        await fetch("/api/generate-roadmap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assessmentId: aid }),
+        });
       }
-
-      // Unified Analysis Fetch
-      const res = await fetch(`/api/assessments/${assessmentId}/analysis?benchmarkType=${activeBenchmarkType}`);
+      const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`);
       const data = await res.json();
       setAnalysis(data);
-    } catch (error) {
-       console.error("Command Center Context Refresh Error:", error);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
   const handleAssessmentComplete = async ({ responses, notes, evidenceNames, answeredAt }: any) => {
-    const questionCount = metadata.questions.length;
-    const answeredCount = Object.keys(responses).filter(k => responses[k] !== undefined && responses[k] !== null).length;
-
-    if (answeredCount !== questionCount) {
-      alert(`CRITICAL PIPELINE BLOCK: ${questionCount - answeredCount} vectors missing. Please ensure all 100 questions are populated.`);
-      return; 
+    const qCount = metadata.questions.length;
+    const ansCount = Object.keys(responses).filter(k => responses[k as any] !== undefined).length;
+    if (ansCount !== qCount) {
+      alert(`Pipeline block: ${qCount - ansCount} vectors missing.`);
+      return;
     }
-
     setLoading(true);
     try {
-      // Precise mapping from source of truth (metadata) to ensure alignment
-      const formatted = metadata.questions.map((q: any) => {
-        const val = responses[q.id];
-        if (val === undefined || val === null) {
-            throw new Error(`Integrity Gap: Question ID ${q.id} has no value.`);
-        }
-        return {
-          questionId: q.id,
-          score: Number(val),
-          note: notes[q.id] || "",
-          evidenceName: evidenceNames[q.id] || "",
-          answeredAt: answeredAt[q.id] || new Date().toISOString(),
-        };
-      });
-      
-      console.log(`[PIPELINE] Submitting ${formatted.length} vectors for Assessment ${assessmentId}`);
-      
-      const saveRes = await fetch("/api/responses/create", {
+      const formatted = metadata.questions.map((q: any) => ({
+        questionId: q.id,
+        score: Number(responses[q.id]),
+        note: notes[q.id] || "",
+        evidenceName: evidenceNames[q.id] || "",
+        answeredAt: answeredAt[q.id] || new Date().toISOString(),
+      }));
+      const save = await fetch("/api/responses/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assessmentId, responses: formatted })
+        body: JSON.stringify({ assessmentId, responses: formatted }),
       });
-
-      if (!saveRes.ok) {
-        const err = await saveRes.json();
-        throw new Error(`Data Integrity Error: ${err.message || saveRes.statusText}`);
+      if (!save.ok) {
+        const err = await save.json();
+        throw new Error(err.message || "Storage failure");
       }
-
-      console.log("[PIPELINE] Synchronizing Analytics...");
-      await handleFetchCommandCenterData(assessmentId!, benchmarkType);
+      await fetchAnalysis(assessmentId!, benchmarkType);
       setScreen("navigator");
-    } catch (error: any) {
-      console.error("Assessment Finalization Error:", error);
-      alert(`PIPELINE FAILURE: ${error.message}`);
+    } catch (e: any) {
+      alert(`Pipeline failure: ${e.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-[linear-gradient(180deg,#eff6ff_0%,#f8fbff_55%,#eef7ff_100%)] min-h-screen text-slate-900 font-sans selection:bg-sky-200">
+    <div className="min-h-screen text-[var(--color-text-primary)] font-sans">
       <AnimatePresence mode="wait">
         {screen === "login" && (
-          <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-screen flex items-center justify-center">
-             <div className="w-full max-w-sm p-12 bg-white border border-sky-100 rounded-[32px] shadow-[0_24px_70px_rgba(37,99,235,0.12)]">
-               <div className="text-center mb-16">
-                 <ShieldCheck size={48} className="text-blue-600 mx-auto mb-6" />
-                 <h1 className="text-3xl font-mono font-black tracking-[0.3em] text-slate-900">RISK X AI</h1>
-                 <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-3 underline decoration-blue-400/50 underline-offset-8">ERM Maturity Assessment Demo</p>
-               </div>
-               <div className="space-y-6">
-                 <div className="space-y-2">
-                    <p className={STYLES.heading}>User Email</p>
-                    <input 
-                      type="email"
-                      value={loginEmail}
-                      onChange={e => setLoginEmail(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleLogin()}
-                      className="w-full bg-sky-50 border border-sky-100 p-4 text-slate-900 font-mono text-[11px] outline-none focus:border-blue-500 rounded-2xl" 
-                      placeholder="yourname@gmail.com" 
-                    />
-                    <p className="text-[10px] font-mono text-slate-500">Use any Gmail address.</p>
-                 </div>
-                 <div className="space-y-2">
-                    <p className={STYLES.heading}>Password</p>
-                    <input 
-                      type="password" 
-                      value={loginPassword}
-                      onChange={e => setLoginPassword(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && handleLogin()}
-                      className="w-full bg-sky-50 border border-sky-100 p-4 text-slate-900 font-mono text-[11px] outline-none focus:border-blue-500 rounded-2xl" 
-                      placeholder="••••••••" 
-                    />
-                    <p className="text-[10px] font-mono text-slate-500">Any typed password will work for the demo.</p>
-                 </div>
-                 {loginError && <p className="text-rose-500 font-mono text-[10px] uppercase tracking-widest text-center">{loginError}</p>}
-                 <button 
-                   onClick={handleLogin} 
-                   className="w-full py-4 bg-blue-600 text-white font-mono font-black uppercase tracking-widest text-[11px] hover:bg-blue-500 transition-all border border-blue-400/20 rounded-2xl"
-                 >
-                   Enter Platform
-                 </button>
-               </div>
-             </div>
+          <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <LoginScreen onLogin={handleLogin} loading={loading} error={loginError} />
           </motion.div>
         )}
 
         {screen === "scope" && (
-          <motion.div key="scope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-12 max-w-6xl mx-auto">
-             <header className="mb-16">
-               <div className="flex items-center gap-3 text-blue-600 mb-2">
-                 <Database size={14} />
-                 <p className={STYLES.heading}>Active Workspace: RISK X AI</p>
-               </div>
-               <h1 className="text-4xl font-black text-slate-900 tracking-widest">Business Unit Selection</h1>
-               <p className="mt-3 text-sm text-slate-500">Select a business unit to start the assessment flow.</p>
-             </header>
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {entities.map(bu => {
-                  const Icon = getEntityIcon(bu.id);
-                  return (
-                    <Card key={bu.id} className="cursor-pointer hover:border-blue-400 group" onClick={() => handleEntitySelect(bu)}>
-                       <div className="w-12 h-12 bg-sky-50 border border-sky-100 flex items-center justify-center text-blue-600 mb-6 group-hover:bg-blue-600 group-hover:text-white transition-all transform group-hover:scale-105 rounded-2xl">
-                         <Icon size={20} />
-                       </div>
-                       <h3 className="text-xl font-bold font-mono text-slate-900 uppercase tracking-widest">{bu.name}</h3>
-                       <p className="text-[10px] font-mono text-slate-500 mt-2 uppercase tracking-[0.2em]">{bu.industry}</p>
-                    </Card>
-                  );
-                })}
-             </div>
+          <motion.div key="scope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <ScopeScreen
+              entities={entities}
+              onSelect={handleEntitySelect}
+              operatorEmail={loginEmail}
+              onLogout={() => setScreen("login")}
+            />
           </motion.div>
         )}
 
         {screen === "assessment" && metadata.questions.length > 0 && (
-          <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-             <VectorCapturePipeline bu={selectedBU} questions={metadata.questions} pillars={metadata.pillars} onBack={() => setScreen("scope")} onComplete={handleAssessmentComplete} />
+          <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <VectorCapturePipeline
+              bu={selectedBU}
+              questions={metadata.questions}
+              pillars={metadata.pillars}
+              onBack={() => setScreen("scope")}
+              onComplete={handleAssessmentComplete}
+            />
           </motion.div>
         )}
 
         {screen === "navigator" && analysis && (
-          <motion.div key="navigator" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-             <RNOSCommandCenter 
-               analysis={analysis} 
-               bu={selectedBU} 
-               allBUs={entities}
-               benchmarkTypes={benchmarkTypes}
-               benchmarkType={benchmarkType}
-               onBenchmarkTypeChange={async (nextBenchmarkType: string) => {
-                 setBenchmarkType(nextBenchmarkType);
-                 if (assessmentId) {
-                   await handleFetchCommandCenterData(assessmentId, nextBenchmarkType, true);
-                 }
-               }}
-               onEntityChange={async (bu: any) => {
-                 setLoading(true);
-                 try {
-                    const res = await fetch("/api/assessments/create", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ entityId: bu.id })
-                    });
-                    const data = await res.json();
-                    setAssessmentId(data.id);
-                    setSelectedBU(bu);
-                    setScreen("assessment");
-                 } finally {
-                    setLoading(false);
-                 }
-               }}
-               onBack={() => setScreen("scope")} 
-             />
+          <motion.div key="navigator" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+            <RNOSCommandCenter
+              analysis={analysis}
+              bu={selectedBU}
+              allBUs={entities}
+              benchmarkTypes={benchmarkTypes}
+              benchmarkType={benchmarkType}
+              onBenchmarkTypeChange={async (t: string) => {
+                setBenchmarkType(t);
+                if (assessmentId) await fetchAnalysis(assessmentId, t, true);
+              }}
+              onEntityChange={async (bu: any) => {
+                setLoading(true);
+                try {
+                  const res = await fetch("/api/assessments/create", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ entityId: bu.id }),
+                  });
+                  const data = await res.json();
+                  setAssessmentId(data.id);
+                  setSelectedBU(bu);
+                  setScreen("assessment");
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              onBack={() => setScreen("scope")}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1178,18 +1591,17 @@ export default function App() {
       <NavigatorAssistant analysis={analysis} />
 
       {loading && (
-        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm z-[200] flex items-center justify-center font-mono">
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 border-t-2 border-blue-600 rounded-full animate-spin" />
-                <p className="text-[10px] uppercase tracking-[0.4em] text-blue-600 animate-pulse">Syncing RISK X AI Engines...</p>
+        <div className="fixed inset-0 bg-[var(--color-plasma-900)]/80 backdrop-blur-sm z-[200] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-5">
+            <div className="flex items-center gap-3">
+              <StatusLED color="cyan" />
+              <StatusLED color="cyan" />
+              <StatusLED color="cyan" />
             </div>
+            <span className="eyebrow-cyan">Synchronizing RNOS core</span>
+          </div>
         </div>
       )}
-
-      <div className="fixed bottom-8 left-8 flex items-center gap-3 opacity-60 pointer-events-none">
-         <div className="w-2.5 h-2.5 bg-blue-600 rounded-full animate-pulse" />
-         <span className="text-[9px] font-mono uppercase tracking-[0.4em] text-sky-700">RISK X AI // RNOS CORE VERIFIED</span>
-      </div>
     </div>
   );
 }
