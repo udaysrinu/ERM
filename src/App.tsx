@@ -753,11 +753,9 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
     const newR = { ...responses, [currentQ.id]: score };
     setResponses(newR);
     setAnsweredAt(prev => ({ ...prev, [currentQ.id]: ts }));
-    if (currIdx < questions.length - 1) {
-      setTimeout(() => setCurrIdx(currIdx + 1), 160);
-    } else if (Object.keys(newR).length === questions.length) {
-      setShowSummary(true);
-    }
+    // Intentionally NOT auto-advancing. The rubric preview, analyst note, and
+    // evidence upload all need the user to stay on this question after
+    // picking a score. User advances via Next button or → key.
   };
 
   const handleSubmit = async () => {
