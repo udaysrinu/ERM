@@ -279,7 +279,7 @@ const LoginScreen = ({
                   ERM Navigator
                 </span>
                 <span className="font-mono text-[9px] tracking-[0.22em] text-[var(--color-ink-muted)] mt-1.5 uppercase">
-                  SEC Risk Maturity Platform
+                  Risk Maturity Platform
                 </span>
               </div>
             </div>
@@ -295,7 +295,7 @@ const LoginScreen = ({
             </h1>
 
             <p className="mt-5 text-[14.5px] text-[var(--color-ink-soft)] leading-[1.6] max-w-[380px]">
-              An auditable maturity platform for Saudi Electricity Company. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
+              An auditable maturity platform for enterprise risk programs. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
             </p>
 
             <div className="mt-8 flex items-center gap-4 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
@@ -989,11 +989,12 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
               {[1, 2, 3, 4, 5].map(score => {
                 const selected = responses[currentQ.id] === score;
                 const labels = ["Ad-hoc", "Partial", "Defined", "Managed", "Optimized"];
-                return (
+                const rubricText = (currentQ as any).rubric?.[score] || "";
+                const button = (
                   <button
                     key={score}
                     onClick={() => handleAnswer(score)}
-                    className={`aspect-[4/3] flex flex-col items-center justify-center border rounded-[10px] transition-all cursor-pointer ${
+                    className={`aspect-[4/3] w-full flex flex-col items-center justify-center border rounded-[10px] transition-all cursor-pointer ${
                       selected
                         ? "bg-[var(--color-ink)] border-[var(--color-ink)] text-[var(--color-highlight)] shadow-[0_4px_12px_rgba(15,42,27,0.22)]"
                         : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-ink)] hover:-translate-y-0.5"
@@ -1010,8 +1011,33 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
                     </span>
                   </button>
                 );
+                return rubricText ? (
+                  <UiTooltip key={score}>
+                    <TooltipTrigger asChild>{button}</TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[320px] text-[12px] leading-[1.5] whitespace-normal">
+                      {rubricText}
+                    </TooltipContent>
+                  </UiTooltip>
+                ) : button;
               })}
             </div>
+            {/* Inline rubric preview — full text of the currently-selected level. */}
+            {(currentQ as any).rubric && responses[currentQ.id] !== undefined && (
+              <motion.div
+                key={`rubric-${currentQ.id}-${responses[currentQ.id]}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.18 }}
+                className="mt-4 px-4 py-3 border-l-2 border-[var(--color-gold)] bg-[var(--color-surface-soft)]/50 rounded-r-[8px]"
+              >
+                <div className="font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-gold)] mb-1.5">
+                  Level {responses[currentQ.id]} criteria
+                </div>
+                <p className="text-[12.5px] leading-[1.6] text-[var(--color-ink-soft)]">
+                  {(currentQ as any).rubric[responses[currentQ.id]]}
+                </p>
+              </motion.div>
+            )}
           </div>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">

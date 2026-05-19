@@ -139,7 +139,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
             ERM Navigator
           </span>
           <span className="font-mono text-[9px] tracking-[0.22em] text-[var(--color-ink-muted)] mt-1 uppercase">
-            SEC Risk Maturity Platform
+            Risk Maturity Platform
           </span>
         </div>
       )}
@@ -324,7 +324,7 @@ export function RunningFooter({
     <footer className="fixed bottom-0 left-0 right-0 pointer-events-none z-30">
       <div className="max-w-[1600px] mx-auto px-8 pb-4">
         <div className="flex items-end justify-between font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-          <span>{left || "ERM Navigator · SEC Risk Maturity"}</span>
+          <span>{left || "ERM Navigator · Risk Maturity"}</span>
           {folio && (
             <span className="font-display text-[13px] tracking-normal italic text-[var(--color-ink-soft)]">
               {folio}

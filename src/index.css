@@ -19,7 +19,7 @@
 
   /* ── Color palette — ink-primary, warm-neutral base ──
      Warm cream base, deep forest-ink as primary,
-     sparing gold for editorial highlight (Saudi heritage nod).
+     sparing gold for editorial highlight.
      Desaturated severity channels. */
   --color-bg: #F5F1E8;              /* warmer paper */
   --color-bg-deep: #EEE8DB;         /* page edge */
@@ -39,7 +39,7 @@
   --color-accent-soft: rgba(15, 42, 27, 0.06);
   --color-highlight: #C8A14B;       /* deeper gold reads cleaner on ink */
   --color-highlight-soft: rgba(200, 161, 75, 0.14);
-  --color-gold: #9C7E3C;            /* muted Saudi gold — on surface */
+  --color-gold: #9C7E3C;            /* muted gold — on surface */
   --color-gold-soft: rgba(156, 126, 60, 0.12);
   --color-gold-line: rgba(156, 126, 60, 0.40);
   --color-mint: #2E6B48;
