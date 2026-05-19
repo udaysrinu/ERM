@@ -11,7 +11,12 @@
     "dev:full": "vercel dev --yes",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "seed:history": "tsx scripts/seed-history.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.46.1",
@@ -20,6 +25,7 @@
     "cmdk": "^1.1.1",
     "framer-motion": "^12.0.0",
     "lucide-react": "^0.471.0",
+    "pdf-lib": "^1.17.1",
     "postgres": "^3.4.7",
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
@@ -36,6 +42,8 @@
     "tailwindcss": "^4.1.14",
     "typescript": "~5.8.2",
     "vercel": "^48.0.0",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^2.1.8",
+    "@playwright/test": "^1.49.0"
   }
 }

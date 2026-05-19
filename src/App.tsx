@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Command as CommandIcon,
+  FileDown,
   Minimize2,
   RotateCcw,
   Send,
@@ -70,6 +71,8 @@ import {
   QUESTIONS,
   WEIGHTS,
 } from "./data/static";
+import { getAssistantReply } from "./lib/assistant";
+import { TrendChart } from "./components/TrendChart";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────
 
@@ -107,39 +110,7 @@ const TOOLTIP_STYLE = {
 } as const;
 
 // ─── ASSISTANT ─────────────────────────────────────────────────────────────
-
-const getAssistantReply = (prompt: string, analysis: any): string => {
-  const n = prompt.toLowerCase();
-
-  if (!analysis) {
-    if (n.includes("weight") || n.includes("score"))
-      return "Scoring uses a 10-pillar × 4-dimension weighted matrix. Each pillar rolls up as Σ(cell × weight) ÷ Σ(weight); overall score is the pillar-weighted average.";
-    if (n.includes("benchmark") || n.includes("peer") || n.includes("industry"))
-      return "Four benchmark profiles ship by default — Target (4.0), Industry average (~3.5), Peer operators (~3.3), External reference (~4.1). Switch profile from the command center header.";
-    if (n.includes("roadmap") || n.includes("action"))
-      return "Roadmap sequencing ranks actions by expected uplift ÷ (cost × duration). Top three land in Phase 1, next three in Phase 2, the rest in Phase 3.";
-    return "ERM Navigator captures 100 standards-aligned responses, computes a weighted maturity vector, detects drift against prior baselines, and sequences improvement actions by uplift-per-effort.";
-  }
-
-  const weakest = [...analysis.analytics].sort((a: any, b: any) => b.gap - a.gap)[0];
-  const top = analysis.roadmap?.[0];
-
-  if (n.includes("weak") || n.includes("gap"))
-    return weakest
-      ? `${weakest.pillarName} is the primary gap — ${weakest.score.toFixed(2)} vs ${BENCHMARK_LABEL[analysis.benchmarkType]} ${weakest.target.toFixed(2)}. Deficit: ${weakest.gap.toFixed(2)}.`
-      : "All pillars are at or above the selected benchmark.";
-  if (n.includes("benchmark"))
-    return `Active profile: ${BENCHMARK_LABEL[analysis.benchmarkType]} (avg ${analysis.benchmarkAverage.toFixed(2)}). ${analysis.systemIntegrity}% of pillars meeting or exceeding baseline.`;
-  if (n.includes("drift") || n.includes("regression"))
-    return analysis.regressions?.length
-      ? `${analysis.regressions.length} regression signal(s) detected. Most severe: ${analysis.regressions[0].pillarName} at Δ${analysis.regressions[0].delta.toFixed(3)}.`
-      : "No negative drift detected across the assessed pillars.";
-  if (n.includes("roadmap") || n.includes("action"))
-    return top
-      ? `Priority: ${top.description}. ${top.phase}. Priority score ${top.priorityScore.toFixed(2)}, expected uplift +${top.expectedUplift.toFixed(1)}.`
-      : "No roadmap actions required — selected unit is aligned with the benchmark.";
-  return `Overall maturity ${analysis.overallScore.toFixed(2)}. Status: ${analysis.missionStatus.replaceAll("_", " ").toLowerCase()}. Ask about gaps, drift, benchmarks, or roadmap sequencing.`;
-};
+// `getAssistantReply` is implemented in ./lib/assistant.ts (deterministic, testable, 15 patterns).
 
 const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -1130,6 +1101,8 @@ const RNOSCommandCenter = ({
   onEntityChange,
   onBack,
   onOpenPalette,
+  assessmentId,
+  operatorEmail,
 }: any) => {
   type SortKey = "priority" | "uplift" | "phase";
   const [sortKey, setSortKey] = useState<SortKey>("priority");
@@ -1209,6 +1182,18 @@ const RNOSCommandCenter = ({
             >
               <CommandIcon size={12} />
               <span>K</span>
+            </button>
+            <button
+              onClick={() => {
+                if (!assessmentId) return;
+                const url = `/api/assessments/${assessmentId}/pdf?benchmarkType=${benchmarkType}`;
+                window.open(url, "_blank");
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border hairline text-[11px] font-mono tracking-[0.14em] uppercase text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
+              aria-label="Download executive PDF report"
+            >
+              <FileDown size={12} />
+              <span>Report</span>
             </button>
             <button
               onClick={onBack}
@@ -1521,6 +1506,9 @@ const RNOSCommandCenter = ({
             </ResponsiveContainer>
           </div>
         </Card>
+
+        {/* Pillar evolution — historical trend across past assessments */}
+        <TrendChart entityId={bu.id} operatorEmail={operatorEmail} benchmarkType={benchmarkType} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <Card className="lg:col-span-2 p-0 overflow-hidden">
@@ -1879,6 +1867,8 @@ export default function App() {
               }}
               onBack={() => setScreen("scope")}
               onOpenPalette={() => setPaletteOpen(true)}
+              assessmentId={assessmentId}
+              operatorEmail={loginEmail}
             />
           </motion.div>
         )}
