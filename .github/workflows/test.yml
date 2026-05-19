@@ -13,3 +13,20 @@ jobs:
           node-version: '22'
       - run: npm ci
       - run: npm run test
+
+  playwright:
+    needs: vitest
+    runs-on: ubuntu-latest
+    env:
+      # CI has no Supabase env wiring, so booting `npm run dev` locally would
+      # 500 on /api/responses/create. Point Playwright at the runway-rewrite
+      # preview deploy, which has the live backend.
+      E2E_BASE_URL: https://erm-navigator-git-runway-rewrite-uday-srinus-projects.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

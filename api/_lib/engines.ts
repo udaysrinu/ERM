@@ -104,13 +104,17 @@ export function computeAnalytics(
 ): { analytics: PillarAnalytic[]; benchmarkAverage: number; averageGap: number; systemIntegrity: number } {
   const profile = BENCHMARKS[benchmarkType] ?? BENCHMARKS.target;
   const analytics: PillarAnalytic[] = PILLAR_IDS.map(pid => {
-    const score = pillarScores.get(pid) ?? 0;
+    const rawScore = pillarScores.get(pid) ?? 0;
+    // Round to the same precision shown in the UI so status thresholds line up
+    // with the displayed score. Without this, FP drift (e.g. 3.9999999999999996)
+    // can render score=4.00 but status=ALIGNED — visibly inconsistent.
+    const score = Number(rawScore.toFixed(2));
     const target = profile[pid] ?? 4.0;
     const gap = Math.max(0, target - score);
     return {
       pillarId: pid,
       pillarName: PILLAR_NAMES[pid],
-      score: Number(score.toFixed(2)),
+      score,
       target,
       gap: Number(gap.toFixed(2)),
       status: score >= target ? "OPTIMIZED" : score >= target * 0.8 ? "ALIGNED" : "DEFICIENT",
