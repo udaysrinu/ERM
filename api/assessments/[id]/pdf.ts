@@ -10,7 +10,10 @@ import {
   missionStatus,
   type RawResponse,
 } from "../../_lib/engines.js";
-import { BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS } from "../../_lib/static.js";
+import {
+  BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS,
+  PILLAR_PROVENANCE, MATURITY_LEVELS, SCORE_LEGEND,
+} from "../../_lib/static.js";
 
 // A4 dimensions in points.
 const A4_WIDTH = 595.28;
@@ -50,10 +53,38 @@ const STATUS_TONE: Record<string, ReturnType<typeof rgb>> = {
 
 interface Fonts { regular: PDFFont; bold: PDFFont; }
 
+// pdf-lib's standard Helvetica only supports WinAnsi codepoints. Strip /
+// transliterate non-WinAnsi characters so we never throw on smart quotes,
+// Greek deltas, em-dashes, etc.
+const WIN_ANSI_TRANSLIT: Record<string, string> = {
+  '–': '-',  // en dash
+  '—': '-',  // em dash
+  '‘': "'",  // left single quote
+  '’': "'",  // right single quote / apostrophe
+  '“': '"',  // left double quote
+  '”': '"',  // right double quote
+  '…': '...',// ellipsis
+  '·': '-',  // middle dot
+  '•': '-',  // bullet
+  ' ': ' ',  // non-breaking space
+  '→': '->', // right arrow
+  '←': '<-', // left arrow
+  'Δ': 'd ', // capital delta (regression marker)
+  '×': 'x',  // multiplication sign
+  '÷': '/',  // division sign
+  '≥': '>=', // ge
+  '≤': '<=', // le
+  '±': '+/-',// plus-minus
+};
+
+function sanitizeForPdf(s: string): string {
+  return (s ?? '').replace(/[^\x20-\x7E]/g, ch => WIN_ANSI_TRANSLIT[ch] ?? '');
+}
+
 function drawText(page: PDFPage, text: string, x: number, y: number, opts: {
   font: PDFFont; size: number; color?: ReturnType<typeof rgb>;
 }) {
-  page.drawText(text ?? "", { x, y, font: opts.font, size: opts.size, color: opts.color ?? INK });
+  page.drawText(sanitizeForPdf(text), { x, y, font: opts.font, size: opts.size, color: opts.color ?? INK });
 }
 
 function drawEyebrow(page: PDFPage, text: string, x: number, y: number, fonts: Fonts) {
@@ -73,7 +104,9 @@ function drawPill(page: PDFPage, label: string, x: number, y: number, fonts: Fon
 }
 
 function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
-  const words = text.split(/\s+/);
+  // Sanitize first so wrapping measurements use only WinAnsi-encodable text.
+  const safe = sanitizeForPdf(text);
+  const words = safe.split(/\s+/);
   const lines: string[] = [];
   let cur = "";
   for (const w of words) {
@@ -307,13 +340,56 @@ function drawMethodology(page: PDFPage, fonts: Fonts, timestamp: string) {
       drawText(page, line, margin, y, { font: fonts.regular, size: 10.5, color: INK });
       y -= 14;
     }
-    y -= 12;
+    y -= 8;
+  }
+
+  // Score legend — sourced from xlsx Scoring Guidelines sheet.
+  drawText(page, "5-LEVEL MATURITY SCALE", margin, y, { font: fonts.bold, size: 9, color: GOLD });
+  y -= 14;
+  for (const lvl of [1, 2, 3, 4, 5]) {
+    drawText(page, `${lvl}`, margin, y, { font: fonts.bold, size: 10.5, color: INK });
+    drawText(page, SCORE_LEGEND[lvl] || "", margin + 16, y, { font: fonts.regular, size: 10, color: INK });
+    y -= 13;
   }
 
   drawHairline(page, margin, margin - 4, maxW);
   drawText(
     page,
     `Generated ${timestamp}  ·  ERM Navigator  ·  Patent claims 1–24`,
+    margin, margin - 18,
+    { font: fonts.regular, size: 8, color: INK_MUTED },
+  );
+}
+
+// New 5th page: standards alignment per pillar (sourced from xlsx Scoring Guidelines).
+function drawStandardsAlignment(page: PDFPage, fonts: Fonts) {
+  const margin = 56;
+  const maxW = A4_WIDTH - margin * 2;
+  let y = A4_HEIGHT - margin;
+  drawEyebrow(page, "Standards alignment", margin, y, fonts);
+  y -= 24;
+  drawText(page, "Per-pillar provenance", margin, y, { font: fonts.bold, size: 18, color: INK });
+  y -= 28;
+
+  for (const pid of PILLAR_IDS) {
+    const meta = (PILLAR_PROVENANCE as any)[pid];
+    if (!meta) continue;
+    if (y < margin + 60) break;
+    const pillarLabel = (pid + " · " + (meta.weight * 100).toFixed(0) + "%").toUpperCase();
+    drawText(page, pillarLabel, margin, y, { font: fonts.bold, size: 9, color: GOLD });
+    y -= 12;
+    const stdLines = wrapText(meta.standards, fonts.regular, 9.5, maxW);
+    for (const line of stdLines.slice(0, 2)) {
+      drawText(page, line, margin, y, { font: fonts.regular, size: 9.5, color: INK_SOFT });
+      y -= 11;
+    }
+    y -= 6;
+  }
+
+  drawHairline(page, margin, margin - 4, maxW);
+  drawText(
+    page,
+    "Sourced from ERM Navigator framework (ISO 31000 · COSO ERM · NIST RMF · RIMS RMM)",
     margin, margin - 18,
     { font: fonts.regular, size: 8, color: INK_MUTED },
   );
@@ -422,6 +498,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const meth = pdf.addPage([A4_WIDTH, A4_HEIGHT]);
     drawMethodology(meth, fonts, timestamp);
+
+    const standards = pdf.addPage([A4_WIDTH, A4_HEIGHT]);
+    drawStandardsAlignment(standards, fonts);
 
     const bytes = await pdf.save();
 
