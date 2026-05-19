@@ -5,7 +5,7 @@ import React, { ReactNode } from "react";
  * White + ink + one gold accent. Inter everywhere. No editorial decoration.
  */
 
-type Severity = "none" | "amber" | "mint" | "coral" | "ink";
+type Severity = "none" | "amber" | "mint" | "coral" | "ink" | "sky";
 type Dot = "amber" | "mint" | "coral" | "sky" | "ink";
 
 const stripeClass: Record<Severity, string> = {
@@ -14,6 +14,7 @@ const stripeClass: Record<Severity, string> = {
   mint: "stripe-mint",
   coral: "stripe-coral",
   ink: "stripe-ink",
+  sky: "stripe-amber", // visual fallback — sky severity reuses amber stripe
 };
 
 /* ── Card ─────────────────────────────────────────────── */
