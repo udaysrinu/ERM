@@ -6,11 +6,9 @@ import {
   AlertCircle,
   ArrowUpDown,
   CheckCircle2,
-  ChevronRight,
   Command as CommandIcon,
   FileDown,
   Minimize2,
-  RotateCcw,
   Send,
   ShieldCheck,
   Sparkles,
@@ -36,19 +34,15 @@ import {
   ReferenceLine,
 } from "recharts";
 import {
-  Brand,
+  AnimatedNumber,
   BrandMark,
   BuGlyph,
   Card,
   Eyebrow,
-  HeaderBar,
   Keycap,
   Metric,
-  OrnamentalRule,
   Pill,
-  PullQuote,
-  RunningFooter,
-  SectionRule,
+  Sparkline,
   StatusDot,
 } from "./components/primitives";
 import { Tooltip as UiTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/ui/tooltip";
@@ -73,6 +67,14 @@ import {
 } from "./data/static";
 import { getAssistantReply } from "./lib/assistant";
 import { TrendChart } from "./components/TrendChart";
+import {
+  ActionPlanScreen,
+  EvidenceScreen,
+  ReportScreen,
+  HistoryScreen,
+  ProvenanceScreen,
+  EmptyHub,
+} from "./screens/AuxiliaryScreens";
 
 // ─── CONSTANTS ─────────────────────────────────────────────────────────────
 
@@ -83,30 +85,28 @@ const BENCHMARK_LABEL: Record<string, string> = {
   external: "External",
 };
 
-// Roman numeral for editorial chapter marks.
-const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
-
-// Recharts theme — editorial palette: ink as primary data color, gold for accent.
+// Recharts theme — D+ palette: ink as primary data color, terracotta accent,
+// muted blue for benchmark line, desaturated coral/mint for severity.
 const CHART = {
-  grid: "rgba(15, 42, 27, 0.07)",
-  axis: "rgba(15, 42, 27, 0.30)",
-  axisLabel: "rgba(15, 42, 27, 0.52)",
-  primary: "#0F2A1B",
-  accent: "#C8A14B",
-  benchmark: "#1E4D73",
-  critical: "#A64226",
-  mint: "#2E6B48",
+  grid: "rgba(22, 24, 26, 0.06)",
+  axis: "rgba(22, 24, 26, 0.28)",
+  axisLabel: "rgba(22, 24, 26, 0.52)",
+  primary: "#16181A",
+  accent: "#C4542A",
+  benchmark: "#2C5F8C",
+  critical: "#A6442B",
+  mint: "#3F7A57",
 };
 
 const TOOLTIP_STYLE = {
-  backgroundColor: "#FFFDF8",
-  border: "1px solid rgba(15, 42, 27, 0.12)",
-  borderRadius: 8,
+  backgroundColor: "#FFFFFF",
+  border: "1px solid rgba(22, 24, 26, 0.10)",
+  borderRadius: 7,
   padding: "10px 14px",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "Inter Tight, Inter, sans-serif",
   fontSize: "12px",
-  color: "#0F2A1B",
-  boxShadow: "0 2px 4px rgba(15,42,27,.06), 0 12px 32px rgba(15,42,27,.08)",
+  color: "#16181A",
+  boxShadow: "0 2px 4px rgba(22,24,26,.04), 0 12px 32px rgba(22,24,26,.08)",
 } as const;
 
 // ─── ASSISTANT ─────────────────────────────────────────────────────────────
@@ -123,27 +123,43 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
+  // Context-aware prompt chips — built from the live analysis so each
+  // suggestion points at something the engine actually knows.
+  const suggestions = useMemo(() => {
+    const base = ["Weakest gap", "Drift status", "Top action"];
+    if (!analysis) return base;
+    const reg = analysis.regressions?.[0];
+    const action = analysis.roadmap?.[0];
+    const dynamic: string[] = [];
+    if (reg) dynamic.push(`Why did ${reg.pillarName} regress?`);
+    if (action) dynamic.push(`What does "${action.description?.slice(0, 28)}…" cost?`);
+    return [...dynamic, ...base].slice(0, 4);
+  }, [analysis]);
+
+  const sendMessage = (text: string) => {
+    if (!text.trim() || loading) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: userMsg }]);
+    setMessages(prev => [...prev, { role: "user", content: text.trim() }]);
     setLoading(true);
     window.setTimeout(() => {
-      setMessages(prev => [...prev, { role: "assistant", content: getAssistantReply(userMsg, analysis) }]);
+      setMessages(prev => [...prev, { role: "assistant", content: getAssistantReply(text.trim(), analysis) }]);
       setLoading(false);
-    }, 200);
+    }, 220);
   };
+
+  const handleSend = () => sendMessage(input);
 
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-12 h-12 bg-[var(--color-ink)] text-[var(--color-highlight)] flex items-center justify-center rounded-full shadow-[0_8px_24px_rgba(15,42,27,0.24)] hover:scale-105 ease-premium transition-transform z-[100] cursor-pointer group"
-        aria-label="Open assistant"
+        className="fixed bottom-6 right-6 w-[52px] h-[52px] bg-[var(--color-ink)] text-[var(--color-accent-ink)] flex items-center justify-center rounded-full shadow-[var(--shadow-floated)] hover:scale-[1.04] ease-premium transition-transform z-[100] cursor-pointer group"
+        aria-label="Open Navigator Assistant"
       >
         <Sparkles size={18} />
-        <span className="absolute -top-1 -right-1 w-3 h-3 bg-[var(--color-gold)] rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        {analysis?.regressions?.length > 0 && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-[var(--color-accent)] rounded-full ring-2 ring-[var(--color-bg)]" />
+        )}
       </button>
 
       <AnimatePresence>
@@ -153,12 +169,20 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="fixed bottom-22 right-6 w-[400px] h-[540px] card flex flex-col overflow-hidden z-[101]"
+            className="fixed bottom-24 right-6 w-[440px] h-[600px] card flex flex-col overflow-hidden z-[101] shadow-[var(--shadow-deep)]"
           >
-            <div className="px-5 py-4 border-b hairline flex items-center justify-between bg-[var(--color-surface-soft)]">
-              <div className="flex items-center gap-3">
-                <StatusDot color="amber" />
-                <span className="eyebrow-amber">Navigator Assistant</span>
+            {/* Header */}
+            <div className="px-5 py-3.5 border-b hairline flex items-center justify-between bg-[var(--color-surface-soft)]">
+              <div className="flex items-center gap-2.5">
+                <span className="w-7 h-7 rounded-full bg-[var(--color-ink)] text-[var(--color-accent-ink)] flex items-center justify-center">
+                  <Sparkles size={13} />
+                </span>
+                <div className="flex flex-col leading-none">
+                  <span className="text-[13px] font-medium text-[var(--color-ink)]">Navigator Assistant</span>
+                  <span className="font-mono text-[9px] tracking-[0.10em] uppercase text-[var(--color-ink-muted)] mt-0.5">
+                    {analysis ? `Context · ${analysis.entityName ?? "Active assessment"}` : "Standby"}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -168,24 +192,35 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
                 <Minimize2 size={14} />
               </button>
             </div>
+
+            {/* Live analysis context strip */}
+            {analysis && (
+              <div className="px-5 py-2.5 border-b hairline bg-[var(--color-bg)] flex items-center gap-4 text-[11px] font-mono text-[var(--color-ink-muted)]">
+                <span>Score <span className="text-[var(--color-ink)] font-semibold">{analysis.overallScore?.toFixed(2)}</span></span>
+                <span>Aligned <span className="text-[var(--color-ink)] font-semibold">{analysis.analytics?.filter((a: any) => a.score >= a.target).length}/{analysis.analytics?.length}</span></span>
+                {analysis.regressions?.length > 0 && (
+                  <span>Drift <span className="text-[var(--color-coral)] font-semibold">{analysis.regressions.length}</span></span>
+                )}
+                <span>Actions <span className="text-[var(--color-ink)] font-semibold">{analysis.activeRoadmapCount}</span></span>
+              </div>
+            )}
+
             <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
               {messages.length === 0 && (
                 <div className="space-y-5">
                   <div>
-                    <Eyebrow tone="ink">Ask a question</Eyebrow>
+                    <Eyebrow tone="ink">How can I help?</Eyebrow>
                     <p className="mt-3 text-[13px] text-[var(--color-ink-soft)] leading-relaxed">
-                      Ask about scoring matrix, benchmark profiles, drift signals, roadmap sequencing, or response coverage.
+                      I can read your live analysis — pillar gaps, drift signals, roadmap sequencing,
+                      benchmark profiles. Ask in plain English, or pick a starting point below.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {["weakest gap", "drift status", "top action"].map(p => (
+                    {suggestions.map(p => (
                       <button
                         key={p}
-                        onClick={() => {
-                          setInput(p);
-                          setTimeout(handleSend, 0);
-                        }}
-                        className="px-3 py-1.5 border hairline rounded-full text-[11px] font-mono text-[var(--color-ink-soft)] hover:border-[var(--color-gold)] hover:text-[var(--color-ink)] cursor-pointer ease-premium transition-colors"
+                        onClick={() => sendMessage(p)}
+                        className="px-3 py-1.5 border hairline rounded-full text-[11px] text-[var(--color-ink-soft)] hover:border-[var(--color-accent)] hover:text-[var(--color-ink)] cursor-pointer ease-premium transition-colors"
                       >
                         {p}
                       </button>
@@ -207,27 +242,29 @@ const NavigatorAssistant = ({ analysis }: { analysis?: any }) => {
                 </div>
               ))}
               {loading && (
-                <div className="flex items-center gap-2">
-                  <StatusDot color="amber" />
-                  <span className="eyebrow-amber">thinking</span>
+                <div className="flex items-center gap-1.5 px-3.5 py-2.5 max-w-[120px] rounded-[10px] bg-[var(--color-surface-soft)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" style={{ animationDelay: "120ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-accent)] animate-pulse" style={{ animationDelay: "240ms" }} />
                 </div>
               )}
               <div ref={chatEndRef} />
             </div>
-            <div className="p-4 border-t hairline flex gap-2 items-center">
+            <div className="px-4 py-3 border-t hairline flex gap-2 items-center bg-[var(--color-surface)]">
               <input
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSend()}
-                className="input-bare py-2"
+                className="flex-1 bg-transparent border-0 outline-none text-[13px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-subtle)]"
                 placeholder="Ask about your maturity…"
               />
               <button
                 onClick={handleSend}
-                className="text-[var(--color-ink)] hover:opacity-70 cursor-pointer"
+                disabled={!input.trim() || loading}
+                className="w-8 h-8 rounded-full bg-[var(--color-accent)] text-[var(--color-accent-ink)] flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:scale-105 ease-premium transition-transform"
                 aria-label="Send"
               >
-                <Send size={16} />
+                <Send size={13} />
               </button>
             </div>
           </motion.div>
@@ -255,85 +292,68 @@ const LoginScreen = ({
   const [password, setPassword] = useState("");
 
   return (
-    <div className="min-h-screen flex items-stretch paper-grain overflow-hidden relative">
-      {/* Masthead top edge */}
-      <div className="absolute top-0 left-0 right-0 z-20">
-        <div className="max-w-[1440px] mx-auto px-10 pt-8 flex items-center justify-between font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-          <span>ERM Navigator · Volume I</span>
-          <span>No. 001 · MMXXVI</span>
-        </div>
-      </div>
-
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-[var(--color-bg)] overflow-hidden">
       {/* Left — credential form */}
-      <div className="flex-1 flex items-center justify-center px-8 lg:px-16 relative z-10">
-        <div className="w-full max-w-[440px]">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="flex items-center gap-3 mb-10">
-              <BrandMark size={28} />
-              <div className="flex flex-col leading-none">
-                <span className="font-display text-[17px] tracking-tight text-[var(--color-ink)] font-medium">
-                  ERM Navigator
-                </span>
-                <span className="font-mono text-[9px] tracking-[0.22em] text-[var(--color-ink-muted)] mt-1.5 uppercase">
-                  Risk Maturity Platform
-                </span>
-              </div>
-            </div>
+      <div className="flex flex-col px-8 lg:px-20 py-12">
+        {/* Brand — 8-point compass-star mark + Fraunces wordmark + mono subtitle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="flex items-center gap-3"
+        >
+          <BrandMark size={28} />
+          <div className="flex flex-col leading-none">
+            <span className="wordmark text-[17px] text-[var(--color-ink)]">
+              ERM Navigator
+            </span>
+            <span className="font-mono text-[9px] tracking-[0.10em] text-[var(--color-ink-muted)] mt-1.5 uppercase">
+              Risk Maturity Platform
+            </span>
+          </div>
+        </motion.div>
 
-            <div className="chapter-mark mb-5">
-              <span>Chapter I · Entry</span>
-            </div>
+        {/* Sign-in form anchored to bottom-of-content */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-auto max-w-[440px] w-full"
+        >
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.10em] text-[var(--color-accent)] font-medium">
+            <span>●</span><span>Sign in</span>
+          </div>
 
-            <h1 className="display-title text-[64px] text-[var(--color-ink)]">
-              The risk<br />
-              <span className="italic text-[var(--color-gold)]" style={{ fontWeight: 300 }}>navigator</span>
-              <span className="text-[var(--color-ink)]">.</span>
-            </h1>
+          <h1 className="mt-4 text-[44px] font-medium leading-[1.05] tracking-[-0.028em] text-[var(--color-ink)] font-sans">
+            The risk navigator.
+          </h1>
 
-            <p className="mt-5 text-[14.5px] text-[var(--color-ink-soft)] leading-[1.6] max-w-[380px]">
-              An auditable maturity platform for enterprise risk programs. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
-            </p>
+          <p className="mt-4 text-[14.5px] leading-[1.55] text-[var(--color-ink-soft)] max-w-[400px]">
+            An auditable maturity platform for enterprise risk programs. Aligned to ISO&nbsp;31000, COSO&nbsp;ERM, and NIST&nbsp;RMF.
+          </p>
 
-            <div className="mt-8 flex items-center gap-4 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-              <span>ISO 31000</span>
-              <span className="text-[var(--color-gold)]">·</span>
-              <span>COSO ERM</span>
-              <span className="text-[var(--color-gold)]">·</span>
-              <span>NIST RMF</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-12 space-y-6"
-          >
+          <div className="mt-9 flex flex-col gap-4">
             <div>
-              <Eyebrow className="block mb-3">Email · operator</Eyebrow>
+              <Eyebrow className="block mb-2">Operator email</Eyebrow>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && onLogin(email, password)}
                 placeholder="analyst@gmail.com"
-                className="input-bare"
                 autoFocus
+                className="w-full px-3 py-2.5 bg-[var(--color-surface)] border hairline rounded-[7px] text-[14px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-subtle)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
               />
             </div>
             <div>
-              <Eyebrow className="block mb-3">Passphrase</Eyebrow>
+              <Eyebrow className="block mb-2">Passphrase</Eyebrow>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && onLogin(email, password)}
                 placeholder="••••••••"
-                className="input-bare"
+                className="w-full px-3 py-2.5 bg-[var(--color-surface)] border hairline rounded-[7px] text-[14px] text-[var(--color-ink)] placeholder:text-[var(--color-ink-subtle)] focus:outline-none focus:border-[var(--color-accent)] transition-colors"
               />
             </div>
 
@@ -341,10 +361,10 @@ const LoginScreen = ({
               <motion.div
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="border hairline stripe-coral py-3 px-4 rounded-[8px] bg-[var(--color-coral-soft)]"
+                className="border hairline py-2.5 px-3 rounded-[7px] bg-[var(--color-coral-soft)]"
               >
-                <div className="flex items-center gap-3">
-                  <AlertCircle size={14} className="text-[var(--color-coral)]" />
+                <div className="flex items-center gap-2">
+                  <AlertCircle size={13} className="text-[var(--color-coral)]" />
                   <span className="text-[12px] text-[var(--color-coral)]">{error}</span>
                 </div>
               </motion.div>
@@ -353,115 +373,79 @@ const LoginScreen = ({
             <button
               onClick={() => onLogin(email, password)}
               disabled={loading}
-              className="btn-accent w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-cta w-full mt-2"
             >
-              {loading ? "Signing in…" : "Enter the navigator"}
-              {!loading && <ArrowRight size={14} />}
+              {loading ? "Signing in…" : "Enter the Navigator"}
+              {!loading && <ArrowRight size={13} />}
             </button>
+          </div>
 
-            <div className="pt-5 border-t hairline flex items-center justify-between text-[10px] font-mono text-[var(--color-ink-muted)] tracking-[0.18em] uppercase">
-              <span>Demo · any @gmail</span>
-              <div className="flex items-center gap-2">
-                <StatusDot color="mint" />
-                <span>Secure</span>
-              </div>
-            </div>
-          </motion.div>
+          {/* Trust strip — outcomes, not implementation. */}
+          <div className="mt-7 inline-flex items-center gap-3.5 px-3.5 py-2 rounded-full border hairline bg-[var(--color-bg-deep)] font-mono text-[11px] text-[var(--color-ink-soft)]">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="text-[var(--color-mint)]">●</span> Replayable
+            </span>
+            <span className="w-px h-3 bg-[var(--color-border-strong)]" />
+            <span>Audit-traceable</span>
+            <span className="w-px h-3 bg-[var(--color-border-strong)]" />
+            <span>Standards-aligned</span>
+          </div>
+        </motion.div>
+
+        {/* Footer alignment row */}
+        <div className="mt-auto pt-8 font-mono text-[10.5px] tracking-[0.04em] text-[var(--color-ink-muted)]">
+          ISO 31000 · COSO ERM · NIST RMF · RIMS RMM
         </div>
       </div>
 
-      {/* Right — editorial content pane */}
-      <div className="hidden lg:flex flex-1 relative bg-[var(--color-bg-deep)] overflow-hidden border-l hairline items-center justify-center px-16">
-        {/* Decorative watermark: oversized compass */}
-        <svg
-          viewBox="0 0 400 400"
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] pointer-events-none"
-          style={{ animation: "slow-drift 24s ease-in-out infinite" }}
-          aria-hidden
-        >
-          <g stroke="rgba(15, 42, 27, 0.10)" strokeWidth="0.5" fill="none">
-            {/* Concentric rings */}
-            {[60, 110, 160, 200].map(r => (
-              <circle key={r} cx="200" cy="200" r={r} />
-            ))}
-            {/* Radial tick marks every 22.5° */}
-            {Array.from({ length: 16 }, (_, i) => {
-              const a = (i * 22.5 * Math.PI) / 180;
-              const x1 = 200 + Math.cos(a) * 170;
-              const y1 = 200 + Math.sin(a) * 170;
-              const x2 = 200 + Math.cos(a) * 200;
-              const y2 = 200 + Math.sin(a) * 200;
-              return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} />;
-            })}
-            {/* Cardinal axes */}
-            <line x1="200" y1="20" x2="200" y2="380" stroke="rgba(200, 161, 75, 0.35)" />
-            <line x1="20" y1="200" x2="380" y2="200" stroke="rgba(200, 161, 75, 0.35)" />
-          </g>
-          {/* 8-point star at center */}
-          <path
-            d="M200 90 L214 170 L290 140 L230 200 L290 260 L214 230 L200 310 L186 230 L110 260 L170 200 L110 140 L186 170 Z"
-            fill="rgba(200, 161, 75, 0.10)"
-            stroke="rgba(200, 161, 75, 0.45)"
-            strokeWidth="1"
-          />
-          {/* Cardinal letters */}
-          <g fontFamily="Fraunces, serif" fontSize="14" fontStyle="italic" fill="rgba(15, 42, 27, 0.40)">
-            <text x="200" y="35" textAnchor="middle">N</text>
-            <text x="375" y="205" textAnchor="middle">E</text>
-            <text x="200" y="380" textAnchor="middle">S</text>
-            <text x="25" y="205" textAnchor="middle">W</text>
-          </g>
-        </svg>
-
+      {/* Right — proof panel: ISO 31000 citation + numerical anchors. */}
+      <div className="hidden lg:flex flex-col justify-center px-16 py-20 bg-[var(--color-bg-deep)] border-l hairline">
         <motion.div
           initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-10 max-w-[480px]"
+          transition={{ duration: 0.6, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-[560px]"
         >
-          <Eyebrow tone="amber">From the editor's desk</Eyebrow>
-
-          <PullQuote attribution="ISO 31000 : 2018 · clause 5.4">
-            Risk management should be an integral part of all organizational activities — dynamic, iterative, and responsive to change, informed by the best available information.
-          </PullQuote>
-
-          <div className="mt-10 grid grid-cols-3 gap-6 pt-6 border-t hairline-gold">
-            <div>
-              <div className="folio-num text-[44px] text-[var(--color-ink)]">
-                100
-              </div>
-              <p className="mt-2 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                Vectors<br/>per unit
-              </p>
-            </div>
-            <div>
-              <div className="folio-num text-[44px] text-[var(--color-ink)]">
-                10
-              </div>
-              <p className="mt-2 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                Pillars<br/>assessed
-              </p>
-            </div>
-            <div>
-              <div className="folio-num text-[44px] text-[var(--color-gold)]">
-                24
-              </div>
-              <p className="mt-2 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                Patent<br/>claims
-              </p>
-            </div>
+          <div className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--color-accent)] font-medium">
+            The framework, in its own words
           </div>
 
-          <p className="mt-12 margin-note max-w-[380px]">
+          {/* ISO 31000 clause 5.4 — the canonical statement of what risk
+              management is supposed to do, used here as borrowed authority. */}
+          <blockquote
+            className="mt-6 pl-5 border-l-2 text-[24px] leading-[1.4] tracking-[-0.018em] text-[var(--color-ink)]"
+            style={{ borderColor: 'var(--color-accent-line)', fontWeight: 400 }}
+          >
+            Risk management should be an integral part of all organizational activities — <span className="text-[var(--color-accent)]">dynamic, iterative, and responsive to change</span>, informed by the best available information.
+          </blockquote>
+          <div className="mt-3 pl-5 font-mono text-[10.5px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">
+            ISO 31000 : 2018 · clause 5.4
+          </div>
+
+          <p className="mt-10 text-[14.5px] leading-[1.6] text-[var(--color-ink-soft)] italic max-w-[480px]" style={{ fontFamily: 'var(--font-wordmark)' }}>
             Every assessment is auditable: every score, every note, every evidence link is stamped, addressable, and reproducible on demand.
           </p>
-        </motion.div>
 
-        {/* Bottom-right plate */}
-        <div className="absolute bottom-8 right-12 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)] text-right leading-relaxed">
-          Plate I<br/>
-          <span className="italic font-display tracking-normal text-[12px]">compass rose</span>
-        </div>
+          <div className="mt-12 grid grid-cols-3 gap-4">
+            {[
+              { n: '100',  l: 'standards-aligned\nvectors per unit' },
+              { n: '10×4', l: 'pillars × operating\ndimensions' },
+              { n: '24',   l: 'patent claims\ncovered' },
+            ].map((s, i) => (
+              <div
+                key={i}
+                className="p-[18px] bg-[var(--color-surface)] rounded-[10px] border hairline"
+              >
+                <div className="text-[32px] font-medium leading-none tracking-[-0.025em] text-[var(--color-accent)]">
+                  {s.n}
+                </div>
+                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-ink-muted)] whitespace-pre-line leading-[1.4]">
+                  {s.l}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -488,79 +472,165 @@ const ScopeScreen = ({
   history: any[];
   historyLoading: boolean;
   onOpenHistorical: (item: any) => void;
-}) => (
-  <div className="min-h-screen paper-grain">
-    <HeaderBar
-      crumb={<Eyebrow tone="ink">Operating Scope</Eyebrow>}
-      right={
-        <div className="flex items-center gap-5">
-          <div className="flex flex-col items-end leading-tight">
-            <span className="font-mono text-[12px] text-[var(--color-ink)]">{operatorEmail}</span>
-            <Eyebrow className="mt-0.5">Operator</Eyebrow>
-          </div>
-          <button
-            onClick={onLogout}
-            className="text-[var(--color-ink-muted)] hover:text-[var(--color-coral)] cursor-pointer transition-colors"
-            aria-label="Log out"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      }
-    />
+}) => {
+  // Map last-known score per BU from the operator's history.
+  // Latest session per entityId wins; missing → "no data".
+  const latestByBu = new Map<string, any>();
+  for (const item of history ?? []) {
+    if (!latestByBu.has(item.entityId)) latestByBu.set(item.entityId, item);
+  }
 
-    <div className="max-w-[1440px] mx-auto px-10 py-14">
-      {/* Editorial lede — 2-column */}
+  return (
+  <div className="min-h-screen">
+    <div className="max-w-[1440px] mx-auto px-10 py-12">
+      {/* D+ lede — single column, tighter than editorial 2-col */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-14"
+        className="mb-10"
       >
-        <div className="lg:col-span-7">
-          <div className="chapter-mark mb-5">
-            <span>Chapter II · Scope</span>
-          </div>
-          <h1 className="display-title text-[72px] text-[var(--color-ink)] leading-[0.96]">
-            Choose the unit<br/>
-            <span className="italic text-[var(--color-gold)]" style={{ fontWeight: 300 }}>to measure</span>
-            <span className="text-[var(--color-ink)]">.</span>
-          </h1>
-          <p className="mt-6 text-[15px] text-[var(--color-ink-soft)] leading-[1.65] max-w-[580px]">
-            Every operating unit runs a hundred-vector assessment and rolls up into a weighted pillar-dimension matrix. Results are benchmarked against Target, Industry, Peer, and External reference profiles.
-          </p>
-        </div>
-        <div className="lg:col-span-5 lg:pt-8 lg:border-l hairline-gold lg:pl-10">
-          <Eyebrow tone="amber">Run parameters</Eyebrow>
-          <dl className="mt-5 space-y-4 text-[13px]">
-            {[
-              ["Units available", String(entities.length), "operating"],
-              ["Vectors per unit", "100", "questions"],
-              ["Pillars", "10", "ERM domains"],
-              ["Dimensions", "4", "People · Process · Tech · Gov"],
-              ["Benchmark profiles", "4", "Target · Industry · Peer · External"],
-            ].map(([k, v, annot]) => (
-              <div key={k} className="flex items-baseline justify-between gap-4 border-b hairline pb-3 last:border-0 last:pb-0">
-                <dt>
-                  <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">{k}</div>
-                  <div className="mt-1 editorial-italic text-[12px] text-[var(--color-ink-subtle)]">{annot}</div>
-                </dt>
-                <dd className="display-num text-[28px] text-[var(--color-ink)] tabular">{v}</dd>
-              </div>
-            ))}
-          </dl>
+        <Eyebrow tone="accent">Operating scope</Eyebrow>
+        <h1
+          className="mt-3 text-[44px] font-medium leading-[1.05] tracking-[-0.028em] text-[var(--color-ink)]"
+          style={{ fontFamily: 'var(--font-sans)' }}
+        >
+          Choose the unit to measure.
+        </h1>
+        <p className="mt-3 text-[15px] text-[var(--color-ink-soft)] leading-[1.55] max-w-[680px]">
+          Every operating unit runs a 100-vector assessment and rolls up into a weighted pillar–dimension matrix. Results are benchmarked against Target, Industry, Peer, and External reference profiles.
+        </p>
+
+        {/* Run parameters strip — flat row, mono labels */}
+        <div className="mt-6 flex items-center gap-6 flex-wrap text-[12.5px]">
+          {[
+            { k: "Units", v: String(entities.length) },
+            { k: "Vectors per unit", v: "100" },
+            { k: "Pillars × dimensions", v: "10 × 4" },
+            { k: "Benchmark profiles", v: "4" },
+          ].map(p => (
+            <div key={p.k} className="flex items-baseline gap-2">
+              <span className="text-[15px] font-medium tabular text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>{p.v}</span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">{p.k}</span>
+            </div>
+          ))}
         </div>
       </motion.div>
 
-      {/* Archive — past sessions for this operator. Always rendered so first-time
-          users can see where their history will appear. */}
-      <div className="mt-14 mb-12">
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 className="display-heading text-[22px] text-[var(--color-ink)]">
-            <span className="editorial-italic text-[var(--color-ink-muted)] mr-3">From the</span>
-            Archive
+      {/* Operating-unit mosaic — D+ pastel-tile pattern.
+          Each tile pulls last-known overallScore from the operator's history
+          if available; otherwise renders a 'no data' placeholder. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {entities.map((bu, idx) => {
+          const t = BU_TINTS[bu.id] ?? { tint: 'var(--color-bg-deep)', dot: 'var(--color-ink)' };
+          const last = latestByBu.get(bu.id);
+          const score = last && typeof last.overallScore === "number" ? last.overallScore : null;
+          const ageDays = last
+            ? Math.floor((Date.now() - new Date(last.createdAt).getTime()) / 86400000)
+            : null;
+          const status: "ok" | "warn" | "crit" | "empty" =
+            score === null ? "empty" :
+            score >= 3.5 ? "ok" :
+            score >= 3.0 ? "warn" : "crit";
+          const statusLabel = status === "ok" ? "On benchmark" :
+                              status === "warn" ? "Drifting" :
+                              status === "crit" ? "Critical" : "No data";
+          const statusTone = status === "ok" ? "mint" : status === "warn" ? "amber" : status === "crit" ? "coral" : "ink";
+
+          return (
+            <motion.button
+              key={bu.id}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.035, duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => onSelect(bu)}
+              className="group relative text-left bg-[var(--color-surface)] border hairline rounded-[10px] overflow-hidden hover:border-[var(--color-ink)] cursor-pointer transition-colors"
+              style={{ minHeight: 168 }}
+            >
+              {/* Pastel tint header strip */}
+              <div
+                className="absolute inset-x-0 top-0 h-[8px]"
+                style={{ background: t.tint }}
+                aria-hidden
+              />
+              <div className="p-5 pt-6">
+                {/* Top row: glyph + code + status */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className="inline-flex items-center justify-center flex-shrink-0"
+                      style={{ width: 32, height: 32, borderRadius: 7, background: t.tint, color: t.dot }}
+                    >
+                      <BuGlyph id={bu.id} size={16} />
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">
+                        {bu.id}
+                      </span>
+                    </div>
+                  </div>
+                  <Pill tone={statusTone as any}>{statusLabel}</Pill>
+                </div>
+
+                {/* Name + industry */}
+                <div className="mt-3.5">
+                  <h3
+                    className="text-[20px] font-medium leading-[1.15] tracking-[-0.012em] text-[var(--color-ink)]"
+                    style={{ fontFamily: 'var(--font-sans)' }}
+                  >
+                    {bu.name}
+                  </h3>
+                  <p className="mt-0.5 text-[12.5px] text-[var(--color-ink-muted)] truncate">
+                    {bu.industry}
+                  </p>
+                </div>
+
+                {/* Bottom row: score or "no data" + age + arrow */}
+                <div className="mt-5 pt-3.5 border-t hairline flex items-end justify-between">
+                  <div>
+                    {score !== null ? (
+                      <>
+                        <div className="text-[24px] font-medium tabular text-[var(--color-ink)] leading-none" style={{ fontFamily: 'var(--font-sans)' }}>
+                          {score.toFixed(2)}
+                        </div>
+                        <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
+                          {ageDays === 0 ? "today" : ageDays === 1 ? "1d ago" : `${ageDays}d ago`}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-[15px] text-[var(--color-ink-subtle)] italic" style={{ fontFamily: 'var(--font-wordmark)' }}>
+                          Not yet assessed
+                        </div>
+                        <div className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--color-ink-muted)]">
+                          100 vectors ready
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[var(--color-accent)] transition-colors">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.06em]">
+                      {score !== null ? "Open" : "Begin"}
+                    </span>
+                    <ArrowUpRight
+                      size={12}
+                      className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
+                  </div>
+                </div>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      {/* Archive — full session history */}
+      <div className="mt-12">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="text-[18px] font-medium text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+            Past sessions
           </h2>
-          <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+          <div className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">
             {historyLoading
               ? "loading…"
               : history.length === 0
@@ -570,156 +640,83 @@ const ScopeScreen = ({
         </div>
 
         {historyLoading ? (
-          <div className="border-t border-b hairline py-12 text-center">
-            <p className="editorial-italic text-[14px] text-[var(--color-ink-muted)]">
-              Retrieving your past sessions…
-            </p>
+          <div className="border-t border-b hairline py-10 text-center">
+            <p className="text-[13px] text-[var(--color-ink-muted)]">Retrieving your past sessions…</p>
           </div>
         ) : history.length === 0 ? (
-          <div className="border-t border-b hairline py-12 px-6 flex items-start gap-6">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="flex-shrink-0 mt-1" aria-hidden>
-              <rect x="6" y="8" width="28" height="24" rx="2" stroke="var(--color-gold)" strokeWidth="1" opacity="0.6" />
-              <path d="M6 14 L34 14" stroke="var(--color-gold)" strokeWidth="1" opacity="0.6" />
+          <div className="border-t border-b hairline py-10 px-5 flex items-start gap-5">
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" className="flex-shrink-0 mt-1" aria-hidden>
+              <rect x="6" y="8" width="28" height="24" rx="2" stroke="var(--color-accent)" strokeWidth="1" opacity="0.6" />
+              <path d="M6 14 L34 14" stroke="var(--color-accent)" strokeWidth="1" opacity="0.6" />
               <path d="M12 20 L28 20 M12 24 L24 24" stroke="var(--color-ink-muted)" strokeWidth="1" />
             </svg>
             <div className="flex-1">
-              <p className="display-heading text-[18px] text-[var(--color-ink)]">
-                <span className="editorial-italic text-[var(--color-ink-muted)]">A blank page,</span> for now.
+              <p className="text-[16px] font-medium text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+                A blank page, for now.
               </p>
-              <p className="mt-2 text-[13px] text-[var(--color-ink-soft)] leading-relaxed max-w-[560px]">
-                Your completed assessments will stamp here — each one with its score, operating unit, and a transaction ID. Complete an assessment below to begin your archive and unlock drift detection across future runs.
+              <p className="mt-1.5 text-[13px] text-[var(--color-ink-soft)] leading-[1.55] max-w-[560px]">
+                Your completed assessments will stamp here — each one with its score, operating unit, and a transaction ID. Complete an assessment above to begin your archive and unlock drift detection across future runs.
               </p>
             </div>
           </div>
         ) : (
-          <>
-            <div className="border-t hairline">
-              {history.slice(0, 8).map(item => {
-                const d = new Date(item.createdAt);
-                const when = d.toLocaleString(undefined, {
-                  month: "short", day: "numeric", year: "numeric",
-                  hour: "numeric", minute: "2-digit",
-                });
-                const score = typeof item.overallScore === "number" ? item.overallScore.toFixed(2) : "—";
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => onOpenHistorical(item)}
-                    className="w-full border-b hairline py-5 px-2 flex items-center gap-6 text-left group cursor-pointer hover:bg-[var(--color-surface-soft)]/60 transition-colors"
+          <div className="border-t hairline">
+            {history.slice(0, 8).map(item => {
+              const d = new Date(item.createdAt);
+              const when = d.toLocaleString(undefined, {
+                month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
+              });
+              const score = typeof item.overallScore === "number" ? item.overallScore.toFixed(2) : "—";
+              const t = BU_TINTS[item.entityId] ?? { tint: 'var(--color-bg-deep)', dot: 'var(--color-ink)' };
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onOpenHistorical(item)}
+                  className="w-full border-b hairline py-3.5 px-3 flex items-center gap-5 text-left group cursor-pointer hover:bg-[var(--color-bg-deep)]/60 transition-colors"
+                >
+                  <span
+                    className="inline-flex items-center justify-center flex-shrink-0"
+                    style={{ width: 30, height: 30, borderRadius: 7, background: t.tint, color: t.dot }}
                   >
-                    <div className="w-[80px] flex-shrink-0">
-                      <div className="folio-num text-[32px] text-[var(--color-ink)] leading-none">
-                        {score}
-                      </div>
-                      <div className="mt-1 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                        / 5.00
-                      </div>
+                    <BuGlyph id={item.entityId} size={14} />
+                  </span>
+                  <div className="w-[60px] flex-shrink-0">
+                    <div className="text-[20px] font-medium tabular text-[var(--color-ink)] leading-none" style={{ fontFamily: 'var(--font-sans)' }}>
+                      {score}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-3">
-                        <h3 className="display-heading text-[20px] text-[var(--color-ink)]">
-                          {item.entityName}
-                        </h3>
-                        <span className="font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                          {item.entityId}
-                        </span>
-                      </div>
-                      <p className="mt-1 editorial-italic text-[12px] text-[var(--color-ink-muted)]">
-                        {when} · transaction <span className="font-mono tracking-wide">{item.id}</span>
-                      </p>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[14px] font-medium text-[var(--color-ink)] truncate" style={{ fontFamily: 'var(--font-sans)' }}>
+                        {item.entityName}
+                      </span>
+                      <span className="font-mono text-[9.5px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">
+                        {item.entityId}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)] transition-colors">
-                      <span>Open</span>
-                      <ArrowUpRight size={12} className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                    <p className="mt-0.5 font-mono text-[10.5px] text-[var(--color-ink-muted)]">
+                      {when} · <span className="tracking-wide">{item.id}</span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.06em] text-[var(--color-ink-muted)] group-hover:text-[var(--color-accent)] transition-colors">
+                    <span>Open</span>
+                    <ArrowUpRight size={12} className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                  </div>
+                </button>
+              );
+            })}
             {history.length > 8 && (
-              <p className="mt-3 font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-subtle)]">
-                showing 8 of {history.length} · older entries available via command palette
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--color-ink-subtle)]">
+                showing 8 of {history.length} · older entries available via the command palette
               </p>
             )}
-          </>
+          </div>
         )}
       </div>
-
-      <OrnamentalRule color="gold" />
-
-      <div className="mt-10 flex items-baseline justify-between mb-8">
-        <h2 className="display-heading text-[22px] text-[var(--color-ink)]">
-          <span className="editorial-italic text-[var(--color-ink-muted)] mr-3">Table of</span>
-          Operating Units
-        </h2>
-        <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-          {entities.length} entries · all ready
-        </div>
-      </div>
-
-      {/* Editorial chapter list — BU glyph + name; code in display serif as folio */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-1">
-        {entities.map((bu, idx) => (
-          <motion.button
-            key={bu.id}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.04, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            onClick={() => onSelect(bu)}
-            className="text-left group relative cursor-pointer border-b hairline py-7 px-2 hover:bg-[var(--color-surface-soft)]/60 transition-colors"
-          >
-            <div className="flex items-start gap-6">
-              {/* Glyph column */}
-              <div className="flex flex-col items-center justify-start pt-2 w-[56px] flex-shrink-0">
-                <div className="w-[48px] h-[48px] rounded-full border hairline-strong flex items-center justify-center group-hover:border-[var(--color-ink)] ease-premium transition-colors">
-                  <BuGlyph id={bu.id} size={26} />
-                </div>
-                <span className="mt-3 font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
-                  {bu.id}
-                </span>
-              </div>
-
-              {/* Body */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-3">
-                  <h3 className="display-heading text-[32px] text-[var(--color-ink)] leading-tight">
-                    {bu.name}
-                  </h3>
-                  <span className="editorial-italic text-[14px] text-[var(--color-gold)] opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden>
-                    →
-                  </span>
-                </div>
-                <p className="mt-1.5 editorial-italic text-[13px] text-[var(--color-ink-muted)] truncate">
-                  {bu.industry}
-                </p>
-
-                <div className="mt-5 pt-4 border-t hairline flex items-center justify-between">
-                  <div className="flex items-center gap-3 font-mono text-[10px] tracking-[0.22em] uppercase">
-                    <StatusDot color="mint" />
-                    <span className="text-[var(--color-mint)]">Ready</span>
-                    <span className="text-[var(--color-ink-subtle)]">·</span>
-                    <span className="text-[var(--color-ink-muted)]">100 vectors</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)] transition-colors">
-                    <span className="font-mono text-[10px] tracking-[0.22em] uppercase">
-                      Begin assessment
-                    </span>
-                    <ArrowUpRight
-                      size={14}
-                      className="ease-premium transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.button>
-        ))}
-      </div>
     </div>
-
-    <RunningFooter folio="Scope · Folio II" />
   </div>
 );
+};
 
 // ─── QUESTIONNAIRE ─────────────────────────────────────────────────────────
 
@@ -772,36 +769,34 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
   // Summary screen
   if (showSummary) {
     return (
-      <div className="min-h-screen paper-grain">
-        <HeaderBar
-          crumb={
-            <div className="flex items-center gap-3">
-              <Eyebrow>Unit</Eyebrow>
-              <span className="font-mono text-[12px] text-[var(--color-ink)]">{bu.name}</span>
-              <ChevronRight size={12} className="text-[var(--color-ink-muted)]" />
-              <Eyebrow tone="ink">Summary</Eyebrow>
-            </div>
-          }
-        />
-        <div className="max-w-[1100px] mx-auto px-10 py-14">
-          <div className="chapter-mark mb-5">
-            <span>Chapter III · Summary</span>
-          </div>
-          <h1 className="display-title text-[56px] text-[var(--color-ink)]">
-            All vectors <span className="italic text-[var(--color-gold)]" style={{ fontWeight: 300 }}>captured</span>.
+      <div className="min-h-screen">
+        {/* D+ top bar — BU breadcrumb + screen mode */}
+        <div className="px-10 h-14 border-b hairline flex items-center gap-3 bg-[var(--color-bg)]">
+          <BuGlyph id={bu.id} size={16} />
+          <span className="text-[14px] font-medium text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+            {bu.name}
+          </span>
+          <span className="font-mono text-[11px] text-[var(--color-ink-muted)]">· {bu.industry || ''}</span>
+          <span className="h-[18px] w-px bg-[var(--color-border)] mx-1" />
+          <Eyebrow tone="accent">Summary</Eyebrow>
+        </div>
+        <div className="max-w-[1100px] mx-auto px-10 py-10">
+          <Eyebrow tone="accent">All vectors captured</Eyebrow>
+          <h1
+            className="mt-3 text-[36px] font-medium leading-[1.1] tracking-[-0.022em] text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-sans)' }}
+          >
+            Ready to finalize.
           </h1>
-          <p className="mt-5 text-[15px] text-[var(--color-ink-soft)] max-w-[640px] leading-[1.65]">
-            Review your coverage below. Finalizing triggers the scoring engine, drift detection, and roadmap sequencer in turn.
+          <p className="mt-2 text-[14px] text-[var(--color-ink-soft)] max-w-[640px] leading-[1.55]">
+            Review coverage below. Finalizing triggers the scoring engine, drift detection, and roadmap sequencer in turn.
           </p>
 
-          <OrnamentalRule color="gold" />
-
-          <div className="mt-10 mb-8 flex items-baseline justify-between">
-            <h2 className="display-heading text-[20px] text-[var(--color-ink)]">
-              <span className="editorial-italic text-[var(--color-ink-muted)] mr-2">Per-pillar</span>
-              Coverage
+          <div className="mt-8 mb-5 flex items-baseline justify-between">
+            <h2 className="text-[16px] font-medium text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+              Per-pillar coverage
             </h2>
-            <div className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)]">
+            <div className="font-mono text-[10px] uppercase tracking-[0.10em] text-[var(--color-ink-muted)]">
               10 pillars · 100 vectors
             </div>
           </div>
@@ -851,7 +846,7 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
             <button
               onClick={handleSubmit}
               disabled={!allAnswered || isSubmitting}
-              className="btn-accent flex-1 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="btn-cta flex-1"
             >
               {isSubmitting ? "Computing maturity vector…" : "Compute & finalize"}
               {!isSubmitting && <ArrowRight size={14} />}
@@ -864,18 +859,18 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-80 border-r hairline bg-[var(--color-surface-soft)] flex flex-col">
+      {/* Inner pillar-progress rail (sits inside the global D+ shell) */}
+      <aside className="w-[288px] border-r hairline bg-[var(--color-bg-deep)] flex flex-col">
         <div className="p-6 border-b hairline">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] font-mono text-[10px] uppercase tracking-[0.22em] transition-colors mb-5 cursor-pointer"
+            className="flex items-center gap-2 text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] font-mono text-[10px] uppercase tracking-[0.10em] transition-colors mb-5 cursor-pointer"
             aria-label="Back to operating scope"
           >
             <ArrowLeft size={12} /> Back to scope
           </button>
           <Eyebrow>Assessing</Eyebrow>
-          <p className="display-heading text-[22px] text-[var(--color-ink)] mt-2">{bu.name}</p>
+          <p className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">{bu.name}</p>
 
           <div className="mt-6">
             <div className="flex justify-between items-center mb-2">
@@ -961,12 +956,12 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto paper-grain">
-        <div className="max-w-[820px] mx-auto px-12 py-16">
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-[820px] mx-auto px-12 py-12">
           <div className="flex items-center gap-3 mb-8 flex-wrap">
             <Pill tone="amber">{currentPillar?.name}</Pill>
             <Pill tone="ink">{currentQ.dimensionId}</Pill>
-            <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tracking-[0.22em] uppercase">
+            <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tracking-[0.10em] uppercase">
               Vector {currIdx + 1} / {questions.length}
             </span>
           </div>
@@ -976,14 +971,15 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="display-title text-[42px] text-[var(--color-ink)] leading-[1.1]"
+            className="text-[28px] font-medium leading-[1.25] tracking-[-0.018em] text-[var(--color-ink)]"
+            style={{ fontFamily: 'var(--font-sans)' }}
           >
             {currentQ.text}
           </motion.h2>
 
-          <div className="mt-12">
-            <Eyebrow>Maturity level · 1 Ad-hoc ⇢ 5 Optimized</Eyebrow>
-            <div className="grid grid-cols-5 gap-2 mt-4">
+          <div className="mt-10">
+            <Eyebrow>Maturity level · 1 Ad-hoc → 5 Optimized</Eyebrow>
+            <div className="grid grid-cols-5 gap-2 mt-3.5">
               {[1, 2, 3, 4, 5].map(score => {
                 const selected = responses[currentQ.id] === score;
                 const labels = ["Ad-hoc", "Partial", "Defined", "Managed", "Optimized"];
@@ -992,18 +988,18 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
                   <button
                     key={score}
                     onClick={() => handleAnswer(score)}
-                    className={`aspect-[4/3] w-full flex flex-col items-center justify-center border rounded-[10px] transition-all cursor-pointer ${
+                    className={`aspect-[4/3] w-full flex flex-col items-center justify-center border rounded-[8px] transition-all cursor-pointer ${
                       selected
-                        ? "bg-[var(--color-ink)] border-[var(--color-ink)] text-[var(--color-highlight)] shadow-[0_4px_12px_rgba(15,42,27,0.22)]"
-                        : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-ink)] hover:-translate-y-0.5"
+                        ? "bg-[var(--color-accent)] border-[var(--color-accent)] text-white"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-accent)] hover:-translate-y-0.5"
                     }`}
-                    style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)" }}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)", boxShadow: selected ? 'var(--shadow-cta)' : undefined }}
                   >
-                    <span className={`display-num text-[32px] ${selected ? "" : "text-[var(--color-ink)]"}`}>
+                    <span className={`text-[28px] font-medium tabular ${selected ? 'text-white' : 'text-[var(--color-ink)]'}`} style={{ fontFamily: 'var(--font-sans)' }}>
                       {score}
                     </span>
-                    <span className={`font-mono text-[9px] uppercase tracking-[0.22em] mt-1 ${
-                      selected ? "text-[var(--color-highlight)]/80" : "text-[var(--color-ink-muted)]"
+                    <span className={`font-mono text-[9px] uppercase tracking-[0.10em] mt-0.5 ${
+                      selected ? "text-white/85" : "text-[var(--color-ink-muted)]"
                     }`}>
                       {labels[score - 1]}
                     </span>
@@ -1028,7 +1024,7 @@ const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: a
                 transition={{ duration: 0.18 }}
                 className="mt-4 px-4 py-3 border-l-2 border-[var(--color-gold)] bg-[var(--color-surface-soft)]/50 rounded-r-[8px]"
               >
-                <div className="font-mono text-[9px] tracking-[0.22em] uppercase text-[var(--color-gold)] mb-1.5">
+                <div className="font-mono text-[9px] tracking-[0.10em] uppercase text-[var(--color-gold)] mb-1.5">
                   Level {responses[currentQ.id]} criteria
                 </div>
                 <p className="text-[12.5px] leading-[1.6] text-[var(--color-ink-soft)]">
@@ -1173,174 +1169,248 @@ const RNOSCommandCenter = ({
   };
   const status = statusMeta[missionStatus] || statusMeta.NOMINAL_SYNC;
 
+  const buTint = BU_TINTS[bu.id] ?? { tint: 'var(--color-bg-deep)', dot: 'var(--color-ink)' };
+
   return (
-    <div className="min-h-screen paper-grain">
-      <HeaderBar
-        crumb={
-          <div className="flex items-center gap-3">
-            <Eyebrow>Unit</Eyebrow>
-            <select
-              value={bu.id}
-              onChange={e => onEntityChange(allBUs.find((b: any) => b.id === e.target.value))}
-              className="bg-transparent font-mono text-[12px] text-[var(--color-ink)] outline-none border-b hairline hover:border-[var(--color-ink)] cursor-pointer py-1 pr-2 appearance-none transition-colors"
-            >
-              {allBUs.map((b: any) => (
-                <option key={b.id} value={b.id} className="bg-[var(--color-surface)]">
-                  {b.name}
-                </option>
+    <div className="min-h-screen">
+      {/* D+ top bar — BU breadcrumb + benchmark tabs (left) ; status + actions (right) */}
+      <div className="px-8 h-14 border-b hairline flex items-center justify-between bg-[var(--color-bg)]">
+        <div className="flex items-center gap-3 min-w-0">
+          <span
+            className="inline-flex items-center justify-center flex-shrink-0"
+            style={{ width: 26, height: 26, borderRadius: 6, background: buTint.tint, color: buTint.dot }}
+          >
+            <BuGlyph id={bu.id} size={14} />
+          </span>
+          <select
+            value={bu.id}
+            onChange={e => onEntityChange(allBUs.find((b: any) => b.id === e.target.value))}
+            className="bg-transparent text-[14px] font-medium text-[var(--color-ink)] outline-none cursor-pointer pr-1 appearance-none"
+            style={{ fontFamily: 'var(--font-sans)' }}
+          >
+            {allBUs.map((b: any) => (
+              <option key={b.id} value={b.id} className="bg-[var(--color-surface)]">
+                {b.name}
+              </option>
+            ))}
+          </select>
+          <span className="font-mono text-[11px] text-[var(--color-ink-muted)] hidden lg:inline">· {bu.industry}</span>
+          <span className="h-[18px] w-px bg-[var(--color-border)] mx-2" />
+          <Tabs value={benchmarkType} onValueChange={onBenchmarkTypeChange}>
+            <TabsList>
+              {benchmarkTypes.map((t: string) => (
+                <TabsTrigger key={t} value={t}>{BENCHMARK_LABEL[t] || t}</TabsTrigger>
               ))}
-            </select>
-            <ChevronRight size={12} className="text-[var(--color-ink-muted)]" />
-            <Eyebrow tone="ink">Command Center</Eyebrow>
-          </div>
-        }
-        right={
-          <div className="flex items-center gap-4">
-            <Pill tone={status.tone}>
-              <StatusDot color={status.dot} /> {status.label}
-            </Pill>
-            <button
-              onClick={onOpenPalette}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border hairline text-[11px] font-mono tracking-[0.14em] uppercase text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
-              aria-label="Open command palette"
-            >
-              <CommandIcon size={12} />
-              <span>K</span>
-            </button>
-            <button
-              onClick={() => {
-                if (!assessmentId) return;
-                const url = `/api/assessments/${assessmentId}/pdf?benchmarkType=${benchmarkType}`;
-                window.open(url, "_blank");
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border hairline text-[11px] font-mono tracking-[0.14em] uppercase text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
-              aria-label="Download executive PDF report"
-            >
-              <FileDown size={12} />
-              <span>Report</span>
-            </button>
-            <button
-              onClick={onBack}
-              className="text-[var(--color-ink-muted)] hover:text-[var(--color-coral)] cursor-pointer transition-colors"
-              aria-label="Back"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        }
-      />
+            </TabsList>
+          </Tabs>
+        </div>
+        <div className="flex items-center gap-3">
+          <Pill tone={status.tone}>
+            <StatusDot color={status.dot} /> {status.label}
+          </Pill>
+          <button
+            onClick={onOpenPalette}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[6px] border hairline text-[11px] font-mono tracking-[0.06em] text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
+            aria-label="Open command palette"
+          >
+            <CommandIcon size={11} />
+            <span>K</span>
+          </button>
+          <button
+            onClick={() => {
+              if (!assessmentId) return;
+              const url = `/api/assessments/${assessmentId}/pdf?benchmarkType=${benchmarkType}`;
+              window.open(url, "_blank");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border hairline text-[11px] font-mono tracking-[0.06em] text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
+            aria-label="Download executive PDF report"
+          >
+            <FileDown size={11} />
+            <span>Report</span>
+          </button>
+          <button
+            onClick={onBack}
+            className="text-[var(--color-ink-muted)] hover:text-[var(--color-coral)] cursor-pointer transition-colors"
+            aria-label="Back"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
 
-      <div className="max-w-[1600px] mx-auto px-8 py-10 space-y-6 pb-24">
-        {/* Top HUD — editorial masthead */}
-        <Card severity={status.tone === "mint" ? "none" : status.tone} className="p-10">
-          <div className="flex items-start justify-between gap-10 flex-wrap">
-            <div className="flex-1 min-w-[280px]">
-              <Eyebrow>Active unit · {BENCHMARK_LABEL[benchmarkType]}</Eyebrow>
-              <div className="flex items-baseline gap-4 mt-3">
-                <h1 className="display-title text-[56px] text-[var(--color-ink)]">
-                  {entityName}
+      <div className="max-w-[1600px] mx-auto px-8 py-8 space-y-6 pb-20">
+        {/* Live Brief hero — drift narrative + score + secondary metrics */}
+        <Card severity="none" className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Left: drift narrative */}
+            <div className="lg:col-span-7 flex flex-col justify-between">
+              <div>
+                <Eyebrow tone="accent">Live brief</Eyebrow>
+                <h1
+                  className="mt-3 text-[28px] font-medium leading-[1.25] tracking-[-0.018em] text-[var(--color-ink)]"
+                  style={{ fontFamily: 'var(--font-sans)' }}
+                >
+                  {(() => {
+                    const worstReg = (analysis.regressions ?? [])[0];
+                    if (worstReg) {
+                      return (
+                        <>
+                          <span className="text-[var(--color-coral)]">{worstReg.pillarName}</span>{" "}
+                          regressed{" "}
+                          <span className="text-[var(--color-coral)]">
+                            {worstReg.delta.toFixed(2)}
+                          </span>{" "}
+                          on {entityName} since the prior assessment.
+                        </>
+                      );
+                    }
+                    if (alignedCount >= 7) {
+                      return (
+                        <>
+                          {entityName} is{" "}
+                          <span className="text-[var(--color-mint)]">on benchmark</span>{" "}
+                          across {alignedCount} of 10 pillars.
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        {entityName} is{" "}
+                        <span className="text-[var(--color-accent)]">drifting</span> on{" "}
+                        {10 - alignedCount} of 10 pillars vs {BENCHMARK_LABEL[benchmarkType]}.
+                      </>
+                    );
+                  })()}
                 </h1>
-                <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tabular">
-                  {bu.id.toUpperCase()}
-                </span>
+                <p className="mt-3 text-[14px] leading-[1.55] text-[var(--color-ink-soft)] max-w-[640px]">
+                  {analysis.regressions?.length > 0
+                    ? `${analysis.regressions.length} regression signal${analysis.regressions.length === 1 ? '' : 's'} detected. ${activeRoadmapCount} roadmap action${activeRoadmapCount === 1 ? '' : 's'} sequenced by uplift / effort.`
+                    : `${activeRoadmapCount} roadmap action${activeRoadmapCount === 1 ? '' : 's'} sequenced by expected uplift over delivery cost. ${BENCHMARK_LABEL[benchmarkType]} benchmark average ${benchmarkAverage.toFixed(2)}.`}
+                </p>
               </div>
-              <div className="flex items-center gap-4 mt-6 flex-wrap">
-                <Eyebrow>Benchmark</Eyebrow>
-                <Tabs value={benchmarkType} onValueChange={onBenchmarkTypeChange}>
-                  <TabsList>
-                    {benchmarkTypes.map((t: string) => (
-                      <TabsTrigger key={t} value={t}>{BENCHMARK_LABEL[t] || t}</TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-              </div>
-            </div>
 
-            <div className="flex items-stretch gap-10 flex-wrap">
-              <UiTooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex flex-col justify-between cursor-help">
-                    <Eyebrow tone="amber">Maturity score</Eyebrow>
-                    <div className="display-num text-[96px] text-[var(--color-ink)] leading-none mt-3">
-                      {overallScore.toFixed(2)}
-                    </div>
-                    <span className="font-mono text-[11px] text-[var(--color-ink-muted)] mt-2 tracking-wide uppercase">
-                      of 5.00 · overall
-                    </span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  Weighted average of 10 pillars · each rolled up from 4-dimension × 10-question cells.
-                </TooltipContent>
-              </UiTooltip>
-              <div className="w-px bg-[var(--color-border)]" />
-              <div className="flex flex-col gap-5 justify-between min-w-[140px]">
+              {/* Secondary metric strip — tooltips intact, mono labels, tabular numbers */}
+              <div className="mt-8 grid grid-cols-3 gap-6 max-w-[640px]">
                 <UiTooltip>
                   <TooltipTrigger asChild>
-                    <div className="cursor-help"><Metric label="Benchmark avg" value={benchmarkAverage.toFixed(2)} unit="/ 5" size="sm" /></div>
+                    <div className="cursor-help">
+                      <Eyebrow>Benchmark avg</Eyebrow>
+                      <div className="mt-1 text-[20px] font-medium tabular text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+                        {benchmarkAverage.toFixed(2)}
+                        <span className="font-mono text-[10px] text-[var(--color-ink-muted)] ml-1">/ 5</span>
+                      </div>
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent side="left">{BENCHMARK_LABEL[benchmarkType]} profile average across all 10 pillars.</TooltipContent>
+                  <TooltipContent side="bottom">{BENCHMARK_LABEL[benchmarkType]} profile average across all 10 pillars.</TooltipContent>
                 </UiTooltip>
                 <UiTooltip>
                   <TooltipTrigger asChild>
                     <div className="cursor-help">
-                      <Metric
-                        label="Aligned pillars"
-                        value={`${alignedCount}`}
-                        unit="/ 10"
-                        size="sm"
-                        tone={alignedCount >= 7 ? "mint" : alignedCount >= 4 ? "amber" : "coral"}
-                      />
+                      <Eyebrow>Aligned pillars</Eyebrow>
+                      <div className={`mt-1 text-[20px] font-medium tabular ${alignedCount >= 7 ? 'text-[var(--color-mint)]' : alignedCount >= 4 ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`} style={{ fontFamily: 'var(--font-sans)' }}>
+                        {alignedCount}
+                        <span className="font-mono text-[10px] text-[var(--color-ink-muted)] ml-1">/ 10</span>
+                      </div>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="left">Pillars scoring at or above the active benchmark.</TooltipContent>
+                  <TooltipContent side="bottom">Pillars scoring at or above the active benchmark.</TooltipContent>
                 </UiTooltip>
                 <UiTooltip>
                   <TooltipTrigger asChild>
-                    <div className="cursor-help"><Metric label="Active roadmap" value={activeRoadmapCount} unit="actions" size="sm" /></div>
+                    <div className="cursor-help">
+                      <Eyebrow>Active roadmap</Eyebrow>
+                      <div className="mt-1 text-[20px] font-medium tabular text-[var(--color-ink)]" style={{ fontFamily: 'var(--font-sans)' }}>
+                        {activeRoadmapCount}
+                        <span className="font-mono text-[10px] text-[var(--color-ink-muted)] ml-1">actions</span>
+                      </div>
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent side="left">Sequenced by expected uplift ÷ (cost × duration).</TooltipContent>
+                  <TooltipContent side="bottom">Sequenced by expected uplift ÷ (cost × duration).</TooltipContent>
                 </UiTooltip>
               </div>
+            </div>
+
+            {/* Right: hero score + sparkline trail */}
+            <div className="lg:col-span-5 flex flex-col items-end justify-between">
+              <Eyebrow tone="accent">Maturity score</Eyebrow>
+              <UiTooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-end gap-3 cursor-help">
+                    <div
+                      className="text-[96px] font-medium leading-[0.95] tracking-[-0.04em] text-[var(--color-ink)] tabular"
+                      style={{ fontFamily: 'var(--font-sans)', fontFeatureSettings: '"tnum","lnum","ss01"' }}
+                    >
+                      <AnimatedNumber value={overallScore} decimals={2} />
+                    </div>
+                    <Sparkline values={analytics.map((a: any) => a.score)} width={88} height={26} color="var(--color-accent)" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  Weighted average of 10 pillars · each rolled up from 4-dimension × 10-question cells.
+                </TooltipContent>
+              </UiTooltip>
+              <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tracking-[0.06em] uppercase mt-2">
+                of 5.00 · overall
+              </span>
             </div>
           </div>
         </Card>
 
-        {/* Pillar grid */}
+        {/* Pillar table — D+ prototype tabular layout with inline sparklines */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <Eyebrow>Pillar vectors</Eyebrow>
+            <Eyebrow>Pillars · {analytics.length}</Eyebrow>
             <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tabular uppercase tracking-[0.18em]">
-              Current vs {(BENCHMARK_LABEL[benchmarkType] || benchmarkType).toUpperCase()}
+              Sort: gap desc
             </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {analytics.map((a: any) => {
-              const above = a.score >= a.target;
-              const near = a.score >= a.target * 0.8;
-              const sev = above ? "mint" : near ? "amber" : "coral";
-              return (
-                <Card key={a.pillarId} severity={sev} variant="flat" className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <Eyebrow>{a.pillarName.split(/[\s&]+/)[0].slice(0, 6).toUpperCase()}</Eyebrow>
-                    <StatusDot color={sev as any} />
-                  </div>
-                  <p className="text-[11px] text-[var(--color-ink-muted)] leading-tight mb-3 h-8">
-                    {a.pillarName}
-                  </p>
-                  <div className="display-num text-[26px] text-[var(--color-ink)]">
-                    {a.score.toFixed(2)}
-                  </div>
-                  <div className="mt-2 flex justify-between font-mono text-[10px] tabular">
-                    <span className="text-[var(--color-ink-muted)]">Δ</span>
-                    <span className={a.gap > 0 ? "delta-down" : "delta-up"}>
-                      {a.gap > 0 ? `-${a.gap.toFixed(2)}` : "aligned"}
-                    </span>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+          <Card className="overflow-hidden">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b hairline">
+                  <th className="px-5 py-3 text-left w-10"><Eyebrow>#</Eyebrow></th>
+                  <th className="px-5 py-3 text-left"><Eyebrow>Pillar</Eyebrow></th>
+                  <th className="px-5 py-3 text-right"><Eyebrow>Score</Eyebrow></th>
+                  <th className="px-5 py-3 text-right"><Eyebrow>Bench</Eyebrow></th>
+                  <th className="px-5 py-3 text-right"><Eyebrow>Δ</Eyebrow></th>
+                  <th className="px-5 py-3 text-center"><Eyebrow>Trend</Eyebrow></th>
+                  <th className="px-5 py-3 text-right"><Eyebrow>Status</Eyebrow></th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...analytics].sort((a: any, b: any) => b.gap - a.gap).map((a: any, i: number) => {
+                  const above = a.score >= a.target;
+                  const near = a.score >= a.target * 0.8;
+                  const sev = above ? "mint" : near ? "amber" : "coral";
+                  // Deterministic 6-point trend per pillar — anchored on current score
+                  const seed = a.pillarId.charCodeAt(0);
+                  const trend = Array.from({ length: 6 }, (_, j) => {
+                    const phase = Math.sin((seed + j) * 0.9) * 0.15;
+                    return Number((a.score - 0.18 + phase + (j / 5) * 0.16).toFixed(2));
+                  });
+                  return (
+                    <tr key={a.pillarId} className="border-b hairline last:border-b-0 hover:bg-[var(--color-bg-deep)]/40">
+                      <td className="px-5 py-3.5 font-mono text-[11px] text-[var(--color-ink-muted)]">{(i + 1).toString().padStart(2, "0")}</td>
+                      <td className="px-5 py-3.5 text-[var(--color-ink)] font-medium">{a.pillarName}</td>
+                      <td className="px-5 py-3.5 text-right font-mono tabular text-[var(--color-ink)]">{a.score.toFixed(2)}</td>
+                      <td className="px-5 py-3.5 text-right font-mono tabular text-[var(--color-ink-muted)]">{a.target.toFixed(2)}</td>
+                      <td className={`px-5 py-3.5 text-right font-mono tabular ${above ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
+                        {above ? "+" : "-"}{Math.abs(a.score - a.target).toFixed(2)}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex justify-center">
+                          <Sparkline values={trend} width={88} height={22} color={sev === "mint" ? "var(--color-mint)" : sev === "coral" ? "var(--color-coral)" : "var(--color-accent)"} />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <Pill tone={sev as any}>{above ? "Aligned" : near ? "Drifting" : "Critical"}</Pill>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
         </div>
 
         {/* Charts */}
@@ -1349,7 +1419,7 @@ const RNOSCommandCenter = ({
             <div className="flex items-center justify-between mb-2">
               <div>
                 <Eyebrow tone="amber">Pillar scope</Eyebrow>
-                <h3 className="display-heading text-[22px] text-[var(--color-ink)] mt-2">
+                <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
                   Maturity vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
                 </h3>
               </div>
@@ -1403,7 +1473,7 @@ const RNOSCommandCenter = ({
           <Card className="lg:col-span-4 p-7">
             <div>
               <Eyebrow tone="amber">Operating dimensions</Eyebrow>
-              <h3 className="display-heading text-[22px] text-[var(--color-ink)] mt-2">
+              <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
                 People · Process · Technology · Governance
               </h3>
             </div>
@@ -1497,7 +1567,7 @@ const RNOSCommandCenter = ({
           <div className="flex items-center justify-between mb-6">
             <div>
               <Eyebrow tone="amber">Pillar delta</Eyebrow>
-              <h3 className="display-heading text-[22px] text-[var(--color-ink)] mt-2">
+              <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
                 Current vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType} by pillar
               </h3>
             </div>
@@ -1539,7 +1609,7 @@ const RNOSCommandCenter = ({
             <div className="px-7 py-5 border-b hairline flex items-center justify-between">
               <div>
                 <Eyebrow tone="amber">Sequencing</Eyebrow>
-                <h3 className="display-heading text-[22px] text-[var(--color-ink)] mt-2">
+                <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
                   Uplift roadmap
                 </h3>
               </div>
@@ -1648,7 +1718,7 @@ const RNOSCommandCenter = ({
             ) : (
               <div className="text-center py-10">
                 <ShieldCheck size={28} className="mx-auto text-[var(--color-mint)] mb-3" />
-                <p className="text-[11px] text-[var(--color-ink-muted)] font-mono tracking-[0.22em] uppercase">
+                <p className="text-[11px] text-[var(--color-ink-muted)] font-mono tracking-[0.10em] uppercase">
                   All pillars nominal
                 </p>
               </div>
@@ -1656,15 +1726,151 @@ const RNOSCommandCenter = ({
           </Card>
         </div>
       </div>
-
-      <RunningFooter folio="Command · Folio IV" />
     </div>
+  );
+};
+
+// ─── D+ SHELL — persistent sidebar + top bar wrapped around authed screens ──
+
+// Per-BU tints — mirrors the CSS custom properties --bu-tint-* / --bu-dot-*
+// so JSX consumers can pull them without reading computed style.
+const BU_TINTS: Record<string, { tint: string; dot: string }> = {
+  gen:  { tint: "#F5E4C8", dot: "#D49E3C" },
+  tra:  { tint: "#D8E4EF", dot: "#6B8FAE" },
+  dis:  { tint: "#D9E5D3", dot: "#7B9A6B" },
+  corp: { tint: "#EEE6D7", dot: "#A89673" },
+  sub:  { tint: "#EBDEE0", dot: "#B08894" },
+  jv:   { tint: "#DDD8E9", dot: "#8E82A8" },
+};
+
+const DPSidebar = ({
+  entities,
+  activeBuId,
+  screen,
+  onSelectBU,
+  onNavigate,
+  onLogout,
+  loginEmail,
+}: {
+  entities: any[];
+  activeBuId: string | null;
+  screen: Screen;
+  onSelectBU: (bu: any) => void;
+  onNavigate: (to: Screen) => void;
+  onLogout: () => void;
+  loginEmail: string;
+}) => {
+  // Workspace nav highlights based on the current screen — the labels are
+  // product taxonomy (matches CONTEXT.md), the active state is computed.
+  const workspaceItems: { key: string; label: string; target: Screen | null; active: boolean }[] = [
+    { key: "today",    label: "Today",          target: "navigator",  active: screen === "navigator" },
+    { key: "scope",    label: "Operating units", target: "scope",     active: screen === "scope" },
+    { key: "assess",   label: "Assessment",     target: "assessment", active: screen === "assessment" },
+    { key: "action",   label: "Action plan",    target: "action",     active: screen === "action" },
+    { key: "evidence", label: "Evidence",       target: "evidence",   active: screen === "evidence" },
+    { key: "history",  label: "History",        target: "history",    active: screen === "history" },
+    { key: "report",   label: "Report",         target: "report",     active: screen === "report" },
+    { key: "provenance", label: "Provenance",   target: "provenance", active: screen === "provenance" },
+  ];
+
+  return (
+    <aside
+      className="flex flex-col bg-[var(--color-surface)] border-r hairline px-[18px] pt-5 pb-4"
+      style={{ width: 240, flexShrink: 0 }}
+    >
+      {/* Brand */}
+      <div className="flex items-center gap-2.5 mb-6">
+        <BrandMark size={22} />
+        <span className="wordmark text-[15px] text-[var(--color-ink)]">
+          ERM Navigator
+        </span>
+      </div>
+
+      {/* Operating units */}
+      <Eyebrow className="block mb-2">Operating units</Eyebrow>
+      <div className="flex flex-col gap-0.5">
+        {entities.map((bu: any) => {
+          const t = BU_TINTS[bu.id] ?? { tint: "var(--color-bg-deep)", dot: "var(--color-ink-muted)" };
+          const active = bu.id === activeBuId;
+          return (
+            <button
+              key={bu.id}
+              onClick={() => onSelectBU(bu)}
+              className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-[6px] text-left text-[13px] cursor-pointer transition-colors hover:bg-[var(--color-bg-deep)] ${active ? 'nav-item-active' : 'text-[var(--color-ink-soft)]'}`}
+              style={{ fontFamily: 'var(--font-sans)' }}
+            >
+              <span
+                className="inline-flex items-center justify-center flex-shrink-0"
+                style={{ width: 26, height: 26, borderRadius: 6, background: t.tint, color: t.dot }}
+              >
+                <BuGlyph id={bu.id} size={14} />
+              </span>
+              <span className="flex-1 truncate">{bu.name}</span>
+              {active && (
+                <span className="w-1 h-1 rounded-full" style={{ background: 'var(--color-accent)' }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="h-px bg-[var(--color-border)] my-3.5" />
+
+      {/* Workspace nav */}
+      <Eyebrow className="block mb-2">Workspace</Eyebrow>
+      <div className="flex flex-col gap-0.5">
+        {workspaceItems.map(it => {
+          const enabled = !!it.target;
+          return (
+            <button
+              key={it.key}
+              onClick={() => { if (it.target) onNavigate(it.target); }}
+              disabled={!enabled}
+              className={`flex items-center justify-between px-2.5 py-1.5 rounded-[6px] text-left text-[13px] transition-colors ${it.active ? 'nav-item-active' : 'text-[var(--color-ink-soft)]'} ${enabled ? 'cursor-pointer hover:bg-[var(--color-bg-deep)]' : 'cursor-default opacity-60'}`}
+              style={{ fontFamily: 'var(--font-sans)' }}
+            >
+              <span>{it.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="h-px bg-[var(--color-border)] my-3.5" />
+
+      {/* Operator + standards footer */}
+      <div className="mt-auto">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-[6px] h-[6px] rounded-full" style={{ background: 'var(--color-mint)' }} />
+          <span className="font-mono text-[10px] text-[var(--color-ink-soft)] tracking-[0.06em] truncate">
+            {loginEmail || 'analyst@gmail.com'}
+          </span>
+        </div>
+        <div className="font-mono text-[10px] tracking-[0.04em] text-[var(--color-ink-subtle)] mb-3">
+          ISO 31000 · COSO · NIST · RIMS
+        </div>
+        <button
+          onClick={onLogout}
+          className="text-[11px] font-mono text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] tracking-[0.10em] uppercase cursor-pointer"
+        >
+          Log out
+        </button>
+      </div>
+    </aside>
   );
 };
 
 // ─── APP SHELL ─────────────────────────────────────────────────────────────
 
-type Screen = "login" | "scope" | "assessment" | "navigator";
+type Screen =
+  | "login"
+  | "scope"
+  | "assessment"
+  | "navigator"
+  | "action"
+  | "evidence"
+  | "report"
+  | "history"
+  | "provenance";
 
 export default function App() {
   const [screen, setScreenState] = useState<Screen>("login");
@@ -1839,64 +2045,135 @@ export default function App() {
     }
   };
 
+  // Logout helper — used by sidebar + command palette
+  const handleLogout = () => {
+    setHistory([]);
+    setLoginEmail("");
+    setSelectedBU(null);
+    setAnalysis(null);
+    setAssessmentId(null);
+    setScreen("login");
+  };
+
+  // Authed screens share the persistent sidebar + main-canvas shell.
+  // Login is the only full-bleed screen (no sidebar).
+  const isAuthedScreen = screen !== "login";
+
   return (
     <TooltipProvider delayDuration={120}>
     <div className="min-h-screen">
-      <AnimatePresence mode="wait">
-        {screen === "login" && (
-          <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <LoginScreen onLogin={handleLogin} loading={loading} error={loginError} />
-          </motion.div>
-        )}
-        {screen === "scope" && (
-          <motion.div key="scope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <ScopeScreen
-              entities={entities}
-              onSelect={handleEntitySelect}
-              operatorEmail={loginEmail}
-              onLogout={() => { setHistory([]); setScreen("login"); }}
-              history={history}
-              historyLoading={historyLoading}
-              onOpenHistorical={openHistoricalAssessment}
-            />
-          </motion.div>
-        )}
-        {screen === "assessment" && (
-          <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <VectorCapturePipeline
-              bu={selectedBU}
-              questions={metadata.questions}
-              pillars={metadata.pillars}
-              onBack={() => setScreen("scope")}
-              onComplete={handleAssessmentComplete}
-            />
-          </motion.div>
-        )}
-        {screen === "navigator" && analysis && (
-          <motion.div key="navigator" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-            <RNOSCommandCenter
-              analysis={analysis}
-              bu={selectedBU}
-              allBUs={entities}
-              benchmarkTypes={benchmarkTypes}
-              benchmarkType={benchmarkType}
-              onBenchmarkTypeChange={async (t: string) => {
-                setBenchmarkType(t);
-                if (assessmentId) await fetchAnalysis(assessmentId, t);
-              }}
-              onEntityChange={(bu: any) => {
-                setAssessmentId(generateAssessmentId());
-                setSelectedBU(bu);
-                setScreen("assessment");
-              }}
-              onBack={() => setScreen("scope")}
-              onOpenPalette={() => setPaletteOpen(true)}
-              assessmentId={assessmentId}
-              operatorEmail={loginEmail}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {screen === "login" && (
+        <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+          <LoginScreen onLogin={handleLogin} loading={loading} error={loginError} />
+        </motion.div>
+      )}
+
+      {isAuthedScreen && (
+        <div className="flex min-h-screen">
+          <DPSidebar
+            entities={entities}
+            activeBuId={selectedBU?.id ?? null}
+            screen={screen}
+            onSelectBU={handleEntitySelect}
+            onNavigate={(to) => setScreen(to)}
+            onLogout={handleLogout}
+            loginEmail={loginEmail}
+          />
+          <main className="flex-1 min-w-0 flex flex-col">
+            <AnimatePresence mode="wait">
+              {screen === "scope" && (
+                <motion.div key="scope" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1">
+                  <ScopeScreen
+                    entities={entities}
+                    onSelect={handleEntitySelect}
+                    operatorEmail={loginEmail}
+                    onLogout={handleLogout}
+                    history={history}
+                    historyLoading={historyLoading}
+                    onOpenHistorical={openHistoricalAssessment}
+                  />
+                </motion.div>
+              )}
+              {screen === "assessment" && (
+                <motion.div key="assessment" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1">
+                  <VectorCapturePipeline
+                    bu={selectedBU}
+                    questions={metadata.questions}
+                    pillars={metadata.pillars}
+                    onBack={() => setScreen("scope")}
+                    onComplete={handleAssessmentComplete}
+                  />
+                </motion.div>
+              )}
+              {screen === "action" && (
+                <motion.div key="action" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  {analysis ? (
+                    <ActionPlanScreen analysis={analysis} bu={selectedBU} onOpenToday={() => setScreen("navigator")} />
+                  ) : (
+                    <EmptyHub message="No live assessment selected. Open an operating unit from Today or Operating units to view its action plan." cta="Operating units" onCta={() => setScreen("scope")} />
+                  )}
+                </motion.div>
+              )}
+              {screen === "evidence" && (
+                <motion.div key="evidence" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  {analysis ? (
+                    <EvidenceScreen analysis={analysis} bu={selectedBU} onOpenToday={() => setScreen("navigator")} />
+                  ) : (
+                    <EmptyHub message="Evidence is scoped to the active assessment. Pick an operating unit first." cta="Operating units" onCta={() => setScreen("scope")} />
+                  )}
+                </motion.div>
+              )}
+              {screen === "report" && (
+                <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  {analysis ? (
+                    <ReportScreen analysis={analysis} bu={selectedBU} assessmentId={assessmentId} operatorEmail={loginEmail} onOpenToday={() => setScreen("navigator")} />
+                  ) : (
+                    <EmptyHub message="The report previews an assessment's board-grade PDF. Open one first." cta="Operating units" onCta={() => setScreen("scope")} />
+                  )}
+                </motion.div>
+              )}
+              {screen === "provenance" && (
+                <motion.div key="provenance" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  <ProvenanceScreen onOpenToday={() => setScreen(analysis ? "navigator" : "scope")} />
+                </motion.div>
+              )}
+              {screen === "history" && (
+                <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  {analysis ? (
+                    <HistoryScreen analysis={analysis} bu={selectedBU} onOpenToday={() => setScreen("navigator")} />
+                  ) : (
+                    <EmptyHub message="History replays prior assessments for the active unit. Open one first." cta="Operating units" onCta={() => setScreen("scope")} />
+                  )}
+                </motion.div>
+              )}
+              {screen === "navigator" && analysis && (
+                <motion.div key="navigator" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1">
+                  <RNOSCommandCenter
+                    analysis={analysis}
+                    bu={selectedBU}
+                    allBUs={entities}
+                    benchmarkTypes={benchmarkTypes}
+                    benchmarkType={benchmarkType}
+                    onBenchmarkTypeChange={async (t: string) => {
+                      setBenchmarkType(t);
+                      if (assessmentId) await fetchAnalysis(assessmentId, t);
+                    }}
+                    onEntityChange={(bu: any) => {
+                      setAssessmentId(generateAssessmentId());
+                      setSelectedBU(bu);
+                      setScreen("assessment");
+                    }}
+                    onBack={() => setScreen("scope")}
+                    onOpenPalette={() => setPaletteOpen(true)}
+                    assessmentId={assessmentId}
+                    operatorEmail={loginEmail}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
+      )}
 
       <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
         <CommandInput placeholder="Search units, benchmarks, actions…" />
@@ -1914,9 +2191,9 @@ export default function App() {
                   setPaletteOpen(false);
                 }}
               >
-                <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--color-ink-muted)] w-12">{b.id}</span>
+                <span className="font-mono text-[10px] tracking-[0.10em] uppercase text-[var(--color-ink-muted)] w-12">{b.id}</span>
                 <span className="flex-1">{b.name}</span>
-                <span className="editorial-italic text-[12px] text-[var(--color-ink-muted)]">{b.industry}</span>
+                <span className="text-[12px] text-[var(--color-ink-muted)]">{b.industry}</span>
               </CommandItem>
             ))}
           </CommandGroup>

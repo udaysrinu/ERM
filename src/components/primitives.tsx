@@ -40,19 +40,97 @@ export function Card({
   );
 }
 
-/* ── Eyebrow — small mono uppercase label ───────────────── */
+/* ── Eyebrow — small mono uppercase label ─────────────────
+   tones: muted (default), amber (legacy gold/accent), ink, accent (D+ terracotta) */
 export function Eyebrow({
   children,
   tone = "muted",
   className = "",
 }: {
   children: ReactNode;
-  tone?: "muted" | "amber" | "ink";
+  tone?: "muted" | "amber" | "ink" | "accent";
   className?: string;
 }) {
+  // 'amber' and 'accent' both resolve to the eyebrow-amber class which now
+  // points at --color-accent (terracotta in D+, gold in editorial).
   const cls =
-    tone === "amber" ? "eyebrow-amber" : tone === "ink" ? "eyebrow-ink" : "eyebrow";
+    tone === "amber" || tone === "accent" ? "eyebrow-amber" :
+    tone === "ink" ? "eyebrow-ink" : "eyebrow";
   return <span className={`${cls} ${className}`}>{children}</span>;
+}
+
+/* ── AnimatedNumber — count-up via requestAnimationFrame.
+   Smoothly tweens from prior value to new on prop change. */
+export function AnimatedNumber({
+  value,
+  decimals = 2,
+  duration = 380,
+  className = "",
+}: {
+  value: number;
+  decimals?: number;
+  duration?: number;
+  className?: string;
+}) {
+  const [display, setDisplay] = React.useState(value);
+  const fromRef = React.useRef(value);
+  React.useEffect(() => {
+    const from = fromRef.current;
+    const to = value;
+    if (from === to) { setDisplay(to); return; }
+    const start = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const p = Math.min(1, (t - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 4); // ease-out quart
+      setDisplay(from + (to - from) * eased);
+      if (p < 1) raf = requestAnimationFrame(step);
+      else fromRef.current = to;
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration]);
+  return <span className={className}>{display.toFixed(decimals)}</span>;
+}
+
+/* ── Sparkline — tiny inline trend indicator. Renders an SVG polyline
+   from a value array. Used next to the dashboard hero score. */
+export function Sparkline({
+  values,
+  width = 80,
+  height = 20,
+  color,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) {
+  if (!values || values.length === 0) return null;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const step = width / (values.length - 1 || 1);
+  const points = values
+    .map((v, i) => {
+      const x = i * step;
+      const y = height - ((v - min) / span) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
+  const strokeColor = color || 'var(--color-accent)';
+  return (
+    <svg width={width} height={height} aria-hidden>
+      <polyline
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points}
+      />
+    </svg>
+  );
 }
 
 /* ── Status dot (severity indicator) ────────────────────── */

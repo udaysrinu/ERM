@@ -1,64 +1,91 @@
-/* ERM Navigator — "Editorial Risk Atlas" aesthetic.
-   Warm-paper institutional-report feel. Fraunces display for editorial
-   gravitas, Inter body for operational clarity, JetBrains Mono for data
-   marginalia. Gold is the only chromatic signal; severity channels are
-   desaturated forest / brick / navy. Ink is the primary action color.
+/* ERM Navigator — Direction D+ ("Live Brief") aesthetic.
+   Warm cream base, near-black warm ink, terracotta accent. Single sans
+   (Inter Tight + Inter), Fraunces ONLY on the brand wordmark, JetBrains
+   Mono for monospace labels. Per-BU pastel tints carry the operating-unit
+   identity through the sidebar and scope tiles.
 */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap&font-display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
-  /* ── Typography ─────────────────────────────────────
-     Fraunces (display) → optical sizes 9-144, italic for marginalia.
-     Inter (body) → tabular numerics baked in.
-     JetBrains Mono (data) → editorial callouts. */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", "Times New Roman", serif;
+  /* Typography — Inter Tight for display, Inter for body (Tight is a tighter
+     variant of Inter for headings); Fraunces reserved for the wordmark. */
+  --font-sans: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-wordmark: "Fraunces", "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-  /* ── Color palette — ink-primary, warm-neutral base ──
-     Warm cream base, deep forest-ink as primary,
-     sparing gold for editorial highlight.
-     Desaturated severity channels. */
-  --color-bg: #F5F1E8;              /* warmer paper */
-  --color-bg-deep: #EEE8DB;         /* page edge */
-  --color-surface: #FFFDF8;         /* off-white card */
-  --color-surface-soft: #EDE7D8;    /* sunken surface */
-  --color-surface-sunken: #E4DDCC;
-  --color-border: rgba(15, 42, 27, 0.10);
-  --color-border-strong: rgba(15, 42, 27, 0.22);
-  --color-ink: #0F2A1B;             /* deep forest-black — primary */
-  --color-ink-soft: rgba(15, 42, 27, 0.72);
-  --color-ink-muted: rgba(15, 42, 27, 0.52);
-  --color-ink-subtle: rgba(15, 42, 27, 0.35);
+  /* D+ palette — warm cream + warm near-black ink + terracotta */
+  --color-bg: #FAF7F1;
+  --color-bg-deep: #F4F0E8;          /* sunken background */
+  --color-surface: #FFFFFF;          /* card / panel */
+  --color-surface-soft: #F4F0E8;
+  --color-surface-sunken: #EAE5DA;
 
-  /* Accent = ink. Gold = editorial highlight. */
-  --color-accent: #0F2A1B;
-  --color-accent-ink: #F5F1E8;
-  --color-accent-soft: rgba(15, 42, 27, 0.06);
-  --color-highlight: #C8A14B;       /* deeper gold reads cleaner on ink */
-  --color-highlight-soft: rgba(200, 161, 75, 0.14);
-  --color-gold: #9C7E3C;            /* muted gold — on surface */
-  --color-gold-soft: rgba(156, 126, 60, 0.12);
-  --color-gold-line: rgba(156, 126, 60, 0.40);
-  --color-mint: #2E6B48;
-  --color-mint-soft: rgba(46, 107, 72, 0.10);
-  --color-coral: #A64226;
-  --color-coral-soft: rgba(166, 66, 38, 0.09);
-  --color-sky: #1E4D73;
-  --color-sky-soft: rgba(30, 77, 115, 0.09);
+  --color-border: rgba(22, 24, 26, 0.08);
+  --color-border-strong: rgba(22, 24, 26, 0.16);
+
+  --color-ink: #16181A;              /* warm near-black */
+  --color-ink-soft: rgba(22, 24, 26, 0.74);
+  --color-ink-muted: rgba(22, 24, 26, 0.52);
+  --color-ink-subtle: rgba(22, 24, 26, 0.34);
+  --color-ink-faint: rgba(22, 24, 26, 0.14);
+
+  /* Accent — terracotta (D+ signature) */
+  --color-accent: #C4542A;
+  --color-accent-ink: #FFFFFF;
+  --color-accent-soft: rgba(196, 84, 42, 0.10);
+  --color-accent-line: rgba(196, 84, 42, 0.30);
+
+  /* Highlight: keep token name for legacy callers — same as accent */
+  --color-highlight: #C4542A;
+  --color-highlight-soft: rgba(196, 84, 42, 0.14);
+
+  /* Legacy gold tokens kept for transitional code paths; aliased to accent */
+  --color-gold: #C4542A;
+  --color-gold-soft: rgba(196, 84, 42, 0.10);
+  --color-gold-line: rgba(196, 84, 42, 0.30);
+
+  /* Secondary — institutional muted blue for benchmark/comparison */
+  --color-blue: #2C5F8C;
+  --color-blue-soft: rgba(44, 95, 140, 0.10);
+  --color-sky: #2C5F8C;              /* legacy alias */
+  --color-sky-soft: rgba(44, 95, 140, 0.10);
+
+  /* Status — desaturated */
+  --color-mint: #3F7A57;
+  --color-mint-soft: rgba(63, 122, 87, 0.12);
+  --color-warn: #B5862A;
+  --color-warn-soft: rgba(181, 134, 42, 0.12);
+  --color-coral: #A6442B;
+  --color-coral-soft: rgba(166, 68, 43, 0.10);
+
+  /* Dark accent for footer/rail elements */
+  --color-ground: #1A1B1E;
+  --color-ground-ink: rgba(250, 247, 241, 0.62);
+
+  /* Per-BU pastel tints (sidebar + scope tile headers) */
+  --bu-tint-gen:  #F5E4C8;  --bu-dot-gen:  #D49E3C;
+  --bu-tint-tra:  #D8E4EF;  --bu-dot-tra:  #6B8FAE;
+  --bu-tint-dis:  #D9E5D3;  --bu-dot-dis:  #7B9A6B;
+  --bu-tint-corp: #EEE6D7;  --bu-dot-corp: #A89673;
+  --bu-tint-sub:  #EBDEE0;  --bu-dot-sub:  #B08894;
+  --bu-tint-jv:   #DDD8E9;  --bu-dot-jv:   #8E82A8;
 
   --radius-sm: 4px;
   --radius-md: 6px;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 
-  --shadow-soft: 0 1px 2px rgba(15, 42, 27, 0.04), 0 2px 8px rgba(15, 42, 27, 0.04);
-  --shadow-card: 0 1px 2px rgba(15, 42, 27, 0.04), 0 4px 12px rgba(15, 42, 27, 0.06);
-  --shadow-floated: 0 2px 4px rgba(15, 42, 27, 0.06), 0 12px 32px rgba(15, 42, 27, 0.08);
-  --shadow-deep: 0 8px 24px rgba(15, 42, 27, 0.10), 0 24px 64px rgba(15, 42, 27, 0.12);
+  --shadow-soft: 0 1px 2px rgba(22, 24, 26, 0.04), 0 2px 6px rgba(22, 24, 26, 0.04);
+  --shadow-card: 0 1px 2px rgba(22, 24, 26, 0.04), 0 4px 12px rgba(22, 24, 26, 0.05);
+  --shadow-floated: 0 2px 4px rgba(22, 24, 26, 0.06), 0 12px 32px rgba(22, 24, 26, 0.08);
+  --shadow-deep: 0 8px 24px rgba(22, 24, 26, 0.10), 0 24px 64px rgba(22, 24, 26, 0.12);
+  /* D+ tactile CTA shadow — three-layer, white inner highlight + soft drop + contact line */
+  --shadow-cta: inset 0 2px 4px rgba(255,255,255,0.56), 0 4px 8px rgba(38,27,7,0.06), 0 1px 2px rgba(38,27,7,0.36);
 }
 
 @layer base {
@@ -75,12 +102,13 @@
     @apply antialiased;
     background: var(--color-bg);
     color: var(--color-ink);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-weight: 400;
-    font-size: 15px;
-    line-height: 1.55;
-    letter-spacing: -0.005em;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
     font-variant-numeric: tabular-nums;
+    font-feature-settings: "ss01";
     /* App-like feel: chrome is unselectable by default. Content opts back in
        below so investors can still copy scores, IDs, and question text. */
     user-select: none;
@@ -126,32 +154,84 @@
 }
 
 @layer components {
-  /* ─── Eyebrow labels ──────────────────────────────── */
+  /* ─── Eyebrow labels — D+ uses tighter tracking and slightly larger size ── */
   .eyebrow {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 500;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
     color: var(--color-ink-muted);
   }
 
+  /* Legacy alias kept for components that still reference eyebrow-amber */
   .eyebrow-amber {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
-    color: var(--color-gold);
+    color: var(--color-accent);
   }
 
   .eyebrow-ink {
     font-family: var(--font-mono);
     font-size: 10px;
     font-weight: 600;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
     color: var(--color-ink);
+  }
+
+  /* D+ display number — Inter Tight, slight negative tracking, tabular */
+  .display-num,
+  .display-heading,
+  .display-title {
+    font-family: var(--font-display);
+    font-feature-settings: "tnum", "lnum", "ss01";
+  }
+
+  /* D+ tactile gold/accent CTA recipe — overrides the editorial btn-accent */
+  .btn-cta {
+    background: var(--color-accent);
+    color: var(--color-accent-ink);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.10);
+    cursor: pointer;
+    box-shadow: var(--shadow-cta);
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 180ms;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .btn-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-cta), 0 8px 20px rgba(196, 84, 42, 0.20);
+  }
+  .btn-cta:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* D+ wordmark — Fraunces only on the brand lockup */
+  .wordmark {
+    font-family: var(--font-wordmark);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* D+ sidebar nav-item state */
+  .nav-item-active {
+    background: var(--color-surface);
+    box-shadow: inset 0 0 0 1px var(--color-border-strong);
+    color: var(--color-ink);
+    font-weight: 500;
   }
 
   /* ─── Display + editorial typography ──────────────── */
