@@ -1,3 +1,19 @@
+/**
+ * SPA screen state machine. Drives sidebar highlights, route transitions,
+ * and history sync. Only `login` is full-bleed; everything else renders
+ * inside the persistent D+ shell.
+ */
+export type Screen =
+  | "login"
+  | "scope"
+  | "assessment"
+  | "navigator"     // Today / Live Brief
+  | "action"        // Action Plan
+  | "evidence"
+  | "report"
+  | "history"
+  | "provenance";
+
 export type OperatingDimension = "Process" | "Governance" | "People" | "Technology";
 
 export type Pillar = 
