@@ -14,6 +14,7 @@ import {
   BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS,
   PILLAR_PROVENANCE, MATURITY_LEVELS, SCORE_LEGEND,
 } from "../../_lib/static.js";
+import { computeRunSignatures, validateScoringInputCoverage } from "../../_lib/signatures.js";
 
 // A4 dimensions in points.
 const A4_WIDTH = 595.28;
@@ -125,7 +126,7 @@ function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): 
 function drawCoverPage(
   page: PDFPage,
   fonts: Fonts,
-  args: { entityName: string; overallScore: number; assessmentId: string; missionStatusKey: string; date: string },
+  args: { entityName: string; overallScore: number; assessmentId: string; missionStatusKey: string; date: string; signatures?: { scoringInputHashShort: string; analysisHashShort: string; scoringSpecVersion: string; catalogVersion: string; benchmarkType: string; coverage?: { ok: boolean; reason?: string } } },
 ) {
   const margin = 56;
   let y = A4_HEIGHT - margin;
@@ -169,6 +170,17 @@ function drawCoverPage(
 
   drawEyebrow(page, "Audit ID", margin + 220, by + 22, fonts);
   drawText(page, args.assessmentId, margin + 220, by + 8, { font: fonts.regular, size: 10, color: INK });
+
+  // Run signature — patent claim 24, embedded in the board-grade artifact.
+  if (args.signatures) {
+    drawEyebrow(page, "Run signature", margin + 360, by + 22, fonts);
+    drawText(
+      page,
+      `sig·${args.signatures.scoringInputHashShort} · spec v${args.signatures.scoringSpecVersion} · ${args.signatures.coverage?.ok ? "complete" : "incomplete"}`,
+      margin + 360, by + 8,
+      { font: fonts.regular, size: 9, color: INK },
+    );
+  }
 
   drawText(
     page,
@@ -481,6 +493,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const fonts: Fonts = { regular, bold };
 
+    const sigCoverage = validateScoringInputCoverage(
+      rawResponses.map(r => ({ questionId: r.questionId, score: r.score })),
+    );
+    const sig = computeRunSignatures(
+      rawResponses.map(r => ({ questionId: r.questionId, score: r.score })),
+      benchmarkType,
+    );
+
     const cover = pdf.addPage([A4_WIDTH, A4_HEIGHT]);
     drawCoverPage(cover, fonts, {
       entityName,
@@ -488,6 +508,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       assessmentId: id,
       missionStatusKey: status,
       date,
+      signatures: { ...sig, coverage: sigCoverage },
     });
 
     const pillars = pdf.addPage([A4_WIDTH, A4_HEIGHT]);

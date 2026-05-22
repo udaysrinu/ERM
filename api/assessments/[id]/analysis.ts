@@ -10,6 +10,7 @@ import {
   type RawResponse,
 } from "../../_lib/engines.js";
 import { BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS } from "../../_lib/static.js";
+import { computeRunSignatures, validateScoringInputCoverage } from "../../_lib/signatures.js";
 
 /*
  * Single unified endpoint — reads raw responses from the 2-table DB and
@@ -26,8 +27,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Load current assessment + its raw responses.
     const [assessment] = await sql<
-      { id: string; entityId: string; createdAt: string; status: string }[]
-    >`SELECT id, "entityId", "createdAt", status FROM assessments WHERE id = ${id}`;
+      { id: string; entityId: string; createdAt: string; status: string; operatorEmail: string | null }[]
+    >`SELECT id, "entityId", "createdAt", status, "operatorEmail" FROM assessments WHERE id = ${id}`;
     if (!assessment) return res.status(404).json({ error: "Assessment not found" });
 
     const rawResponses = await sql<
@@ -51,12 +52,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       benchmarkType,
     );
 
-    // Drift — compare to prior completed assessment for same entity.
+    // Drift — compare to the prior COMPLETED assessment for the same operator
+    // and the same entity. Operator-scoping prevents cross-tenant data bleed
+    // into the Live Brief headline; status-scoping ensures we never compare
+    // against an abandoned/in-flight row.
     const [prior] = await sql<{ id: string }[]>`
       SELECT id FROM assessments
       WHERE "entityId" = ${assessment.entityId}
         AND id != ${id}
         AND "createdAt" < ${assessment.createdAt}
+        AND status = 'completed'
+        AND "operatorEmail" = ${assessment.operatorEmail}
       ORDER BY "createdAt" DESC LIMIT 1
     `;
     let driftProfile: any[] = [];
@@ -96,6 +102,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ),
     };
 
+    // Per-question evidence — what was actually attached during capture.
+    // Used by the Evidence library so the UI never fabricates filenames.
+    const evidenceFiles = rawResponses
+      .filter(r => r.evidenceName && r.evidenceName.length > 0)
+      .map(r => ({
+        questionId: r.questionId,
+        filename: r.evidenceName,
+        answeredAt: r.answeredAt,
+      }));
+
+    // Run signatures — patent claim 24 surfaced for the UI. We compute
+    // them on every read so the user can SEE that same inputs always
+    // produce the same hash. If the response set doesn't cover every
+    // question exactly once we still compute (best-effort) but flag
+    // the coverage status so the UI can warn instead of pretending.
+    const coverage = validateScoringInputCoverage(
+      rawResponses.map(r => ({ questionId: r.questionId, score: r.score })),
+    );
+    const signatures = computeRunSignatures(
+      rawResponses.map(r => ({ questionId: r.questionId, score: r.score })),
+      benchmarkType,
+    );
+
     const profile = BENCHMARKS[benchmarkType] ?? BENCHMARKS.target;
     const benchmarkProfile = PILLAR_IDS.map(pid => ({
       pillarId: pid,
@@ -129,6 +158,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       driftProfile: driftProfile.map(d => ({ pillar: d.pillar, delta: Number(d.delta.toFixed(3)) })),
       regressions,
       roadmap,
+      evidenceFiles,
+      signatures: {
+        ...signatures,
+        coverage,
+        computedAt: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error("analysis endpoint failed:", error);

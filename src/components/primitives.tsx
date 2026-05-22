@@ -93,8 +93,8 @@ export function AnimatedNumber({
   return <span className={className}>{display.toFixed(decimals)}</span>;
 }
 
-/* ── Sparkline — tiny inline trend indicator. Renders an SVG polyline
-   from a value array. Used next to the dashboard hero score. */
+/* ── Sparkline — tiny inline trend indicator. Stroke + soft tinted area
+   fill matching the D+ "Live Brief" trend treatment. */
 export function Sparkline({
   values,
   width = 80,
@@ -105,29 +105,43 @@ export function Sparkline({
   width?: number;
   height?: number;
   color?: string;
+  fill?: boolean;
 }) {
   if (!values || values.length === 0) return null;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = max - min || 1;
   const step = width / (values.length - 1 || 1);
-  const points = values
-    .map((v, i) => {
-      const x = i * step;
-      const y = height - ((v - min) / span) * height;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
-  const strokeColor = color || 'var(--color-accent)';
+  // Reserve 1px top/bottom so the stroke isn't clipped at extremes.
+  const inner = height - 2;
+  const coords = values.map((v, i) => {
+    const x = i * step;
+    const y = 1 + (inner - ((v - min) / span) * inner);
+    return { x, y };
+  });
+  const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"}${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
+  // Closed area path: line + back along baseline so we can fill it.
+  const areaPath = `${linePath} L${coords[coords.length - 1].x.toFixed(1)},${height} L${coords[0].x.toFixed(1)},${height} Z`;
+  const strokeColor = color || "var(--color-accent)";
+  // Stable id so multiple sparklines don't collide. React.useId would be ideal
+  // but adds ceremony — values+width is enough since the gradient is per-color.
+  const gradId = React.useMemo(() => `spark-grad-${Math.random().toString(36).slice(2, 8)}`, []);
   return (
     <svg width={width} height={height} aria-hidden>
-      <polyline
+      <defs>
+        <linearGradient id={gradId} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={strokeColor} stopOpacity={0.22} />
+          <stop offset="100%" stopColor={strokeColor} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradId})`} stroke="none" />
+      <path
+        d={linePath}
         fill="none"
         stroke={strokeColor}
         strokeWidth="1.4"
         strokeLinecap="round"
         strokeLinejoin="round"
-        points={points}
       />
     </svg>
   );

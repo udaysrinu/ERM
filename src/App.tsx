@@ -10,29 +10,11 @@ import {
   FileDown,
   Minimize2,
   Send,
-  ShieldCheck,
   Sparkles,
   Upload,
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ResponsiveContainer,
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  BarChart,
-  Bar,
-  ReferenceLine,
-} from "recharts";
 import {
   AnimatedNumber,
   BrandMark,
@@ -47,7 +29,6 @@ import {
 } from "./components/primitives";
 import { Tooltip as UiTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "./components/ui/tabs";
-import { Progress } from "./components/ui/progress";
 import {
   CommandDialog,
   CommandInput,
@@ -720,14 +701,53 @@ const ScopeScreen = ({
 
 // ─── QUESTIONNAIRE ─────────────────────────────────────────────────────────
 
-const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack }: any) => {
+const VectorCapturePipeline = ({ questions, pillars, bu, onComplete, onBack, draft, onDraftChange }: any) => {
+  // Responses/notes/evidence/answeredAt are owned by the App so they survive
+  // unmount/remount when the user navigates away and back via the sidebar.
+  // currIdx/showSummary stay local — those are pure view state.
   const [currIdx, setCurrIdx] = useState(0);
-  const [responses, setResponses] = useState<Record<number, number>>({});
-  const [notes, setNotes] = useState<Record<number, string>>({});
-  const [evidenceNames, setEvidenceNames] = useState<Record<number, string>>({});
-  const [answeredAt, setAnsweredAt] = useState<Record<number, string>>({});
+  const responses: Record<number, number> = draft?.responses ?? {};
+  const notes: Record<number, string> = draft?.notes ?? {};
+  const evidenceNames: Record<number, string> = draft?.evidenceNames ?? {};
+  const answeredAt: Record<number, string> = draft?.answeredAt ?? {};
+  // Each setter uses a FUNCTIONAL parent update so multiple setters fired
+  // in the same handler compose correctly. The previous version closed over
+  // a stale `draft` reference and the second batched setter overwrote the
+  // first — losing the score on every click. Codex P1 catch.
+  const setResponses = (next: Record<number, number> | ((prev: Record<number, number>) => Record<number, number>)) => {
+    onDraftChange?.((prev: any) => ({
+      ...prev,
+      responses: typeof next === "function" ? (next as any)(prev?.responses ?? {}) : next,
+    }));
+  };
+  const setNotes = (next: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => {
+    onDraftChange?.((prev: any) => ({
+      ...prev,
+      notes: typeof next === "function" ? (next as any)(prev?.notes ?? {}) : next,
+    }));
+  };
+  const setEvidenceNames = (next: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => {
+    onDraftChange?.((prev: any) => ({
+      ...prev,
+      evidenceNames: typeof next === "function" ? (next as any)(prev?.evidenceNames ?? {}) : next,
+    }));
+  };
+  const setAnsweredAt = (next: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => {
+    onDraftChange?.((prev: any) => ({
+      ...prev,
+      answeredAt: typeof next === "function" ? (next as any)(prev?.answeredAt ?? {}) : next,
+    }));
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+
+  // Resume cursor at the first unanswered question on remount.
+  useEffect(() => {
+    if (Object.keys(responses).length === 0) return;
+    const firstUnanswered = questions.findIndex((q: any) => responses[q.id] === undefined);
+    if (firstUnanswered >= 0) setCurrIdx(firstUnanswered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const currentQ = questions[currIdx];
   const currentPillar = pillars.find((p: any) => p.id === currentQ?.pillarId);
@@ -1121,15 +1141,41 @@ const RNOSCommandCenter = ({
   onEntityChange,
   onBack,
   onOpenPalette,
+  onOpenActionPlan,
+  onOpenProvenance,
   assessmentId,
   operatorEmail,
 }: any) => {
   type SortKey = "priority" | "uplift" | "phase";
   const [sortKey, setSortKey] = useState<SortKey>("priority");
+
+  // Real per-pillar trajectories from /api/assessments/trend. Replaces the
+  // deterministic Math.sin sparklines that were synthesizing "history" from
+  // the current score — an integrity bug for a product whose patent claim
+  // is reproducibility. When fewer than 2 sessions exist we render no
+  // sparkline (rather than a misleading flat line or fabricated curve).
+  const [pillarTrend, setPillarTrend] = useState<Record<string, number[]>>({});
+  useEffect(() => {
+    if (!bu?.id || !operatorEmail) return;
+    const ctrl = new AbortController();
+    fetch(`/api/assessments/trend?entityId=${bu.id}&operatorEmail=${encodeURIComponent(operatorEmail)}&benchmarkType=${benchmarkType}`, { signal: ctrl.signal })
+      .then(r => r.json())
+      .then(data => {
+        const sessions: any[] = data.sessions ?? [];
+        if (sessions.length < 2) { setPillarTrend({}); return; }
+        const byPillar: Record<string, number[]> = {};
+        const pillarIds: string[] = sessions[0].pillars.map((p: any) => p.pillarId);
+        for (const pid of pillarIds) {
+          byPillar[pid] = sessions.map(s => s.pillars.find((x: any) => x.pillarId === pid)?.score ?? 0);
+        }
+        setPillarTrend(byPillar);
+      })
+      .catch(() => { /* abort or transient — leave map empty */ });
+    return () => ctrl.abort();
+  }, [bu?.id, operatorEmail, benchmarkType]);
   const {
     analytics,
     dimensions,
-    driftProfile,
     regressions,
     roadmap,
     overallScore,
@@ -1138,24 +1184,11 @@ const RNOSCommandCenter = ({
     criticalRegressionsCount,
     activeRoadmapCount,
     benchmarkAverage,
-    averageGap,
     responseSummary,
     missionStatus,
+    signatures,
   } = analysis;
-
-  const radarData = useMemo(
-    () => analytics.map((a: any) => ({ pillar: a.pillarName, score: a.score, target: a.target, fullMark: 5 })),
-    [analytics],
-  );
-  const barData = useMemo(
-    () =>
-      analytics.map((a: any) => ({
-        pillar: a.pillarName.split(/[\s&]+/)[0].slice(0, 8),
-        score: a.score,
-        benchmark: a.target,
-      })),
-    [analytics],
-  );
+  const [showSig, setShowSig] = useState(false);
   const alignedCount = analytics.filter((a: any) => a.score >= a.target).length;
 
   const statusMeta: Record<
@@ -1239,8 +1272,10 @@ const RNOSCommandCenter = ({
       </div>
 
       <div className="max-w-[1600px] mx-auto px-8 py-8 space-y-6 pb-20">
-        {/* Live Brief hero — drift narrative + score + secondary metrics */}
-        <Card severity="none" className="p-8">
+        {/* Live Brief hero — drift narrative + score + secondary metrics
+            Severity stripe lights coral when a CRITICAL regression is live, so
+            the most important moment of the screen carries its alarm. */}
+        <Card severity={criticalRegressionsCount > 0 ? "coral" : (analysis.regressions?.length ?? 0) > 0 ? "amber" : "mint"} className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Left: drift narrative */}
             <div className="lg:col-span-7 flex flex-col justify-between">
@@ -1255,7 +1290,14 @@ const RNOSCommandCenter = ({
                     if (worstReg) {
                       return (
                         <>
-                          <span className="text-[var(--color-coral)]">{worstReg.pillarName}</span>{" "}
+                          <button
+                            type="button"
+                            onClick={() => onOpenProvenance?.(worstReg.pillarId)}
+                            className="text-[var(--color-coral)] hover:underline cursor-pointer"
+                            title="View standards alignment for this pillar"
+                          >
+                            {worstReg.pillarName}
+                          </button>{" "}
                           regressed{" "}
                           <span className="text-[var(--color-coral)]">
                             {worstReg.delta.toFixed(2)}
@@ -1328,6 +1370,23 @@ const RNOSCommandCenter = ({
                   <TooltipContent side="bottom">Sequenced by expected uplift ÷ (cost × duration).</TooltipContent>
                 </UiTooltip>
               </div>
+
+              {/* Live Brief CTAs — routes the operator to the next obvious move */}
+              <div className="mt-6 flex items-center gap-3">
+                <button
+                  onClick={onOpenActionPlan}
+                  disabled={activeRoadmapCount === 0}
+                  className="btn-cta text-[12px] disabled:opacity-50"
+                >
+                  Open action plan <ArrowRight size={12} />
+                </button>
+                <button
+                  onClick={onOpenPalette}
+                  className="btn-ghost text-[12px]"
+                >
+                  Switch benchmark · ⌘K
+                </button>
+              </div>
             </div>
 
             {/* Right: hero score + sparkline trail */}
@@ -1349,12 +1408,86 @@ const RNOSCommandCenter = ({
                   Weighted average of 10 pillars · each rolled up from 4-dimension × 10-question cells.
                 </TooltipContent>
               </UiTooltip>
-              <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tracking-[0.06em] uppercase mt-2">
-                of 5.00 · overall
-              </span>
+              <div className="flex flex-col items-end gap-2 mt-2">
+                <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tracking-[0.06em] uppercase">
+                  of 5.00 · overall
+                </span>
+                {/* Run signature — patent claim 24 made tangible. Click to
+                    inspect the inputs that determined this score. */}
+                {signatures && (
+                  <button
+                    onClick={() => setShowSig(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border hairline bg-[var(--color-surface)] hover:border-[var(--color-accent)] cursor-pointer transition-colors"
+                    aria-label="Inspect run signature"
+                    title="Click to inspect the inputs that determined this score"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-mint)]" />
+                    <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--color-ink-soft)]">
+                      sig·{signatures.scoringInputHashShort} · spec v{signatures.scoringSpecVersion} · {signatures.coverage?.ok ? "complete" : "incomplete"}
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </Card>
+
+        {/* Signature inspector modal */}
+        {showSig && signatures && (
+          <div
+            className="fixed inset-0 z-[150] bg-[rgba(22,24,26,0.45)] backdrop-blur-sm flex items-center justify-center p-6"
+            onClick={() => setShowSig(false)}
+          >
+            <div
+              className="card max-w-[640px] w-full p-7 shadow-[var(--shadow-deep)]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-baseline justify-between">
+                <Eyebrow tone="accent">Run signature · patent claim 24</Eyebrow>
+                <button
+                  onClick={() => setShowSig(false)}
+                  className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <h3 className="mt-2 text-[20px] font-medium tracking-[-0.012em] text-[var(--color-ink)]">
+                Same inputs always produce the same score.
+              </h3>
+              <p className="mt-2 text-[13px] text-[var(--color-ink-soft)] leading-[1.55]">
+                These hashes are deterministic. Two assessments with the same scoring-input hash compute to the same overall score, byte-for-byte. Switching benchmark only changes the analysis hash, not the scoring hash.
+              </p>
+
+              <div className="mt-5 space-y-3">
+                <div className="border-l-2 border-[var(--color-accent)] pl-3">
+                  <Eyebrow tone="ink">Scoring-input hash</Eyebrow>
+                  <code className="block mt-1 font-mono text-[11px] text-[var(--color-ink)] break-all leading-[1.5]">{signatures.scoringInputHash}</code>
+                  <p className="mt-1 text-[11px] text-[var(--color-ink-muted)]">SHA-256 over canonical responses + catalog v{signatures.catalogVersion} (catalog·{signatures.catalogHash}) + spec v{signatures.scoringSpecVersion}.</p>
+                </div>
+                <div className="border-l-2 border-[var(--color-ink-faint)] pl-3">
+                  <Eyebrow tone="ink">Analysis hash · {signatures.benchmarkType}</Eyebrow>
+                  <code className="block mt-1 font-mono text-[11px] text-[var(--color-ink)] break-all leading-[1.5]">{signatures.analysisHash}</code>
+                  <p className="mt-1 text-[11px] text-[var(--color-ink-muted)]">Adds the active benchmark profile to the scoring-input hash.</p>
+                </div>
+                <div>
+                  <Eyebrow tone="ink">Coverage</Eyebrow>
+                  <p className={`mt-1 font-mono text-[11px] ${signatures.coverage?.ok ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
+                    {signatures.coverage?.ok ? "complete · all questions answered exactly once" : `incomplete · ${signatures.coverage?.reason}`}
+                  </p>
+                </div>
+                <div>
+                  <Eyebrow tone="ink">Computed at</Eyebrow>
+                  <p className="mt-1 font-mono text-[11px] text-[var(--color-ink-muted)]">{signatures.computedAt}</p>
+                </div>
+              </div>
+
+              <p className="mt-5 text-[11px] text-[var(--color-ink-muted)] leading-[1.55]">
+                Note: this is an input fingerprint, not a tamper-evident signature. SHA-256 proves equality between two computations; HMAC + a server secret would be required for authenticity.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Pillar table — D+ prototype tabular layout with inline sparklines */}
         <div>
@@ -1382,16 +1515,21 @@ const RNOSCommandCenter = ({
                   const above = a.score >= a.target;
                   const near = a.score >= a.target * 0.8;
                   const sev = above ? "mint" : near ? "amber" : "coral";
-                  // Deterministic 6-point trend per pillar — anchored on current score
-                  const seed = a.pillarId.charCodeAt(0);
-                  const trend = Array.from({ length: 6 }, (_, j) => {
-                    const phase = Math.sin((seed + j) * 0.9) * 0.15;
-                    return Number((a.score - 0.18 + phase + (j / 5) * 0.16).toFixed(2));
-                  });
+                  // Real trend points, or none. Never fabricate.
+                  const trend = pillarTrend[a.pillarId];
                   return (
                     <tr key={a.pillarId} className="border-b hairline last:border-b-0 hover:bg-[var(--color-bg-deep)]/40">
                       <td className="px-5 py-3.5 font-mono text-[11px] text-[var(--color-ink-muted)]">{(i + 1).toString().padStart(2, "0")}</td>
-                      <td className="px-5 py-3.5 text-[var(--color-ink)] font-medium">{a.pillarName}</td>
+                      <td className="px-5 py-3.5 text-[var(--color-ink)] font-medium">
+                        <button
+                          type="button"
+                          onClick={() => onOpenProvenance?.(a.pillarId)}
+                          className="text-left hover:text-[var(--color-accent)] cursor-pointer transition-colors"
+                          title="View standards alignment for this pillar"
+                        >
+                          {a.pillarName}
+                        </button>
+                      </td>
                       <td className="px-5 py-3.5 text-right font-mono tabular text-[var(--color-ink)]">{a.score.toFixed(2)}</td>
                       <td className="px-5 py-3.5 text-right font-mono tabular text-[var(--color-ink-muted)]">{a.target.toFixed(2)}</td>
                       <td className={`px-5 py-3.5 text-right font-mono tabular ${above ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
@@ -1399,7 +1537,11 @@ const RNOSCommandCenter = ({
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex justify-center">
-                          <Sparkline values={trend} width={88} height={22} color={sev === "mint" ? "var(--color-mint)" : sev === "coral" ? "var(--color-coral)" : "var(--color-accent)"} />
+                          {trend && trend.length >= 2 ? (
+                            <Sparkline values={trend} width={88} height={22} color={sev === "mint" ? "var(--color-mint)" : sev === "coral" ? "var(--color-coral)" : "var(--color-accent)"} />
+                          ) : (
+                            <span className="font-mono text-[10px] text-[var(--color-ink-subtle)]">—</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-5 py-3.5 text-right">
@@ -1413,199 +1555,96 @@ const RNOSCommandCenter = ({
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <Card className="lg:col-span-5 p-7">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <Eyebrow tone="amber">Pillar scope</Eyebrow>
-                <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
-                  Maturity vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
-                </h3>
-              </div>
-              <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tabular tracking-[0.18em] uppercase">10 × 5</span>
-            </div>
-            <div className="h-[340px] mt-3">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
-                  <PolarGrid stroke={CHART.grid} />
-                  <PolarAngleAxis
-                    dataKey="pillar"
-                    stroke={CHART.axis}
-                    tick={{ fill: CHART.axisLabel, fontSize: 9, fontFamily: "Inter" }}
-                  />
-                  <PolarRadiusAxis stroke={CHART.axis} tick={false} axisLine={false} domain={[0, 5]} />
-                  <Radar
-                    name="Current"
-                    dataKey="score"
-                    stroke={CHART.primary}
-                    fill={CHART.primary}
-                    fillOpacity={0.14}
-                    strokeWidth={2}
-                    dot={{ fill: CHART.primary, r: 3 }}
-                  />
-                  <Radar
-                    name="Benchmark"
-                    dataKey="target"
-                    stroke={CHART.accent}
-                    fill="transparent"
-                    strokeDasharray="4 4"
-                    strokeWidth={1.5}
-                  />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} cursor={false} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex items-center gap-5 pt-4 border-t hairline">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-0.5 bg-[var(--color-ink)]" />
-                <span className="text-[11px] text-[var(--color-ink-soft)]">Current</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 border-t border-dashed border-[var(--color-gold)]" />
-                <span className="text-[11px] text-[var(--color-ink-soft)]">
-                  {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="lg:col-span-4 p-7">
-            <div>
-              <Eyebrow tone="amber">Operating dimensions</Eyebrow>
-              <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
-                People · Process · Technology · Governance
-              </h3>
-            </div>
-            <div className="space-y-6 mt-7">
-              {dimensions.map((d: any) => {
-                const pct = (d.score / 5) * 100;
-                const above = d.score >= 4.0;
-                return (
-                  <div key={d.id} className="space-y-2">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-[13px] font-medium text-[var(--color-ink)]">
-                        {d.name}
-                      </span>
-                      <span className={`display-num text-[20px] ${above ? "text-[var(--color-gold)]" : "text-[var(--color-ink)]"}`}>
-                        {d.score.toFixed(2)}
-                      </span>
-                    </div>
-                    <Progress value={pct} accent={above ? "mint" : "ink"} />
+        {/* Focus Inspector — 4 dimension tiles. Each surfaces dim score + gap
+            against a 4.0 reference, the canonical "Managed" maturity threshold.
+            Color drives off above/below the threshold so an operator scanning
+            the row sees which axis is bleeding without reading numbers. */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <Eyebrow>Focus inspector · operating dimensions</Eyebrow>
+            <span className="font-mono text-[11px] text-[var(--color-ink-muted)] tabular uppercase tracking-[0.18em]">
+              Reference 4.00 · "Managed"
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {dimensions.map((d: any) => {
+              const ref = 4.0;
+              const above = d.score >= ref;
+              const near = d.score >= ref * 0.85;
+              const sev = above ? "mint" : near ? "amber" : "coral";
+              const pct = Math.min(100, (d.score / 5) * 100);
+              const refPct = (ref / 5) * 100;
+              return (
+                <Card key={d.id} severity={sev as any} variant="flat" className="p-5">
+                  <div className="flex items-baseline justify-between">
+                    <Eyebrow tone="ink">{d.name ?? d.id}</Eyebrow>
+                    <Pill tone={sev as any}>{above ? "Aligned" : near ? "Drifting" : "Critical"}</Pill>
                   </div>
-                );
-              })}
-            </div>
-            <div className="mt-7 pt-5 border-t hairline grid grid-cols-2 gap-4">
-              <div>
-                <Eyebrow>Avg gap</Eyebrow>
-                <p className="mt-1 display-num text-[18px] text-[var(--color-coral)]">
-                  {averageGap.toFixed(2)}
-                </p>
-              </div>
-              <div>
-                <Eyebrow>Integrity</Eyebrow>
-                <p className="mt-1 display-num text-[18px] text-[var(--color-mint)]">
-                  {systemIntegrity}%
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <div className="lg:col-span-3 flex flex-col gap-5">
-            <Card severity={regressions.length > 0 ? "coral" : "none"} className="p-5">
-              <div className="flex items-center justify-between mb-3">
-                <Eyebrow tone="amber">Drift signal</Eyebrow>
-                <StatusDot color={regressions.length > 0 ? "coral" : "mint"} />
-              </div>
-              <div className="h-[130px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={driftProfile}>
-                    <CartesianGrid stroke={CHART.grid} strokeDasharray="2 4" vertical={false} />
-                    <XAxis dataKey="pillar" hide />
-                    <YAxis stroke={CHART.axis} tick={{ fontSize: 9, fontFamily: "Inter", fill: CHART.axisLabel }} />
-                    <Tooltip contentStyle={TOOLTIP_STYLE} cursor={false} />
-                    <ReferenceLine y={0} stroke={CHART.axis} strokeDasharray="2 2" />
-                    <Line
-                      type="step"
-                      dataKey="delta"
-                      stroke={CHART.accent}
-                      strokeWidth={2}
-                      dot={{ r: 3, fill: CHART.accent }}
-                      activeDot={{ r: 5 }}
+                  <div className="mt-3 flex items-baseline gap-2">
+                    <span className="display-num text-[34px] text-[var(--color-ink)]">
+                      {d.score.toFixed(2)}
+                    </span>
+                    <span className="font-mono text-[10px] text-[var(--color-ink-muted)]">/ 5.00</span>
+                    <span className={`ml-auto font-mono text-[11px] font-semibold ${above ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
+                      {above ? "+" : "-"}{Math.abs(d.score - ref).toFixed(2)}
+                    </span>
+                  </div>
+                  {/* Bar with reference tick at 4.0 */}
+                  <div className="relative mt-3 h-[5px] bg-[var(--color-surface-soft)] rounded-full overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0"
+                      style={{ width: `${pct}%`, background: above ? "var(--color-mint)" : near ? "var(--color-accent)" : "var(--color-coral)" }}
                     />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="pt-3 border-t hairline flex justify-between text-[11px]">
-                <span className="text-[var(--color-ink-muted)]">vs prior baseline</span>
-                <span className={regressions.length > 0 ? "delta-down" : "delta-up"}>
-                  {regressions.length} signals
-                </span>
-              </div>
-            </Card>
-
-            <Card className="p-5 flex-1">
-              <Eyebrow className="mb-3 block">Response coverage</Eyebrow>
-              <div className="space-y-3">
-                {[
-                  ["Vectors", `${responseSummary.totalResponses}/100`],
-                  ["Evidence", String(responseSummary.evidenceCount)],
-                  ["Notes", String(responseSummary.noteCount)],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between text-[12px] pb-2 border-b hairline last:border-0 last:pb-0">
-                    <span className="font-mono text-[var(--color-ink-muted)] tracking-wide">{k}</span>
-                    <span className="text-[var(--color-ink)] tabular">{v}</span>
+                    <div className="absolute inset-y-0 w-px bg-[var(--color-ink-faint)]" style={{ left: `${refPct}%` }} />
                   </div>
-                ))}
-              </div>
-            </Card>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
-        <Card className="p-7">
-          <div className="flex items-center justify-between mb-6">
+        {/* Response coverage strip — what raw inputs underpin this analysis.
+            Audit-trail-friendly. The radar/dimensions/drift cards that used
+            to sit here were redundant with the pillar table + Focus Inspector
+            + Live Brief headline; cut to reduce chart inflation. */}
+        <Card className="p-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <Eyebrow tone="amber">Pillar delta</Eyebrow>
-              <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
-                Current vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType} by pillar
-              </h3>
+              <Eyebrow>Vectors captured</Eyebrow>
+              <p className="mt-2 display-num text-[22px] text-[var(--color-ink)]">
+                {responseSummary.totalResponses}<span className="text-[12px] text-[var(--color-ink-muted)] ml-1">/ 100</span>
+              </p>
             </div>
-            <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tracking-[0.18em] uppercase">
-              Avg {benchmarkAverage.toFixed(2)}
-            </span>
-          </div>
-          <div className="h-[260px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                <CartesianGrid stroke={CHART.grid} strokeDasharray="2 4" vertical={false} />
-                <XAxis
-                  dataKey="pillar"
-                  stroke={CHART.axis}
-                  tick={{ fontSize: 10, fontFamily: "Inter", fill: CHART.axisLabel }}
-                  tickLine={false}
-                  axisLine={{ stroke: CHART.grid }}
-                />
-                <YAxis
-                  domain={[0, 5]}
-                  stroke={CHART.axis}
-                  tick={{ fontSize: 10, fontFamily: "Inter", fill: CHART.axisLabel }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(200,161,75,0.08)" }} />
-                <Bar dataKey="score" fill={CHART.primary} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="benchmark" fill={CHART.accent} opacity={0.5} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <div>
+              <Eyebrow>Evidence linked</Eyebrow>
+              <p className="mt-2 display-num text-[22px] text-[var(--color-ink)]">
+                {responseSummary.evidenceCount}
+              </p>
+            </div>
+            <div>
+              <Eyebrow>Notes captured</Eyebrow>
+              <p className="mt-2 display-num text-[22px] text-[var(--color-ink)]">
+                {responseSummary.noteCount}
+              </p>
+            </div>
+            <div>
+              <Eyebrow>System integrity</Eyebrow>
+              <p className={`mt-2 display-num text-[22px] ${systemIntegrity >= 80 ? "text-[var(--color-mint)]" : systemIntegrity >= 50 ? "text-[var(--color-accent)]" : "text-[var(--color-coral)]"}`}>
+                {systemIntegrity}<span className="text-[12px] text-[var(--color-ink-muted)] ml-1">%</span>
+              </p>
+            </div>
           </div>
         </Card>
 
-        {/* Pillar evolution — historical trend across past assessments */}
+        {/* Pillar evolution — historical trend across past assessments.
+            Real longitudinal data, not redundant with anything else. */}
         <TrendChart entityId={bu.id} operatorEmail={operatorEmail} benchmarkType={benchmarkType} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <Card className="lg:col-span-2 p-0 overflow-hidden">
+        {/* Sequenced roadmap — preserved at top level for the audit narrative.
+            Regression Alerts card was cut: same data shown by Live Brief
+            headline + pillar-table status pills. */}
+        <div>
+          <Card className="p-0 overflow-hidden">
             <div className="px-7 py-5 border-b hairline flex items-center justify-between">
               <div>
                 <Eyebrow tone="amber">Sequencing</Eyebrow>
@@ -1684,46 +1723,6 @@ const RNOSCommandCenter = ({
             </div>
           </Card>
 
-          <Card severity={criticalRegressionsCount > 0 ? "coral" : "none"} className="p-5">
-            <div className="flex items-center justify-between mb-4">
-              <Eyebrow tone="amber">Regression alerts</Eyebrow>
-              {criticalRegressionsCount > 0 && <StatusDot color="coral" />}
-            </div>
-            {regressions.length > 0 ? (
-              <div className="space-y-2">
-                {regressions.slice(0, 6).map((r: any, i: number) => (
-                  <div
-                    key={i}
-                    className="border hairline p-3 rounded-[8px] flex items-center justify-between hover:border-[var(--color-coral)] transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`w-0.5 h-5 rounded-full ${r.severity === "CRITICAL" ? "bg-[var(--color-coral)]" : "bg-[var(--color-gold)]"}`}
-                      />
-                      <div>
-                        <p className="text-[12px] text-[var(--color-ink)] font-medium">
-                          {r.pillarName}
-                        </p>
-                        <p className="font-mono text-[10px] text-[var(--color-ink-muted)] tracking-wide uppercase">
-                          {r.severity}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-[12px] text-[var(--color-coral)] tabular">
-                      {r.delta.toFixed(3)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-10">
-                <ShieldCheck size={28} className="mx-auto text-[var(--color-mint)] mb-3" />
-                <p className="text-[11px] text-[var(--color-ink-muted)] font-mono tracking-[0.10em] uppercase">
-                  All pillars nominal
-                </p>
-              </div>
-            )}
-          </Card>
         </div>
       </div>
     </div>
@@ -1765,7 +1764,11 @@ const DPSidebar = ({
   const workspaceItems: { key: string; label: string; target: Screen | null; active: boolean }[] = [
     { key: "today",    label: "Today",          target: "navigator",  active: screen === "navigator" },
     { key: "scope",    label: "Operating units", target: "scope",     active: screen === "scope" },
-    { key: "assess",   label: "Assessment",     target: "assessment", active: screen === "assessment" },
+    // Assessment is intentionally not directly navigable — it requires a BU
+    // selection (see handleEntitySelect). Clicking the nav item routes to
+    // scope so the user picks a unit; the "active" highlight still lights up
+    // when the assessment is in progress.
+    { key: "assess",   label: "Assessment",     target: screen === "assessment" ? "assessment" : "scope", active: screen === "assessment" },
     { key: "action",   label: "Action plan",    target: "action",     active: screen === "action" },
     { key: "evidence", label: "Evidence",       target: "evidence",   active: screen === "evidence" },
     { key: "history",  label: "History",        target: "history",    active: screen === "history" },
@@ -1905,6 +1908,23 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
+  // Lifted draft for the in-progress questionnaire so navigating away and
+  // back via the sidebar doesn't blow away captured responses. Keyed by
+  // assessmentId so a different BU starts a fresh draft.
+  // Provenance deep-link target — when set, opening the Provenance screen
+  // scrolls to and highlights this pillar. Cleared on next setScreen.
+  const [provenancePillarId, setProvenancePillarId] = useState<string | null>(null);
+  const openProvenance = (pillarId?: string | null) => {
+    setProvenancePillarId(pillarId ?? null);
+    setScreen("provenance");
+  };
+  const [assessmentDraft, setAssessmentDraft] = useState<{
+    id: string | null;
+    responses: Record<number, number>;
+    notes: Record<number, string>;
+    evidenceNames: Record<number, string>;
+    answeredAt: Record<number, string>;
+  }>({ id: null, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
 
   const entities = BUSINESS_UNITS;
   const metadata = { pillars: PILLARS, questions: QUESTIONS, weights: WEIGHTS };
@@ -1986,22 +2006,54 @@ export default function App() {
   const generateAssessmentId = () =>
     "TX" + Math.random().toString(36).substring(2, 11).toUpperCase();
 
+  // Explicit "begin new assessment" — used by Scope tile click and the
+  // explicit "+ New assessment" affordance. Resets the draft because this
+  // is the user's deliberate action to start fresh.
   const handleEntitySelect = (bu: any) => {
-    setAssessmentId(generateAssessmentId());
+    const aid = generateAssessmentId();
+    setAssessmentId(aid);
     setSelectedBU(bu);
+    setAssessmentDraft({ id: aid, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
     setScreen("assessment");
   };
 
+  // Sidebar BU click — filter the workspace to that unit. Adopts the
+  // mental model: clicking a BU NEVER creates or mutates records. If a
+  // prior completed assessment exists, open it. Otherwise route to scope
+  // so the user can explicitly begin one. Never silently overwrite.
+  const handleSidebarBuSelect = async (bu: any) => {
+    setSelectedBU(bu);
+    const priorForBu = history.find((h: any) => h.entityId === bu.id);
+    if (priorForBu) {
+      setAssessmentId(priorForBu.id);
+      await fetchAnalysis(priorForBu.id, benchmarkType);
+      setScreen("navigator");
+    } else {
+      // No prior — clear analysis so Today's empty hub fires correctly,
+      // then route to scope so the user explicitly initiates a new assessment.
+      setAnalysis(null);
+      setAssessmentId(null);
+      setScreen("scope");
+    }
+  };
+
+  // Race-safe analysis fetch. When the operator switches BU mid-fetch we
+  // abort the in-flight request so a stale response can't overwrite the
+  // newer selection's analysis.
+  const analysisAbortRef = useRef<AbortController | null>(null);
   const fetchAnalysis = async (aid: string, bType = benchmarkType) => {
+    analysisAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    analysisAbortRef.current = ctrl;
     setLoading(true);
     try {
-      const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`);
+      const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`, { signal: ctrl.signal });
       const data = await res.json();
-      setAnalysis(data);
-    } catch (e) {
-      console.error(e);
+      if (!ctrl.signal.aborted) setAnalysis(data);
+    } catch (e: any) {
+      if (e?.name !== "AbortError") console.error(e);
     } finally {
-      setLoading(false);
+      if (!ctrl.signal.aborted) setLoading(false);
     }
   };
 
@@ -2045,13 +2097,17 @@ export default function App() {
     }
   };
 
-  // Logout helper — used by sidebar + command palette
+  // Logout helper — clears every operator-scoped state slot so the next
+  // operator inherits no preferences, drafts, or analyses from the previous
+  // session. Operator A's mid-questionnaire draft must not be visible to B.
   const handleLogout = () => {
     setHistory([]);
     setLoginEmail("");
     setSelectedBU(null);
     setAnalysis(null);
     setAssessmentId(null);
+    setBenchmarkType("target");
+    setAssessmentDraft({ id: null, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
     setScreen("login");
   };
 
@@ -2074,7 +2130,7 @@ export default function App() {
             entities={entities}
             activeBuId={selectedBU?.id ?? null}
             screen={screen}
-            onSelectBU={handleEntitySelect}
+            onSelectBU={handleSidebarBuSelect}
             onNavigate={(to) => setScreen(to)}
             onLogout={handleLogout}
             loginEmail={loginEmail}
@@ -2102,6 +2158,8 @@ export default function App() {
                     pillars={metadata.pillars}
                     onBack={() => setScreen("scope")}
                     onComplete={handleAssessmentComplete}
+                    draft={assessmentDraft}
+                    onDraftChange={setAssessmentDraft}
                   />
                 </motion.div>
               )}
@@ -2126,7 +2184,14 @@ export default function App() {
               {screen === "report" && (
                 <motion.div key="report" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
                   {analysis ? (
-                    <ReportScreen analysis={analysis} bu={selectedBU} assessmentId={assessmentId} operatorEmail={loginEmail} onOpenToday={() => setScreen("navigator")} />
+                    <ReportScreen
+                      analysis={analysis}
+                      bu={selectedBU}
+                      assessmentId={assessmentId}
+                      operatorEmail={loginEmail}
+                      onOpenToday={() => setScreen("navigator")}
+                      onOpenProvenance={() => openProvenance(null)}
+                    />
                   ) : (
                     <EmptyHub message="The report previews an assessment's board-grade PDF. Open one first." cta="Operating units" onCta={() => setScreen("scope")} />
                   )}
@@ -2134,16 +2199,28 @@ export default function App() {
               )}
               {screen === "provenance" && (
                 <motion.div key="provenance" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
-                  <ProvenanceScreen onOpenToday={() => setScreen(analysis ? "navigator" : "scope")} />
+                  <ProvenanceScreen
+                    onOpenToday={() => setScreen(analysis ? "navigator" : "scope")}
+                    highlightPillarId={provenancePillarId}
+                  />
                 </motion.div>
               )}
               {screen === "history" && (
                 <motion.div key="history" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
-                  {analysis ? (
-                    <HistoryScreen analysis={analysis} bu={selectedBU} onOpenToday={() => setScreen("navigator")} />
+                  {selectedBU ? (
+                    <HistoryScreen bu={selectedBU} operatorEmail={loginEmail} onOpenToday={() => setScreen(analysis ? "navigator" : "scope")} />
                   ) : (
-                    <EmptyHub message="History replays prior assessments for the active unit. Open one first." cta="Operating units" onCta={() => setScreen("scope")} />
+                    <EmptyHub message="History needs an operating unit. Pick one to see its full trajectory." cta="Operating units" onCta={() => setScreen("scope")} />
                   )}
+                </motion.div>
+              )}
+              {screen === "navigator" && !analysis && (
+                <motion.div key="navigator-empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
+                  <EmptyHub
+                    message="Today reads a live assessment. Open one from Operating units to see its Live Brief, drift, and roadmap."
+                    cta="Operating units"
+                    onCta={() => setScreen("scope")}
+                  />
                 </motion.div>
               )}
               {screen === "navigator" && analysis && (
@@ -2165,6 +2242,8 @@ export default function App() {
                     }}
                     onBack={() => setScreen("scope")}
                     onOpenPalette={() => setPaletteOpen(true)}
+                    onOpenActionPlan={() => setScreen("action")}
+                    onOpenProvenance={(pid: string) => openProvenance(pid)}
                     assessmentId={assessmentId}
                     operatorEmail={loginEmail}
                   />

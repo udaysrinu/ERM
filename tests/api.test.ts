@@ -329,6 +329,15 @@ describe('GET /api/assessments/[id]/analysis', () => {
     expect(industry._body.benchmarkType).toBe('industry');
     // benchmarkAverage should differ between target and industry profiles.
     expect(industry._body.benchmarkAverage).not.toBe(target._body.benchmarkAverage);
+
+    // Run signatures — patent claim 24 surfaced via the API.
+    expect(target._body.signatures).toBeDefined();
+    expect(target._body.signatures.scoringInputHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(target._body.signatures.analysisHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(target._body.signatures.coverage).toBeDefined();
+    // Switching benchmark must change analysisHash but keep scoringInputHash stable.
+    expect(industry._body.signatures.scoringInputHash).toBe(target._body.signatures.scoringInputHash);
+    expect(industry._body.signatures.analysisHash).not.toBe(target._body.signatures.analysisHash);
   });
 
   it('rejects POST → 405', async () => {

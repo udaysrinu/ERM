@@ -184,9 +184,10 @@ function ScenarioCard({
 }
 
 /* ── EVIDENCE LIBRARY ───────────────────────────────────────
-   Aggregates evidence across captured vectors. Reads analysis.responseSummary.
-   Backend doesn't yet return per-question evidence; rendered list is a
-   read-only registry derived from response counts. */
+   Reads analysis.evidenceFiles — the real per-question evidence captured
+   during the questionnaire. We do NOT fabricate filenames. When no files
+   are attached we render an honest empty state explaining that evidence
+   storage (Supabase Storage signed URLs + AI validation) is on the roadmap. */
 export function EvidenceScreen({
   analysis,
   bu,
@@ -199,24 +200,28 @@ export function EvidenceScreen({
   const [query, setQuery] = useState("");
   const summary = analysis?.responseSummary ?? { evidenceCount: 0, totalResponses: 100 };
 
-  // Stub library — until backend exposes per-question evidence we render a
-  // representative fixed list scoped to the current BU. Counts honor the
-  // real evidenceCount returned by the engine.
+  // Pillar lookup so we can label files with the pillar of the question
+  // they were attached to. analytics carries pillarId → pillarName.
+  const pillarByQuestionId = useMemo(() => {
+    const map = new Map<number, string>();
+    // We don't have question→pillar mapping in the analysis payload, so we
+    // group by question-id range using the canonical static questions list.
+    // Since QUESTIONS isn't imported here, fall back to a generic label.
+    return map;
+  }, []);
+
   const items = useMemo(() => {
-    const base = [
-      { name: "control-test-q3-2025.pdf", pillar: "Risk Treatment", buId: bu?.id ?? "gen", kind: "pdf" },
-      { name: "iso31000-audit-2025.pdf", pillar: "Leadership & Governance", buId: bu?.id ?? "gen", kind: "pdf" },
-      { name: "kri-thresholds-current.xlsx", pillar: "Monitoring & Review", buId: bu?.id ?? "gen", kind: "xls" },
-      { name: "incident-postmortem.pdf", pillar: "Risk Culture", buId: bu?.id ?? "gen", kind: "pdf" },
-      { name: "vendor-risk-register.xlsx", pillar: "Risk Identification", buId: "tra", kind: "xls" },
-      { name: "board-risk-appetite-2026.pdf", pillar: "Strategy & Integration", buId: "corp", kind: "pdf" },
-      { name: "culture-survey-q1.pdf", pillar: "Risk Culture", buId: bu?.id ?? "gen", kind: "pdf" },
-      { name: "roadmap-rollup-2026.pdf", pillar: "Continuous Improvement", buId: "corp", kind: "pdf" },
-    ];
-    return base
-      .slice(0, Math.max(summary.evidenceCount, 4))
-      .filter(i => !query || i.name.toLowerCase().includes(query.toLowerCase()) || i.pillar.toLowerCase().includes(query.toLowerCase()));
-  }, [query, summary.evidenceCount, bu?.id]);
+    const files: { questionId: number; filename: string; answeredAt: string }[] =
+      analysis?.evidenceFiles ?? [];
+    return files
+      .map(f => ({
+        questionId: f.questionId,
+        name: f.filename,
+        pillar: pillarByQuestionId.get(f.questionId) ?? "—",
+        kind: /\.xlsx?$/i.test(f.filename) ? "xls" : "pdf",
+      }))
+      .filter(i => !query || i.name.toLowerCase().includes(query.toLowerCase()));
+  }, [analysis?.evidenceFiles, query, pillarByQuestionId]);
 
   const pdfCount = items.filter(i => i.kind === "pdf").length;
   const xlsCount = items.filter(i => i.kind === "xls").length;
@@ -234,7 +239,9 @@ export function EvidenceScreen({
           Evidence linked to <span className="text-[var(--color-accent)]">{summary.evidenceCount} vectors</span>
         </h1>
         <p className="mt-3 text-[14px] text-[var(--color-ink-soft)] max-w-[780px] leading-[1.55]">
-          Files attached to assessment vectors. Each is stamped with operator email and signed-URL preserved across sessions.
+          Filenames captured during the questionnaire for {bu?.name ?? "this unit"}. The current build records
+          attached filenames for traceability; signed-URL blob storage and AI evidence validation are on the
+          roadmap (Supabase Storage + Gemini Vision).
         </p>
 
         {/* Search + filter */}
@@ -244,7 +251,7 @@ export function EvidenceScreen({
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search filename, pillar, BU…"
+              placeholder="Search filename…"
               className="flex-1 bg-transparent text-[13px] outline-none text-[var(--color-ink)] placeholder:text-[var(--color-ink-subtle)]"
             />
           </div>
@@ -252,47 +259,50 @@ export function EvidenceScreen({
           <Pill tone="mint">XLSX · {xlsCount}</Pill>
         </div>
 
-        {/* Library table */}
-        <Card className="mt-6 overflow-hidden">
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b hairline">
-                <th className="px-5 py-3 text-left w-12"></th>
-                <th className="px-5 py-3 text-left"><Eyebrow>Filename</Eyebrow></th>
-                <th className="px-5 py-3 text-left"><Eyebrow>Pillar</Eyebrow></th>
-                <th className="px-5 py-3 text-left"><Eyebrow>BU</Eyebrow></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it, i) => (
-                <tr key={i} className="border-b hairline last:border-b-0 hover:bg-[var(--color-bg-deep)]/40">
-                  <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center justify-center w-9 h-7 rounded-[4px] font-mono text-[9px] uppercase tracking-[0.08em] ${it.kind === "pdf" ? "bg-[var(--color-coral-soft)] text-[var(--color-coral)]" : "bg-[var(--color-mint-soft)] text-[var(--color-mint)]"}`}>
-                      {it.kind}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-[var(--color-ink)] font-medium">{it.name}</td>
-                  <td className="px-5 py-3.5 text-[var(--color-ink-soft)]">{it.pillar}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="inline-flex items-center gap-2">
-                      <BuGlyph id={it.buId} size={14} />
-                      <span className="text-[var(--color-ink-soft)]">
-                        {it.buId === "gen" ? "Generation" : it.buId === "tra" ? "Transmission" : it.buId === "corp" ? "Corporate" : "—"}
+        {items.length === 0 ? (
+          <Card className="mt-6 p-10 text-center">
+            <FileText size={28} className="mx-auto text-[var(--color-ink-faint)]" />
+            <p className="mt-4 text-[14px] text-[var(--color-ink-soft)] max-w-[480px] mx-auto">
+              No evidence files have been attached for this assessment yet. Capture filenames during the
+              questionnaire — they appear here keyed to their vector.
+            </p>
+            <p className="mt-3 font-mono text-[10px] tracking-[0.10em] uppercase text-[var(--color-ink-subtle)]">
+              Roadmap · upload to signed storage · AI validation against the rubric
+            </p>
+          </Card>
+        ) : (
+          <Card className="mt-6 overflow-hidden">
+            <table className="w-full text-[13px]">
+              <thead>
+                <tr className="border-b hairline">
+                  <th className="px-5 py-3 text-left w-12"></th>
+                  <th className="px-5 py-3 text-left"><Eyebrow>Filename</Eyebrow></th>
+                  <th className="px-5 py-3 text-left"><Eyebrow>Vector</Eyebrow></th>
+                  <th className="px-5 py-3 text-left"><Eyebrow>BU</Eyebrow></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(it => (
+                  <tr key={it.questionId} className="border-b hairline last:border-b-0 hover:bg-[var(--color-bg-deep)]/40">
+                    <td className="px-5 py-3.5">
+                      <span className={`inline-flex items-center justify-center w-9 h-7 rounded-[4px] font-mono text-[9px] uppercase tracking-[0.08em] ${it.kind === "pdf" ? "bg-[var(--color-coral-soft)] text-[var(--color-coral)]" : "bg-[var(--color-mint-soft)] text-[var(--color-mint)]"}`}>
+                        {it.kind}
                       </span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {items.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-[13px] text-[var(--color-ink-muted)]">
-                    No evidence matches "{query}".
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
+                    </td>
+                    <td className="px-5 py-3.5 text-[var(--color-ink)] font-medium">{it.name}</td>
+                    <td className="px-5 py-3.5 text-[var(--color-ink-soft)] font-mono text-[11px]">q.{it.questionId.toString().padStart(3, "0")}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="inline-flex items-center gap-2">
+                        <BuGlyph id={bu?.id ?? "gen"} size={14} />
+                        <span className="text-[var(--color-ink-soft)]">{bu?.name ?? "—"}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
       </div>
     </div>
   );
@@ -308,22 +318,35 @@ export function ReportScreen({
   assessmentId,
   operatorEmail,
   onOpenToday,
+  onOpenProvenance,
 }: {
   analysis: Analysis;
   bu: any;
   assessmentId: string | null;
   operatorEmail: string;
   onOpenToday: () => void;
+  onOpenProvenance?: () => void;
 }) {
   const score = analysis?.overallScore ?? 0;
   const benchAvg = analysis?.benchmarkAverage ?? 4.0;
   const delta = (score - benchAvg).toFixed(2);
   const analytics: any[] = analysis?.analytics ?? [];
+  const dimensions: any[] = analysis?.dimensions ?? [];
+  const roadmap: any[] = analysis?.roadmap ?? [];
+  const regressions: any[] = analysis?.regressions ?? [];
 
   const handleDownload = () => {
     if (!assessmentId) return;
     window.open(`/api/assessments/${assessmentId}/pdf`, "_blank");
   };
+
+  const buName = (bu?.name ?? "Generation").toUpperCase();
+  const PageHeader = ({ n }: { n: number }) => (
+    <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-ink-muted)] tracking-[0.10em] uppercase">
+      <span>ERM Navigator</span>
+      <span>{buName} · PAGE {n} / 5</span>
+    </div>
+  );
 
   return (
     <div className="flex-1 flex flex-col">
@@ -341,21 +364,19 @@ export function ReportScreen({
         <h1 className="mt-3 text-[40px] font-medium leading-[1.05] tracking-[-0.025em] text-[var(--color-ink)]">
           What the board sees.
         </h1>
+        <p className="mt-3 text-[14px] text-[var(--color-ink-soft)] max-w-[780px] leading-[1.55]">
+          Every page of the downloadable report, previewed in order. Numbers, dimensions, roadmap
+          phases, and standards alignment all match what the PDF endpoint produces.
+        </p>
 
-        {/* Two pages side-by-side */}
         <div className="mt-8 grid grid-cols-2 gap-5">
           {/* Page 1 — Cover */}
           <Card className="p-9 aspect-[1/1.41] flex flex-col">
-            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-ink-muted)] tracking-[0.10em] uppercase">
-              <span>ERM Navigator</span>
-              <span>{(bu?.name ?? "Generation").toUpperCase()} · PAGE 1 / 5</span>
-            </div>
+            <PageHeader n={1} />
             <Eyebrow className="mt-7 block">Cover</Eyebrow>
             <div className="mt-12">
               <div className="text-[11px] text-[var(--color-ink-soft)]">Risk Maturity Report</div>
-              <div className="display-title text-[56px] mt-1 text-[var(--color-ink)]">
-                {bu?.name ?? "Generation"}
-              </div>
+              <div className="display-title text-[56px] mt-1 text-[var(--color-ink)]">{bu?.name ?? "Generation"}</div>
               <div className="font-mono text-[11px] text-[var(--color-ink-muted)] mt-1">
                 {(bu?.industry ?? "Power generation")} · benchmark · Industry
               </div>
@@ -373,12 +394,93 @@ export function ReportScreen({
             </div>
           </Card>
 
-          {/* Page 2 — Methodology */}
+          {/* Page 2 — Pillar scores */}
           <Card className="p-9 aspect-[1/1.41] flex flex-col">
-            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-ink-muted)] tracking-[0.10em] uppercase">
-              <span>ERM Navigator</span>
-              <span>{(bu?.name ?? "Generation").toUpperCase()} · PAGE 2 / 5</span>
+            <PageHeader n={2} />
+            <Eyebrow className="mt-7 block">Pillar scores</Eyebrow>
+            <h3 className="mt-2 text-[20px] font-medium text-[var(--color-ink)] leading-[1.15]">10 pillars at a glance</h3>
+            <table className="mt-4 text-[11.5px] w-full">
+              <thead>
+                <tr className="border-b hairline">
+                  <th className="py-1.5 text-left w-7"><Eyebrow>#</Eyebrow></th>
+                  <th className="py-1.5 text-left"><Eyebrow>Pillar</Eyebrow></th>
+                  <th className="py-1.5 text-right"><Eyebrow>Score</Eyebrow></th>
+                  <th className="py-1.5 text-right"><Eyebrow>Bench</Eyebrow></th>
+                  <th className="py-1.5 text-right"><Eyebrow>Δ</Eyebrow></th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.map((a: any, i: number) => (
+                  <tr key={a.pillarId} className="border-b hairline last:border-b-0">
+                    <td className="py-1.5 font-mono text-[10px] text-[var(--color-ink-muted)]">{(i + 1).toString().padStart(2, "0")}</td>
+                    <td className="py-1.5 text-[var(--color-ink)]">{a.pillarName}</td>
+                    <td className="py-1.5 text-right font-mono tabular text-[var(--color-ink)]">{a.score.toFixed(2)}</td>
+                    <td className="py-1.5 text-right font-mono tabular text-[var(--color-ink-muted)]">{a.target.toFixed(2)}</td>
+                    <td className={`py-1.5 text-right font-mono tabular ${a.score >= a.target ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
+                      {a.score >= a.target ? "+" : ""}{(a.score - a.target).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          {/* Page 3 — Dimensions + Roadmap + Regressions */}
+          <Card className="p-9 aspect-[1/1.41] flex flex-col col-span-2">
+            <PageHeader n={3} />
+            <Eyebrow className="mt-7 block">Dimensions & roadmap</Eyebrow>
+            <h3 className="mt-2 text-[20px] font-medium text-[var(--color-ink)] leading-[1.15]">Where the gap lives, and what to do about it</h3>
+            <div className="mt-5 grid grid-cols-3 gap-6">
+              <div>
+                <Eyebrow>Operating dimensions</Eyebrow>
+                <div className="mt-3 space-y-2.5">
+                  {dimensions.map((d: any) => (
+                    <div key={d.id}>
+                      <div className="flex items-baseline justify-between text-[12px]">
+                        <span className="text-[var(--color-ink)]">{d.name ?? d.id}</span>
+                        <span className="font-mono tabular text-[var(--color-ink)]">{d.score.toFixed(2)}</span>
+                      </div>
+                      <div className="mt-1 h-[3px] bg-[var(--color-surface-soft)] rounded-full overflow-hidden">
+                        <div className="h-full bg-[var(--color-accent)]" style={{ width: `${(d.score / 5) * 100}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="col-span-2">
+                <Eyebrow>Phase-1 roadmap · {roadmap.filter(r => r.phase === "Phase 1").length} actions</Eyebrow>
+                <table className="mt-3 text-[11px] w-full">
+                  <tbody>
+                    {roadmap.filter(r => r.phase === "Phase 1").slice(0, 8).map((r: any) => (
+                      <tr key={r.id} className="border-b hairline last:border-b-0">
+                        <td className="py-1.5 text-[var(--color-ink)]">{r.description}</td>
+                        <td className="py-1.5 text-right font-mono text-[var(--color-accent)] font-semibold whitespace-nowrap pl-3">+{r.expectedUplift?.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {regressions.length > 0 && (
+                  <div className="mt-4">
+                    <Eyebrow>Regressions · {regressions.length}</Eyebrow>
+                    <ul className="mt-2 space-y-1">
+                      {regressions.slice(0, 4).map((r: any) => (
+                        <li key={r.pillarId} className="text-[11px] flex items-baseline justify-between">
+                          <span className="text-[var(--color-ink)]">{r.pillarName}</span>
+                          <span className={`font-mono ${r.severity === "CRITICAL" ? "text-[var(--color-coral)]" : "text-[var(--color-warn)]"}`}>
+                            {r.delta.toFixed(2)} · {r.severity}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
+          </Card>
+
+          {/* Page 4 — Methodology */}
+          <Card className="p-9 aspect-[1/1.41] flex flex-col">
+            <PageHeader n={4} />
             <Eyebrow className="mt-7 block">Methodology</Eyebrow>
             <h3 className="mt-2 text-[24px] font-medium text-[var(--color-ink)] leading-[1.15]">How we score</h3>
             <p className="mt-3 text-[12.5px] text-[var(--color-ink-soft)] leading-[1.55]">
@@ -407,38 +509,39 @@ export function ReportScreen({
             </table>
           </Card>
 
-          {/* Page 3 — Pillar scores */}
-          <Card className="p-9 aspect-[1/1.41] flex flex-col col-span-2">
-            <div className="flex items-center justify-between text-[10px] font-mono text-[var(--color-ink-muted)] tracking-[0.10em] uppercase">
-              <span>ERM Navigator</span>
-              <span>{(bu?.name ?? "Generation").toUpperCase()} · PAGE 3 / 5</span>
+          {/* Page 5 — Standards alignment */}
+          <Card className="p-9 aspect-[1/1.41] flex flex-col">
+            <PageHeader n={5} />
+            <Eyebrow className="mt-7 block">Standards alignment</Eyebrow>
+            <h3 className="mt-2 text-[20px] font-medium text-[var(--color-ink)] leading-[1.15]">Per-pillar provenance · patent claim 13</h3>
+            <div className="mt-4 space-y-2.5 overflow-hidden">
+              {analytics.slice(0, 6).map((a: any) => {
+                const prov = (PILLAR_PROVENANCE as any)[a.pillarId];
+                if (!prov) return null;
+                return (
+                  <div key={a.pillarId} className="border-b hairline last:border-b-0 pb-2">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[12px] font-medium text-[var(--color-ink)]">{a.pillarName}</span>
+                      <span className="font-mono text-[10px] text-[var(--color-accent)]">{(prov.weight * 100).toFixed(0)}%</span>
+                    </div>
+                    <p className="mt-1 text-[10.5px] text-[var(--color-ink-soft)] leading-[1.45] line-clamp-2">
+                      {prov.standards}
+                    </p>
+                  </div>
+                );
+              })}
+              <p className="mt-3 font-mono text-[9px] tracking-[0.10em] uppercase text-[var(--color-ink-subtle)]">
+                + 4 more pillars in the full PDF
+              </p>
+              {onOpenProvenance && (
+                <button
+                  onClick={onOpenProvenance}
+                  className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-[0.10em] text-[var(--color-accent)] hover:underline cursor-pointer"
+                >
+                  Open full Provenance · all 10 pillars + dimensions <ArrowRight size={10} />
+                </button>
+              )}
             </div>
-            <Eyebrow className="mt-7 block">Pillar scores</Eyebrow>
-            <h3 className="mt-2 text-[24px] font-medium text-[var(--color-ink)] leading-[1.15]">10 pillars at a glance</h3>
-            <table className="mt-5 text-[13px] w-full">
-              <thead>
-                <tr className="border-b hairline">
-                  <th className="py-2 text-left w-10"><Eyebrow>#</Eyebrow></th>
-                  <th className="py-2 text-left"><Eyebrow>Pillar</Eyebrow></th>
-                  <th className="py-2 text-right"><Eyebrow>Score</Eyebrow></th>
-                  <th className="py-2 text-right"><Eyebrow>Industry</Eyebrow></th>
-                  <th className="py-2 text-right"><Eyebrow>Gap</Eyebrow></th>
-                </tr>
-              </thead>
-              <tbody>
-                {analytics.map((a: any, i: number) => (
-                  <tr key={a.pillarId} className="border-b hairline last:border-b-0">
-                    <td className="py-2 font-mono text-[11px] text-[var(--color-ink-muted)]">{(i + 1).toString().padStart(2, "0")}</td>
-                    <td className="py-2 text-[var(--color-ink)]">{a.pillarName}</td>
-                    <td className="py-2 text-right font-mono tabular text-[var(--color-ink)]">{a.score.toFixed(2)}</td>
-                    <td className="py-2 text-right font-mono tabular text-[var(--color-ink-muted)]">{a.target.toFixed(2)}</td>
-                    <td className={`py-2 text-right font-mono tabular ${a.score >= a.target ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
-                      {a.score >= a.target ? "+" : ""}{(a.score - a.target).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </Card>
         </div>
       </div>
@@ -447,33 +550,58 @@ export function ReportScreen({
 }
 
 /* ── HISTORY (Time Machine) ─────────────────────────────────
-   12-month playhead-style trend across pillars. Reads analysis.analytics
-   for current values; uses deterministic synthetic 12-month series as a
-   stand-in until a longitudinal API exists. */
+   Real per-session per-pillar trajectories from /api/assessments/trend.
+   Falls back to a single-point view when only one session exists. */
 export function HistoryScreen({
-  analysis,
   bu,
+  operatorEmail,
   onOpenToday,
 }: {
-  analysis: Analysis;
   bu: any;
+  operatorEmail: string;
   onOpenToday: () => void;
 }) {
-  const analytics: any[] = analysis?.analytics ?? [];
+  const [sessions, setSessions] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Deterministic 12-month series per pillar — anchored on current score,
-  // walks backward with a small noise envelope so trajectories read distinct.
-  const series = useMemo(() => {
-    return analytics.map((a: any, idx: number) => {
-      const seed = a.pillarId.charCodeAt(0) + idx;
-      const months = Array.from({ length: 12 }, (_, i) => {
-        const phase = Math.sin((seed + i) * 0.7) * 0.18;
-        const drift = (i / 11) * 0.25 * (idx % 2 === 0 ? 1 : -1);
-        return Number((a.score - drift + phase).toFixed(2));
+  React.useEffect(() => {
+    if (!bu?.id || !operatorEmail) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/assessments/trend?entityId=${bu.id}&operatorEmail=${encodeURIComponent(operatorEmail)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        setSessions(data.sessions ?? []);
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setError(String(e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
-      return { name: a.pillarName, current: a.score, atMar: months[2], months };
+    return () => { cancelled = true; };
+  }, [bu?.id, operatorEmail]);
+
+  // Group sessions into per-pillar series. Each entry has the pillar name
+  // and an ordered array of {createdAt, score}.
+  const pillarSeries = useMemo(() => {
+    if (sessions.length === 0) return [];
+    const pillarIds: string[] = sessions[0].pillars.map((p: any) => p.pillarId);
+    return pillarIds.map(pid => {
+      const points = sessions.map(s => {
+        const p = s.pillars.find((x: any) => x.pillarId === pid);
+        return { createdAt: s.createdAt, score: p?.score ?? 0 };
+      });
+      const name = sessions[0].pillars.find((p: any) => p.pillarId === pid)?.pillarName ?? pid;
+      const earliest = points[0]?.score ?? 0;
+      const latest = points[points.length - 1]?.score ?? 0;
+      return { pillarId: pid, name, points, earliest, latest, delta: latest - earliest };
     });
-  }, [analytics]);
+  }, [sessions]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -484,32 +612,68 @@ export function HistoryScreen({
       </div>
 
       <div className="flex-1 px-10 py-9 overflow-y-auto">
-        <Eyebrow tone="accent">Time machine · 12-month scope</Eyebrow>
+        <Eyebrow tone="accent">Time machine · {sessions.length} session{sessions.length === 1 ? "" : "s"}</Eyebrow>
         <h1 className="mt-3 text-[40px] font-medium leading-[1.05] tracking-[-0.025em] text-[var(--color-ink)]">
-          {bu?.name ?? "Generation"} maturity over twelve months.
+          {bu?.name ?? "Generation"} maturity over time.
         </h1>
         <p className="mt-3 text-[14px] text-[var(--color-ink-soft)] max-w-[780px] leading-[1.55]">
-          Per-pillar trajectories, pinned snapshots, and inflection points. Click a point to replay
-          the exact responses captured that quarter.
+          Real per-pillar trajectories from completed assessments. Each point is a finalized session for
+          this operating unit. Drift is the delta between the first and most recent session.
         </p>
 
-        <div className="mt-9 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {series.map((s, i) => (
-            <Card key={i} className="p-5">
-              <div className="flex items-baseline justify-between mb-2">
-                <Eyebrow>{s.name}</Eyebrow>
-                <div className={`font-mono text-[11px] ${s.current >= s.atMar ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
-                  {s.current >= s.atMar ? "+" : ""}{(s.current - s.atMar).toFixed(2)} vs Mar
+        {loading && (
+          <div className="mt-9 font-mono text-[11px] text-[var(--color-ink-muted)]">loading trajectories…</div>
+        )}
+        {error && (
+          <Card className="mt-9 p-6 text-[13px] text-[var(--color-coral)]">
+            Trend unavailable · {error}
+          </Card>
+        )}
+        {!loading && !error && sessions.length === 0 && (
+          <Card className="mt-9 p-10 text-center">
+            <FileText size={28} className="mx-auto text-[var(--color-ink-faint)]" />
+            <p className="mt-4 text-[14px] text-[var(--color-ink-soft)] max-w-[420px] mx-auto">
+              No completed sessions yet for {bu?.name ?? "this unit"}. After the first assessment finalizes,
+              its scores anchor the trajectory; subsequent sessions extend it.
+            </p>
+          </Card>
+        )}
+        {!loading && !error && sessions.length === 1 && pillarSeries.length > 0 && (
+          <Card className="mt-9 p-6">
+            <Eyebrow>Single session captured</Eyebrow>
+            <p className="mt-2 text-[13px] text-[var(--color-ink-soft)]">
+              Drift trajectories appear once a second assessment is finalized. The current snapshot is
+              shown below.
+            </p>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {pillarSeries.map(s => (
+                <div key={s.pillarId} className="flex items-baseline justify-between border-b hairline last:border-b-0 py-2.5">
+                  <Eyebrow>{s.name}</Eyebrow>
+                  <span className="font-mono tabular text-[14px] text-[var(--color-ink)]">{s.latest.toFixed(2)}</span>
                 </div>
-              </div>
-              <Sparkline values={s.months} width={520} height={48} color="var(--color-accent)" />
-              <div className="mt-2 flex items-baseline justify-between font-mono text-[11px] text-[var(--color-ink-muted)]">
-                <span>at Mar · {s.atMar.toFixed(2)}</span>
-                <span className="text-[var(--color-ink)] font-semibold">{s.current.toFixed(2)}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </div>
+          </Card>
+        )}
+        {!loading && !error && sessions.length >= 2 && (
+          <div className="mt-9 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {pillarSeries.map(s => (
+              <Card key={s.pillarId} className="p-5">
+                <div className="flex items-baseline justify-between mb-2">
+                  <Eyebrow>{s.name}</Eyebrow>
+                  <div className={`font-mono text-[11px] ${s.delta >= 0 ? "text-[var(--color-mint)]" : "text-[var(--color-coral)]"}`}>
+                    {s.delta >= 0 ? "+" : ""}{s.delta.toFixed(2)} vs first
+                  </div>
+                </div>
+                <Sparkline values={s.points.map((p: any) => p.score)} width={520} height={48} color="var(--color-accent)" />
+                <div className="mt-2 flex items-baseline justify-between font-mono text-[11px] text-[var(--color-ink-muted)]">
+                  <span>first · {s.earliest.toFixed(2)}</span>
+                  <span className="text-[var(--color-ink)] font-semibold">{s.latest.toFixed(2)}</span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -519,8 +683,27 @@ export function HistoryScreen({
    Per-pillar + per-dimension standards-alignment + rationale + weight.
    Static data sourced from /api/_lib/static.ts (mirrored to /src/data).
    Independent of any active assessment. */
-export function ProvenanceScreen({ onOpenToday }: { onOpenToday: () => void }) {
+export function ProvenanceScreen({
+  onOpenToday,
+  highlightPillarId,
+}: {
+  onOpenToday: () => void;
+  highlightPillarId?: string | null;
+}) {
   const [tab, setTab] = useState<"pillars" | "dimensions" | "scale">("pillars");
+  // Scroll the highlighted pillar into view on mount. Used when the operator
+  // clicks a regression headline on Today and wants the standards rationale
+  // for that specific pillar without scanning the full list.
+  React.useEffect(() => {
+    if (!highlightPillarId) return;
+    setTab("pillars");
+    const el = document.getElementById(`provenance-pillar-${highlightPillarId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-1", "ring-[var(--color-accent)]");
+      setTimeout(() => el.classList.remove("ring-1", "ring-[var(--color-accent)]"), 2400);
+    }
+  }, [highlightPillarId]);
 
   return (
     <div className="flex-1 flex flex-col">
@@ -566,7 +749,7 @@ export function ProvenanceScreen({ onOpenToday }: { onOpenToday: () => void }) {
               const prov = PILLAR_PROVENANCE[p.id];
               if (!prov) return null;
               return (
-                <Card key={p.id} className="p-6">
+                <Card key={p.id} id={`provenance-pillar-${p.id}`} className="p-6 transition-shadow">
                   <div className="flex items-start gap-6">
                     <div className="flex-shrink-0 w-14">
                       <div className="font-mono text-[11px] text-[var(--color-ink-muted)]">{(i + 1).toString().padStart(2, "0")}</div>
