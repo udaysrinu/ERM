@@ -1,0 +1,62 @@
+graph TB
+    subgraph Browser["🌐 Operator's Browser (React 19 SPA)"]
+        UI[App.tsx · Screen state machine]
+        UI --> Login[LoginScreen]
+        UI --> Scope[ScopeScreen<br/>BU mosaic + archive]
+        UI --> Quest[VectorCapturePipeline<br/>100 questions + uploads]
+        UI --> Today[TodayScreen<br/>Live Brief + signature chip]
+        UI --> Action[ActionPlanScreen]
+        UI --> Evid[EvidenceScreen]
+        UI --> Hist[HistoryScreen]
+        UI --> Report[ReportScreen]
+        UI --> Prov[ProvenanceScreen]
+        UI --> Chat[NavigatorAssistant<br/>15-pattern matcher]
+    end
+
+    subgraph CDN["⚡ Vercel Edge"]
+        Cache[("Edge Cache<br/>s-maxage=60 swr=300<br/>for /trend, /assessments")]
+        Static[("Static assets<br/>1y immutable")]
+    end
+
+    subgraph VercelFn["☁️ Vercel Serverless Functions (api/)"]
+        Auth["/api/auth/login"]
+        AnalysisAPI["/api/assessments/[id]/analysis<br/>scoring + drift + roadmap + signatures"]
+        TrendAPI["/api/assessments/trend<br/>per-pillar trajectories"]
+        ListAPI["/api/assessments<br/>operator history"]
+        CreateAPI["/api/responses/create<br/>finalize 100 vectors"]
+        PdfAPI["/api/assessments/[id]/pdf<br/>5-page board PDF"]
+        UploadURL["/api/evidence/upload-url<br/>signed PUT URL"]
+        DownloadURL["/api/evidence/download-url<br/>signed GET URL · 5min TTL"]
+    end
+
+    subgraph SharedCode["📦 /shared (single source of truth)"]
+        Static_TS[static.ts<br/>100 questions + 10 pillars + 4 dimensions<br/>+ benchmark profiles + provenance]
+        Engines[engines.ts<br/>computeVectors · computeAnalytics<br/>computeDrift · generateRoadmap]
+        Sigs[signatures.ts<br/>SHA-256 scoringInputHash + analysisHash<br/>+ catalog/spec versioning]
+    end
+
+    subgraph Supabase["🐘 Supabase (Postgres + Storage)"]
+        Assess[(assessments<br/>id · entityId · operatorEmail<br/>status · overallScore)]
+        Resp[(responses<br/>questionId · score · note<br/>evidenceName · evidencePath)]
+        Bucket[("evidence bucket<br/>private · 10MB/file<br/>MIME allowlist<br/>key: assessmentId/qid-name")]
+    end
+
+    Browser -->|HTTPS| CDN
+    CDN -->|miss| VercelFn
+    VercelFn --> SharedCode
+    VercelFn -->|service-role| Bucket
+    VercelFn -->|direct pg| Assess
+    VercelFn -->|direct pg| Resp
+    Browser -.->|signed URL · PUT bytes| Bucket
+    Browser -.->|signed URL · GET bytes| Bucket
+
+    classDef browser fill:#FAF7F1,stroke:#16181A,color:#16181A
+    classDef edge fill:#FBE6D9,stroke:#C4542A,color:#16181A
+    classDef api fill:#E8F0E2,stroke:#3F7A57,color:#16181A
+    classDef shared fill:#FFF4D8,stroke:#B5862A,color:#16181A
+    classDef db fill:#E0EAF2,stroke:#2C5F8C,color:#16181A
+    class Browser,UI,Login,Scope,Quest,Today,Action,Evid,Hist,Report,Prov,Chat browser
+    class CDN,Cache,Static edge
+    class VercelFn,Auth,AnalysisAPI,TrendAPI,ListAPI,CreateAPI,PdfAPI,UploadURL,DownloadURL api
+    class SharedCode,Static_TS,Engines,Sigs shared
+    class Supabase,Assess,Resp,Bucket db

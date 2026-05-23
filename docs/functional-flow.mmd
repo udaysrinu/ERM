@@ -1,0 +1,64 @@
+sequenceDiagram
+    autonumber
+    actor Op as Operator
+    participant B as Browser (SPA)
+    participant E as Vercel Edge
+    participant F as Vercel Function
+    participant DB as Supabase Postgres
+    participant ST as Supabase Storage
+
+    Note over Op,ST: 1. LOGIN + LOAD ARCHIVE
+    Op->>B: enter email + passphrase
+    B->>F: POST /api/auth/login
+    F-->>B: 200 OK
+    B->>F: GET /api/assessments?operatorEmail=...
+    F->>DB: SELECT past completed assessments
+    DB-->>F: history list
+    F-->>E: cache 60s · public
+    E-->>B: history rendered in Scope
+
+    Note over Op,ST: 2. RUN ASSESSMENT (with evidence)
+    Op->>B: pick BU · start questionnaire
+    Op->>B: answer Q1 · attach control-test.pdf
+    B->>F: POST /api/evidence/upload-url
+    F->>DB: verify operator owns assessment
+    F->>ST: createSignedUploadUrl
+    ST-->>F: signed URL + path
+    F-->>B: { uploadUrl, path }
+    B->>ST: PUT bytes to signed URL
+    ST-->>B: 200 stored
+    B->>B: save evidencePath in lifted draft
+
+    Note over Op,ST: 3. FINALIZE
+    Op->>B: complete 100/100 → "Compute & finalize"
+    B->>F: POST /api/responses/create<br/>{ assessmentId, responses: 100 rows }
+    F->>F: validate coverage · run computeVectors
+    F->>DB: BEGIN tx<br/>UPSERT assessment<br/>DELETE+INSERT responses
+    DB-->>F: committed
+    F-->>B: { overallScore }
+
+    Note over Op,ST: 4. LIVE BRIEF (Today)
+    B->>F: GET /api/assessments/[id]/analysis
+    F->>DB: SELECT responses + prior assessment<br/>(operator + status filter)
+    DB-->>F: raw responses + prior pillar scores
+    F->>F: computeVectors → computeAnalytics<br/>→ computeDrift → generateRoadmap<br/>→ computeRunSignatures
+    F-->>E: cache private 30s
+    E-->>B: { score, drift, roadmap,<br/>signatures.scoringInputHash }
+    B-->>Op: Live Brief headline + sig chip + table
+
+    Note over Op,ST: 5. EVIDENCE LIBRARY (download)
+    Op->>B: open Evidence tab · click "Open ↗"
+    B->>F: GET /api/evidence/download-url<br/>?assessmentId&questionId&operatorEmail
+    F->>DB: JOIN assessments + responses<br/>verify operator owns it
+    F->>ST: createSignedUrl (5min TTL)
+    ST-->>F: short-lived signed URL
+    F-->>B: { downloadUrl }
+    B->>ST: GET signed URL (new tab)
+    ST-->>Op: file streams to browser
+
+    Note over Op,ST: 6. PDF EXPORT
+    Op->>B: click "Report"
+    B->>F: GET /api/assessments/[id]/pdf
+    F->>DB: SELECT responses
+    F->>F: pdf-lib · 5 pages<br/>cover with sig fingerprint
+    F-->>B: application/pdf bytes (no-store)
