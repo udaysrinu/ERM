@@ -11,6 +11,7 @@ import {
 } from "../../_lib/engines.js";
 import { BUSINESS_UNIT_NAMES, BENCHMARKS, PILLAR_IDS } from "../../_lib/static.js";
 import { computeRunSignatures, validateScoringInputCoverage } from "../../_lib/signatures.js";
+import { mediumPrivate } from "../../_lib/cache.js";
 
 /*
  * Single unified endpoint — reads raw responses from the 2-table DB and
@@ -32,9 +33,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!assessment) return res.status(404).json({ error: "Assessment not found" });
 
     const rawResponses = await sql<
-      { questionId: number; score: number; note: string; evidenceName: string; answeredAt: string }[]
+      { questionId: number; score: number; note: string; evidenceName: string; evidencePath: string; answeredAt: string }[]
     >`
-      SELECT "questionId", score, note, "evidenceName", "answeredAt"
+      SELECT "questionId", score, note, "evidenceName", "evidencePath", "answeredAt"
       FROM responses WHERE "assessmentId" = ${id}
     `;
 
@@ -109,6 +110,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .map(r => ({
         questionId: r.questionId,
         filename: r.evidenceName,
+        // hasUpload tells the UI whether a real file is in storage (true)
+        // or only the filename was captured (false). Drives the Evidence
+        // library "Download" affordance.
+        hasUpload: !!(r.evidencePath && r.evidencePath.length > 0),
         answeredAt: r.answeredAt,
       }));
 
@@ -131,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       score: Number((profile[pid] ?? 4.0).toFixed(2)),
     }));
 
-    return res.json({
+    return mediumPrivate(res).json({
       assessmentId: id,
       entityId: assessment.entityId,
       entityName: BUSINESS_UNIT_NAMES[assessment.entityId] ?? assessment.entityId,

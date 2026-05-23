@@ -70,6 +70,10 @@ export default function App() {
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  // Separate flag for analysis fetches — those fire on every BU click and
+  // benchmark switch, so a full-screen blocking overlay is too aggressive.
+  // Surfaced as a 2px progress strip at the top of the screen instead.
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   // Lifted draft for the in-progress questionnaire so navigating away and
@@ -87,8 +91,9 @@ export default function App() {
     responses: Record<number, number>;
     notes: Record<number, string>;
     evidenceNames: Record<number, string>;
+    evidencePaths: Record<number, string>;
     answeredAt: Record<number, string>;
-  }>({ id: null, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
+  }>({ id: null, responses: {}, notes: {}, evidenceNames: {}, evidencePaths: {}, answeredAt: {} });
 
   const entities = BUSINESS_UNITS;
   const metadata = { pillars: PILLARS, questions: QUESTIONS, weights: WEIGHTS };
@@ -176,7 +181,7 @@ export default function App() {
     const aid = generateAssessmentId();
     setAssessmentId(aid);
     setSelectedBU(bu);
-    setAssessmentDraft({ id: aid, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
+    setAssessmentDraft({ id: aid, responses: {}, notes: {}, evidenceNames: {}, evidencePaths: {}, answeredAt: {} });
     setScreen("assessment");
   };
 
@@ -208,7 +213,7 @@ export default function App() {
     analysisAbortRef.current?.abort();
     const ctrl = new AbortController();
     analysisAbortRef.current = ctrl;
-    setLoading(true);
+    setAnalysisLoading(true);
     try {
       const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`, { signal: ctrl.signal });
       const data = await res.json();
@@ -216,11 +221,11 @@ export default function App() {
     } catch (e: any) {
       if (e?.name !== "AbortError") console.error(e);
     } finally {
-      if (!ctrl.signal.aborted) setLoading(false);
+      if (!ctrl.signal.aborted) setAnalysisLoading(false);
     }
   };
 
-  const handleAssessmentComplete = async ({ responses, notes, evidenceNames, answeredAt }: any) => {
+  const handleAssessmentComplete = async ({ responses, notes, evidenceNames, evidencePaths, answeredAt }: any) => {
     const qCount = metadata.questions.length;
     const ansCount = Object.keys(responses).filter(k => responses[k as any] !== undefined).length;
     if (ansCount !== qCount) {
@@ -234,6 +239,7 @@ export default function App() {
         score: Number(responses[q.id]),
         note: notes[q.id] || "",
         evidenceName: evidenceNames[q.id] || "",
+        evidencePath: evidencePaths?.[q.id] || "",
         answeredAt: answeredAt[q.id] || new Date().toISOString(),
       }));
       const save = await fetch("/api/responses/create", {
@@ -270,7 +276,7 @@ export default function App() {
     setAnalysis(null);
     setAssessmentId(null);
     setBenchmarkType("target");
-    setAssessmentDraft({ id: null, responses: {}, notes: {}, evidenceNames: {}, answeredAt: {} });
+    setAssessmentDraft({ id: null, responses: {}, notes: {}, evidenceNames: {}, evidencePaths: {}, answeredAt: {} });
     setScreen("login");
   };
 
@@ -323,6 +329,8 @@ export default function App() {
                     onComplete={handleAssessmentComplete}
                     draft={assessmentDraft}
                     onDraftChange={setAssessmentDraft}
+                    assessmentId={assessmentId}
+                    operatorEmail={loginEmail}
                   />
                 </motion.div>
               )}
@@ -338,7 +346,13 @@ export default function App() {
               {screen === "evidence" && (
                 <motion.div key="evidence" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.20 }} className="flex-1 flex flex-col">
                   {analysis ? (
-                    <EvidenceScreen analysis={analysis} bu={selectedBU} onOpenToday={() => setScreen("navigator")} />
+                    <EvidenceScreen
+                      analysis={analysis}
+                      bu={selectedBU}
+                      assessmentId={assessmentId}
+                      operatorEmail={loginEmail}
+                      onOpenToday={() => setScreen("navigator")}
+                    />
                   ) : (
                     <EmptyHub message="Evidence is scoped to the active assessment. Pick an operating unit first." cta="Operating units" onCta={() => setScreen("scope")} />
                   )}
@@ -469,6 +483,20 @@ export default function App() {
 
       {screen !== "login" && <NavigatorAssistant analysis={analysis} />}
 
+      {/* Subtle top-progress strip — fires on analysis fetches without
+          blocking the screen. The big "Computing" overlay was overkill
+          for routine sidebar clicks and benchmark switches. */}
+      {analysisLoading && (
+        <div className="fixed top-0 left-0 right-0 h-[2px] z-[150] overflow-hidden bg-[var(--color-accent)]/15">
+          <div
+            className="absolute inset-y-0 w-1/3 bg-[var(--color-accent)]"
+            style={{ animation: "loadingSlide 1.1s ease-in-out infinite" }}
+          />
+        </div>
+      )}
+
+      {/* Full-screen blocker for genuinely user-blocking ops:
+          login authentication and assessment finalize. */}
       {loading && (
         <div className="fixed inset-0 bg-[var(--color-bg)]/85 backdrop-blur-sm z-[200] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">

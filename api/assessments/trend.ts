@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors } from "../_lib/cors.js";
 import { sql } from "../_lib/db.js";
+import { shortPublic } from "../_lib/cache.js";
 import { computeAnalytics, computeVectors, type RawResponse } from "../_lib/engines.js";
 import { PILLAR_IDS, PILLAR_NAMES } from "../_lib/static.js";
 
@@ -42,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `;
 
     if (assessments.length === 0) {
-      return res.json({ sessions: [] });
+      return shortPublic(res).json({ sessions: [] });
     }
 
     const sessions = await Promise.all(
@@ -72,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }),
     );
 
-    return res.json({ sessions });
+    return shortPublic(res).json({ sessions });
   } catch (error) {
     console.error("assessments/trend failed:", error);
     return res.status(500).json({ error: "Query failure", details: String(error) });

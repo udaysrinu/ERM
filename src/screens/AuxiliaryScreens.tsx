@@ -191,14 +191,40 @@ function ScenarioCard({
 export function EvidenceScreen({
   analysis,
   bu,
+  assessmentId,
+  operatorEmail,
   onOpenToday,
 }: {
   analysis: Analysis;
   bu: any;
+  assessmentId?: string | null;
+  operatorEmail?: string;
   onOpenToday: () => void;
 }) {
   const [query, setQuery] = useState("");
   const summary = analysis?.responseSummary ?? { evidenceCount: 0, totalResponses: 100 };
+
+  // Open a signed download URL for the evidence on a specific question.
+  // The signed URL is short-lived (5 min); we open it in a new tab so the
+  // browser handles the file directly instead of going through React state.
+  const openDownload = async (questionId: number) => {
+    if (!assessmentId || !operatorEmail) return;
+    try {
+      const r = await fetch(
+        `/api/evidence/download-url?assessmentId=${encodeURIComponent(assessmentId)}` +
+          `&questionId=${questionId}&operatorEmail=${encodeURIComponent(operatorEmail)}`,
+      );
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        alert(err.error || `Could not open evidence (HTTP ${r.status})`);
+        return;
+      }
+      const { downloadUrl } = await r.json() as { downloadUrl: string };
+      window.open(downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      alert(`Download failed: ${e?.message ?? e}`);
+    }
+  };
 
   // Pillar lookup so we can label files with the pillar of the question
   // they were attached to. analytics carries pillarId → pillarName.
@@ -211,12 +237,13 @@ export function EvidenceScreen({
   }, []);
 
   const items = useMemo(() => {
-    const files: { questionId: number; filename: string; answeredAt: string }[] =
+    const files: { questionId: number; filename: string; hasUpload?: boolean; answeredAt: string }[] =
       analysis?.evidenceFiles ?? [];
     return files
       .map(f => ({
         questionId: f.questionId,
         name: f.filename,
+        hasUpload: !!f.hasUpload,
         pillar: pillarByQuestionId.get(f.questionId) ?? "—",
         kind: /\.xlsx?$/i.test(f.filename) ? "xls" : "pdf",
       }))
@@ -239,9 +266,9 @@ export function EvidenceScreen({
           Evidence linked to <span className="text-[var(--color-accent)]">{summary.evidenceCount} vectors</span>
         </h1>
         <p className="mt-3 text-[14px] text-[var(--color-ink-soft)] max-w-[780px] leading-[1.55]">
-          Filenames captured during the questionnaire for {bu?.name ?? "this unit"}. The current build records
-          attached filenames for traceability; signed-URL blob storage and AI evidence validation are on the
-          roadmap (Supabase Storage + Gemini Vision).
+          Files attached during the questionnaire for {bu?.name ?? "this unit"}. Each upload is stored in a
+          private bucket and accessed via short-lived signed URLs scoped to the assessment owner. Click an
+          uploaded row to open it in a new tab.
         </p>
 
         {/* Search + filter */}
@@ -279,6 +306,7 @@ export function EvidenceScreen({
                   <th className="px-5 py-3 text-left"><Eyebrow>Filename</Eyebrow></th>
                   <th className="px-5 py-3 text-left"><Eyebrow>Vector</Eyebrow></th>
                   <th className="px-5 py-3 text-left"><Eyebrow>BU</Eyebrow></th>
+                  <th className="px-5 py-3 text-right"><Eyebrow>Action</Eyebrow></th>
                 </tr>
               </thead>
               <tbody>
@@ -296,6 +324,23 @@ export function EvidenceScreen({
                         <BuGlyph id={bu?.id ?? "gen"} size={14} />
                         <span className="text-[var(--color-ink-soft)]">{bu?.name ?? "—"}</span>
                       </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      {it.hasUpload && assessmentId && operatorEmail ? (
+                        <button
+                          onClick={() => openDownload(it.questionId)}
+                          className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-accent)] hover:underline cursor-pointer"
+                        >
+                          Open ↗
+                        </button>
+                      ) : (
+                        <span
+                          className="font-mono text-[10px] uppercase tracking-[0.08em] text-[var(--color-ink-subtle)]"
+                          title="Filename captured but no file in storage"
+                        >
+                          name only
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}

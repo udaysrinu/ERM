@@ -48,6 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     score: r.score,
     note: r.note || "",
     "evidenceName": r.evidenceName || "",
+    "evidencePath": r.evidencePath || "",
     "answeredAt": r.answeredAt || nowIso,
   }));
 
@@ -67,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `;
       await tx`DELETE FROM responses WHERE "assessmentId" = ${assessmentId}`;
       await tx`
-        INSERT INTO responses ${tx(rows, "assessmentId", "questionId", "score", "note", "evidenceName", "answeredAt")}
+        INSERT INTO responses ${tx(rows, "assessmentId", "questionId", "score", "note", "evidenceName", "evidencePath", "answeredAt")}
       `;
     });
 

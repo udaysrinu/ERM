@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { applyCors } from "../_lib/cors.js";
 import { sql } from "../_lib/db.js";
 import { BUSINESS_UNIT_NAMES } from "../_lib/static.js";
+import { shortPublic } from "../_lib/cache.js";
 
 /*
  * GET /api/assessments?operatorEmail=foo@gmail.com
@@ -38,7 +39,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       LIMIT 50
     `;
 
-    return res.json({
+    return shortPublic(res).json({
       assessments: rows.map(r => ({
         id: r.id,
         entityId: r.entityId,

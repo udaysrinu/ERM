@@ -33,12 +33,18 @@ export function VectorCapturePipeline({
   onBack,
   draft,
   onDraftChange,
+  assessmentId,
+  operatorEmail,
 }: any) {
   const [currIdx, setCurrIdx] = useState(0);
   const responses: Record<number, number> = draft?.responses ?? {};
   const notes: Record<number, string> = draft?.notes ?? {};
   const evidenceNames: Record<number, string> = draft?.evidenceNames ?? {};
+  const evidencePaths: Record<number, string> = draft?.evidencePaths ?? {};
   const answeredAt: Record<number, string> = draft?.answeredAt ?? {};
+  // Per-question upload state — { uploading, error } map. Local-only;
+  // does not need to survive remount because uploads are short-lived.
+  const [uploadStatus, setUploadStatus] = useState<Record<number, "uploading" | "ok" | string>>({});
 
   const setResponses = (next: Record<number, number> | ((prev: Record<number, number>) => Record<number, number>)) => {
     onDraftChange?.((prev: any) => ({
@@ -56,6 +62,12 @@ export function VectorCapturePipeline({
     onDraftChange?.((prev: any) => ({
       ...prev,
       evidenceNames: typeof next === "function" ? (next as any)(prev?.evidenceNames ?? {}) : next,
+    }));
+  };
+  const setEvidencePaths = (next: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => {
+    onDraftChange?.((prev: any) => ({
+      ...prev,
+      evidencePaths: typeof next === "function" ? (next as any)(prev?.evidencePaths ?? {}) : next,
     }));
   };
   const setAnsweredAt = (next: Record<number, string> | ((prev: Record<number, string>) => Record<number, string>)) => {
@@ -100,11 +112,54 @@ export function VectorCapturePipeline({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await onComplete({ responses, notes, evidenceNames, answeredAt });
+      await onComplete({ responses, notes, evidenceNames, evidencePaths, answeredAt });
     } catch {
       alert("Assessment submission failed. Please verify all required responses.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Upload handler — fetch signed URL → PUT file → record path.
+  // We capture the filename even on upload failure so the audit trail
+  // ("operator referenced file X for question Y") survives, but we won't
+  // claim a hasUpload until storage actually accepted the bytes.
+  const handleEvidenceUpload = async (questionId: number, file: File) => {
+    if (!file) return;
+    setEvidenceNames(prev => ({ ...prev, [questionId]: file.name }));
+    if (!assessmentId || !operatorEmail) {
+      setUploadStatus(s => ({ ...s, [questionId]: "filename captured · sign in to upload" }));
+      return;
+    }
+    setUploadStatus(s => ({ ...s, [questionId]: "uploading" }));
+    try {
+      const r = await fetch("/api/evidence/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assessmentId, questionId, filename: file.name, operatorEmail }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}));
+        throw new Error(err.error || `signed URL request failed (${r.status})`);
+      }
+      const { uploadUrl, path } = await r.json() as { uploadUrl: string; path: string };
+      const put = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!put.ok) throw new Error(`storage upload failed (${put.status})`);
+      setEvidencePaths(prev => ({ ...prev, [questionId]: path }));
+      setUploadStatus(s => ({ ...s, [questionId]: "ok" }));
+    } catch (e: any) {
+      // Filename stays captured; path stays empty. The honest empty state
+      // in the Evidence library will show this row without a download link.
+      setEvidencePaths(prev => {
+        const next = { ...prev };
+        delete next[questionId];
+        return next;
+      });
+      setUploadStatus(s => ({ ...s, [questionId]: `failed · ${e?.message ?? e}` }));
     }
   };
 
@@ -394,17 +449,36 @@ export function VectorCapturePipeline({
                     className="hidden"
                     onChange={e => {
                       const f = e.target.files?.[0];
-                      setEvidenceNames(prev => ({ ...prev, [currentQ.id]: f?.name || "" }));
+                      if (f) handleEvidenceUpload(currentQ.id, f);
                     }}
                   />
                 </label>
+                {uploadStatus[currentQ.id] && (
+                  <p className={`mt-1.5 font-mono text-[10px] tracking-[0.06em] ${
+                    uploadStatus[currentQ.id] === "ok"
+                      ? "text-[var(--color-mint)]"
+                      : uploadStatus[currentQ.id] === "uploading"
+                      ? "text-[var(--color-ink-muted)]"
+                      : "text-[var(--color-coral)]"
+                  }`}>
+                    {uploadStatus[currentQ.id] === "ok"
+                      ? "uploaded · signed-URL"
+                      : uploadStatus[currentQ.id] === "uploading"
+                      ? "uploading…"
+                      : uploadStatus[currentQ.id]}
+                  </p>
+                )}
               </div>
               <Card variant="subtle" className="p-4 space-y-2">
                 <Eyebrow>Metadata</Eyebrow>
                 {[
                   ["Score", isAnswered ? `${responses[currentQ.id]} / 5` : "—"],
                   ["Stamped", answeredAt[currentQ.id] ? new Date(answeredAt[currentQ.id]).toLocaleTimeString() : "pending"],
-                  ["Evidence", evidenceNames[currentQ.id] ? "linked" : "none"],
+                  ["Evidence", evidencePaths[currentQ.id]
+                    ? "uploaded"
+                    : evidenceNames[currentQ.id]
+                    ? "filename only"
+                    : "none"],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between text-[12px]">
                     <span className="font-mono text-[var(--color-ink-muted)] tracking-wide">{k}</span>

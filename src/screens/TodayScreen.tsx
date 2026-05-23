@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ArrowRight, ArrowUpDown, Command as CommandIcon, FileDown, X } from "lucide-react";
+import {
+  ResponsiveContainer,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Tooltip as RechartTooltip,
+} from "recharts";
 import {
   AnimatedNumber,
   BuGlyph,
@@ -91,6 +100,22 @@ export function TodayScreen({
   void regressions;
   const [showSig, setShowSig] = useState(false);
   const alignedCount = analytics.filter((a: any) => a.score >= a.target).length;
+
+  // Radar shape — current pillar scores against the active benchmark.
+  // Memoized because Recharts is expensive on first render and we don't
+  // want to recompute it on every benchmark tab click that doesn't change
+  // the underlying analytics shape.
+  const radarData = useMemo(
+    () =>
+      analytics.map((a: any) => ({
+        pillar: a.pillarName.split(/[\s&]+/)[0].slice(0, 8),
+        fullName: a.pillarName,
+        score: a.score,
+        target: a.target,
+        fullMark: 5,
+      })),
+    [analytics],
+  );
 
   const statusMeta: Record<
     string,
@@ -446,6 +471,77 @@ export function TodayScreen({
             </table>
           </Card>
         </div>
+
+        {/* Pillar shape — the 10-pillar radar. Same data as the table above
+            but in the canonical "shape of risk" view that boards expect. */}
+        <Card className="p-7">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <Eyebrow tone="accent">Pillar shape</Eyebrow>
+              <h3 className="text-[18px] font-medium tracking-[-0.012em] text-[var(--color-ink)] mt-2">
+                Maturity vs {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
+              </h3>
+            </div>
+            <span className="font-mono text-[10px] text-[var(--color-ink-muted)] tabular tracking-[0.18em] uppercase">
+              10 × 5
+            </span>
+          </div>
+          <div className="h-[340px] mt-3">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="78%" data={radarData}>
+                <PolarGrid stroke="rgba(22,24,26,0.06)" />
+                <PolarAngleAxis
+                  dataKey="pillar"
+                  stroke="rgba(22,24,26,0.28)"
+                  tick={{ fill: "rgba(22,24,26,0.52)", fontSize: 10, fontFamily: "Inter" }}
+                />
+                <PolarRadiusAxis stroke="rgba(22,24,26,0.28)" tick={false} axisLine={false} domain={[0, 5]} />
+                <Radar
+                  name="Current"
+                  dataKey="score"
+                  stroke="var(--color-ink)"
+                  fill="var(--color-ink)"
+                  fillOpacity={0.14}
+                  strokeWidth={2}
+                  dot={{ fill: "var(--color-ink)", r: 3 }}
+                />
+                <Radar
+                  name="Benchmark"
+                  dataKey="target"
+                  stroke="var(--color-accent)"
+                  fill="transparent"
+                  strokeDasharray="4 4"
+                  strokeWidth={1.5}
+                />
+                <RechartTooltip
+                  contentStyle={{
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border-strong)",
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontFamily: "Inter",
+                  }}
+                  labelFormatter={(label, payload) => {
+                    const item = payload?.[0]?.payload;
+                    return item?.fullName ?? label;
+                  }}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex items-center gap-5 pt-4 border-t hairline">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-0.5 bg-[var(--color-ink)]" />
+              <span className="text-[11px] text-[var(--color-ink-soft)]">Current</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="w-3 border-t border-dashed border-[var(--color-accent)]" />
+              <span className="text-[11px] text-[var(--color-ink-soft)]">
+                {BENCHMARK_LABEL[benchmarkType] || benchmarkType}
+              </span>
+            </div>
+          </div>
+        </Card>
 
         {/* Focus Inspector — 4 dimension tiles vs 4.0 "Managed" reference. */}
         <div>
