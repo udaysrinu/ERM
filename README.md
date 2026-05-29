@@ -100,6 +100,9 @@ The editable Mermaid sources and rendered PNGs live in `docs/`:
 - `docs/architecture.mmd` / `architecture.png` — system layout (browser → Vercel edge → functions → `/shared` engines → Supabase Postgres + Storage).
 - `docs/functional-flow.mmd` / `functional-flow.png` — end-to-end sequence covering login, assessment with evidence upload, finalize, Live Brief, evidence download, and PDF export.
 
+access course - https://erm-navigator.vercel.app/course/
+Access product - https://erm-navigator.vercel.app
+
 ASCII fallback for terminal readers:
 
 ```
