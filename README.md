@@ -16,7 +16,7 @@ For the full problem statement, patent-claim map, decision history, and "where w
 npm install
 cp .env.example .env.local       # then fill SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL
 npm run dev                      # vite at http://127.0.0.1:5173
-npm test                         # 104 vitest assertions across 5 layers
+npm test                         # vitest suite across engine, API, assistant, signatures, storage, and component layers
 npm run build                    # production build verification
 ```
 
@@ -60,10 +60,15 @@ Both branches share the same Supabase database, same engines, same APIs, same te
 | `api/assessments/[id]/analysis.ts` | Reads raw responses, runs all engines in-memory, returns the dashboard JSON. **No cached engine outputs.** |
 | `api/assessments/[id]/pdf.ts` | Server-rendered 5-page A4 PDF using `pdf-lib` (no headless Chromium). |
 | `api/assessments/trend.ts` | Per-pillar score arrays across past sessions for the trend chart. |
+| `api/evidence/upload-url.ts` | Issues a short-lived Supabase Storage signed PUT URL for evidence uploads. Backed by the private `evidence` bucket (10 MB cap, MIME allowlist). |
+| `api/evidence/download-url.ts` | Issues a short-lived signed GET URL for evidence retrieval, scoped to the assessment owner. |
 | `api/_lib/engines.ts` | Pure deterministic functions: `computeVectors`, `computeAnalytics`, `computeDrift`, `generateRoadmap`, `missionStatus`. **The patent-protected math lives here.** |
 | `api/_lib/static.ts` | Generated from `ERM Navigator - 100 Qs.xlsx`. Contains 100 questions with 5-level rubric, per-pillar/dimension provenance, 5-level maturity model, score legend. **Do not edit by hand — run `node scripts/import-xlsx.cjs`.** |
 | `api/_lib/db.ts` | Postgres connection. Direct `postgres.js` over `DATABASE_URL`. Bypasses RLS by design (backend uses superuser role). |
 | `api/_lib/cors.ts` | Shared CORS preflight handler. |
+| `api/_lib/cache.ts` | HTTP cache-control helpers (`shortPublic`, `mediumPrivate`, `noStore`) for Vercel edge + browser caching of read endpoints. |
+| `api/_lib/storage.ts` | Server-only Supabase Storage client (service-role) used by the evidence endpoints. |
+| `api/_lib/signatures.ts` | Re-export shim — the canonical signature/hashing logic lives in `/shared/signatures.ts` so frontend and backend share one implementation. |
 | `src/App.tsx` | Single-file frontend. ~1900 lines. Login → Scope → Questionnaire → Dashboard. |
 | `src/components/primitives.tsx` | Reusable visual atoms (Card, Eyebrow, BrandMark, BuGlyph, etc.). |
 | `src/components/ui/` | shadcn/ui primitives unified to the `radix-ui` package. |
@@ -76,6 +81,8 @@ Both branches share the same Supabase database, same engines, same APIs, same te
 | `tests/properties.test.ts` | 6 fast-check property-based assertions over 100 random inputs each. |
 | `tests/assistant-robustness.test.ts` | 11 malformed-input + adversarial-prompt tests. |
 | `tests/components.test.tsx` | 6 React-Testing-Library tests for `<TrendChart>` with stubbed `fetch`. Proves UI/backend decoupling. |
+| `tests/signatures.test.ts` | 11 assertions pinning the deterministic response/assessment signature logic in `/shared/signatures.ts`. |
+| `tests/storage-smoke.test.ts` | Smoke test for the evidence Storage client — guards env-var wiring and the bucket key convention. |
 | `tests/e2e.smoke.spec.ts` | Playwright walk: login → 100 answers → dashboard. CI runs against the live preview URL via `E2E_BASE_URL`. |
 | `scripts/import-xlsx.cjs` | xlsx → `static.ts` regenerator. Includes the customer-name scrub (see policy below). |
 | `scripts/seed-history.ts` | Inserts 18 historical assessments with deliberate Generation/Risk-Treatment regression at session 3. |
@@ -88,32 +95,43 @@ Both branches share the same Supabase database, same engines, same APIs, same te
 
 ## Architecture in one diagram
 
+The editable Mermaid sources and rendered PNGs live in `docs/`:
+
+- `docs/architecture.mmd` / `architecture.png` — system layout (browser → Vercel edge → functions → `/shared` engines → Supabase Postgres + Storage).
+- `docs/functional-flow.mmd` / `functional-flow.png` — end-to-end sequence covering login, assessment with evidence upload, finalize, Live Brief, evidence download, and PDF export.
+
+ASCII fallback for terminal readers:
+
 ```
 ┌─────────────────┐         ┌─────────────────────────────────┐
 │   Vite + React  │ ──HTTP→ │   Vercel serverless (api/*)     │
 │   src/          │         │                                 │
 │                 │         │   ┌──────────────────────────┐  │
-│  - App.tsx      │         │   │  api/_lib/engines.ts     │  │
-│  - components   │         │   │  computeVectors          │  │
-│  - data/static  │ ──reads─┼─→ │  computeAnalytics        │  │
-│    (mirror)     │         │   │  computeDrift            │  │
-└─────────────────┘         │   │  generateRoadmap         │  │
+│  - App.tsx      │         │   │  /shared + api/_lib      │  │
+│  - components   │         │   │  engines / signatures    │  │
+│  - data/static  │ ──reads─┼─→ │  computeVectors          │  │
+│    (mirror)     │         │   │  computeAnalytics        │  │
+└─────────────────┘         │   │  computeDrift            │  │
+                            │   │  generateRoadmap         │  │
                             │   │  missionStatus           │  │
                             │   └──────────────────────────┘  │
                             │                                 │
                             │   ┌──────────────────────────┐  │
-                            │   │  api/_lib/db.ts (sql)    │  │
+                            │   │  db.ts (sql)             │  │
+                            │   │  storage.ts (signed URLs)│  │
                             │   └────────────┬─────────────┘  │
                             └────────────────┼────────────────┘
                                              │
                                              ▼
                                 ┌────────────────────────────┐
-                                │  Supabase Postgres         │
+                                │  Supabase                  │
                                 │                            │
-                                │  - assessments             │
-                                │  - responses               │
+                                │  Postgres: assessments,    │
+                                │            responses       │
+                                │  Storage:  evidence bucket │
                                 │  RLS on; backend bypasses  │
-                                │  via direct postgres conn  │
+                                │  via service-role + direct │
+                                │  postgres conn             │
                                 └────────────────────────────┘
 ```
 
@@ -180,8 +198,8 @@ The scrub runs on every import. If you re-import after a spec update and the new
 | Capability | Status | Effort to land |
 |---|---|---|
 | Real LLM chatbot (Vercel AI Gateway) | Not built. The chatbot is 15 deterministic regex patterns. | ~30 min once an API key is provided. Awaiting product decision on cost vs. demo predictability trade-off. Real-cost math: ~$0.0003/turn at Claude Haiku rates; $1.50/month at customer scale. Effectively free, decision is about non-determinism risk during a live pitch. |
-| AI evidence validation (Gemini Vision on uploads) | Not built. Patent bonus claim. | Half-day, but blocked on evidence-byte storage. |
-| Evidence file blob storage | Not built. Filename is captured; bytes are discarded. | ~3-4 hours via Supabase Storage bucket + signed-URL flow. |
+| AI evidence validation (Gemini Vision on uploads) | Not built. Patent bonus claim. Now unblocked — evidence bytes are persisted. | Half-day. |
+| ~~Evidence file blob storage~~ | **Shipped.** Private Supabase Storage `evidence` bucket with signed PUT/GET URLs (`api/evidence/upload-url.ts`, `download-url.ts`), 10 MB cap, MIME allowlist. | — |
 | Real Google SSO | Not built. Auth is regex-on-email (`@gmail.com` accepted). | ~4 hours via Supabase Auth + multi-tenant data isolation. Required before any real customer. |
 | Multi-tenant + RBAC (Assessor / Reviewer / Approver — patent Section B) | Not built. | ~1 week. Required pre-customer; optional pre-investor (describe on a slide). |
 | Real-time KRI integration (claim 20) | Not built. | Partner-blocked — needs source-system API access. |
