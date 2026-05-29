@@ -6,6 +6,9 @@
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" }
   ],
+  "redirects": [
+    { "source": "/course", "destination": "/course/", "permanent": false }
+  ],
   "functions": {
     "api/**/*.ts": {
       "runtime": "@vercel/node@5.1.0",
