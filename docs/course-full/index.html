@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ERM Navigator — Full codebase course</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --color-accent:       #C4542A;
+      --color-accent-hover: #A8451F;
+      --color-accent-light: #FBE6D9;
+      --color-accent-muted: #E89585;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">ERM Navigator · Full course</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot" data-target="module-1"  data-tooltip="What we built" role="tab"></button>
+        <button class="nav-dot" data-target="module-2"  data-tooltip="The cast" role="tab"></button>
+        <button class="nav-dot" data-target="module-3"  data-tooltip="The catalog" role="tab"></button>
+        <button class="nav-dot" data-target="module-4"  data-tooltip="The math" role="tab"></button>
+        <button class="nav-dot" data-target="module-5"  data-tooltip="The receipts" role="tab"></button>
+        <button class="nav-dot" data-target="module-6"  data-tooltip="Questionnaire" role="tab"></button>
+        <button class="nav-dot" data-target="module-7"  data-tooltip="Live Brief" role="tab"></button>
+        <button class="nav-dot" data-target="module-8"  data-tooltip="Drift & roadmap" role="tab"></button>
+        <button class="nav-dot" data-target="module-9"  data-tooltip="Evidence" role="tab"></button>
+        <button class="nav-dot" data-target="module-10" data-tooltip="PDF report" role="tab"></button>
+        <button class="nav-dot" data-target="module-11" data-tooltip="Edge & cache" role="tab"></button>
+        <button class="nav-dot" data-target="module-12" data-tooltip="Pick it up next" role="tab"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <section class="module" id="module-1">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">01</span>
+          <h1 class="module-title">What we built — and why anyone should care.</h1>
+          <p class="module-subtitle">A risk officer wants three numbers and a list. We built the boring infrastructure that makes those three numbers <em>defensible</em>.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the problem ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The problem we're solving</h2>
+          <p>Big companies hire consultants to assess their <span class="term" data-definition="Enterprise Risk Management — the discipline of figuring out what could go wrong across an entire company (cyber, financial, supply-chain, legal, reputational) and what to do about it.">ERM</span> maturity. A firm shows up with a spreadsheet, runs interviews for a quarter, hand-tallies scores, hands over a slide deck.</p>
+          <p>Three problems with that:</p>
+
+          <div class="pattern-cards" style="margin-top: var(--space-6)">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🎲</div>
+              <h4 class="pattern-title">Non-reproducible</h4>
+              <p class="pattern-desc">Two consultants score the same evidence differently. Two months apart, the same consultant produces a different score for the same company. The number isn't a measurement — it's an opinion.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">📐</div>
+              <h4 class="pattern-title">Non-comparable</h4>
+              <p class="pattern-desc">"You scored 3.4." Compared to what? Industry? Peers? Last year's you? Without a benchmark you trust, the score is a vibe.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📅</div>
+              <h4 class="pattern-title">Stale by delivery</h4>
+              <p class="pattern-desc">A 90-day engagement produces a 60-day-old picture by the time the deck arrives. Risk doesn't wait for your slide cycle.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 2 — the product, in one sentence ──────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The product, in one sentence</h2>
+          <div class="callout callout-accent">
+            <div class="callout-icon">🎯</div>
+            <div class="callout-content">
+              <strong class="callout-title">ERM Navigator</strong>
+              <p>A <strong>deterministic instrument</strong> that converts a 100-question, ISO/COSO/NIST-aligned interview into a reproducible weighted maturity score — with drift detection, sequenced roadmap, and a board-grade PDF, all in minutes.</p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Read that again with the right emphasis: <em>deterministic instrument</em>. Not a dashboard. Not a consulting deck. An <strong>instrument</strong> — like a thermometer. Same temperature → same number, every time, forever. That's the whole pitch.</p>
+        </div>
+
+        <!-- ── SCREEN 3 — what a thermometer needs ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What does a "thermometer" need to be one?</h2>
+          <p>A thermometer can be trusted because it has three properties. So does our score:</p>
+
+          <div class="badge-list" style="margin-top: var(--space-4)">
+            <div class="badge-item">
+              <code class="badge-code">reproducible</code>
+              <span class="badge-desc">Same inputs → same output, byte-for-byte. (Patent claim 24.)</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">standards-aligned</code>
+              <span class="badge-desc">Every weight is justified against ISO 31000, COSO ERM, NIST RMF, RIMS RMM. The receipts are public. (Patent claim 13.)</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">comparable-over-time</code>
+              <span class="badge-desc">Run it again 6 months later — what changed since last time, and by how much, with severity tags. (Patent claim 4.)</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Everything in the codebase exists to deliver one of those three. If you can't tie a file to one of them, it's probably a UI shell or a polish layer.</p>
+        </div>
+
+        <!-- ── SCREEN 4 — the demo narrative ──────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The demo, in 60 seconds</h2>
+          <p>The demo isn't <em>"look at our pretty dashboard."</em> The demo is one specific story:</p>
+
+          <div class="flow-steps" style="margin-top: var(--space-6)">
+            <div class="flow-step">
+              <div class="flow-step-num">1</div>
+              <p>Operator logs in. Sees an archive of past assessments.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">2</div>
+              <p>Opens <strong>Generation</strong> — last quarter's <span class="term" data-definition="Business Unit. Six in our demo: Generation, Transmission, Distribution, Corporate, Subsidiaries, Joint Ventures.">BU</span> assessment.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">3</div>
+              <p>Today screen says <strong style="color: #C4542A">"Risk Treatment regressed −1.00 since prior assessment."</strong> Coral severity stripe. Drift detected.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">4</div>
+              <p>Click the signature chip: <strong>same hash as last time means same score, computed deterministically</strong>.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">5</div>
+              <p>Click "Open action plan" — Phase 1 / Phase 2 sequenced by uplift ÷ (cost × duration).</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-8)">
+            <div class="callout-icon">🎬</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why this demo, not "look at the dashboard"</strong>
+              <p>The dashboard is decoration. The pitch is: <em>"a number you can defend."</em> The drift headline is the proof — the same instrument, run twice, found something. That's the pivot from "consulting deck" to "instrument."</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An auditor asks: <em>"How do I know the score didn't change because your software updated overnight?"</em></p>
+
+          <div class="quiz-container" id="quiz-module1">
+            <div class="quiz-question-block"
+                 data-correct="signature"
+                 data-explanation-right="Right. The scoring-input hash includes the catalog version AND the engine spec version, so any change to either invalidates the comparison. Different inputs → different hash. Same hash → same score. The hash IS the receipt."
+                 data-explanation-wrong="Not quite. We don't lock down the codebase from updating. Instead, we make any update visible: the score's signature includes both a catalog version and a scoring-spec version. If those change, the hash changes, and the comparison flags as different inputs.">
+              <h3 class="quiz-question">Which of these gives the auditor a defensible answer?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="freeze" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Freeze the codebase forever so nothing can change.</span>
+                </button>
+                <button class="quiz-option" data-value="signature" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Include the catalog and engine versions inside the score's hash, so any code change produces a different hash and is therefore visible.</span>
+                </button>
+                <button class="quiz-option" data-value="trust" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Tell them to trust us — we have tests.</span>
+                </button>
+                <button class="quiz-option" data-value="audit" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Do a third-party SOC 2 audit once a year.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-2">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">02</span>
+          <h1 class="module-title">The cast — six actors and what each one owes the others.</h1>
+          <p class="module-subtitle">Every system is a small theater company. Knowing who plays which role lets you tell AI <em>"put that logic in the engine, not the React component"</em> and have it actually mean something.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A newsroom, not a kitchen</h2>
+          <p>The <span class="term" data-definition="The standard metaphor where the front-end is the dining room and the back-end is the kitchen. It's overused and doesn't fit a deterministic-instrument product, where the math IS the product.">"restaurant" metaphor</span> is overused. Try this instead: a <strong>newsroom</strong>.</p>
+          <p>A risk-management report is a <em>news story</em> — the numbers are facts, the drift headline is the lede, the roadmap is the editorial recommendation. Each actor in the codebase has a role on that newsroom floor.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — meet the actors ──────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Meet the six actors</h2>
+
+          <div class="pattern-cards" style="margin-top: var(--space-6)">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🌐</div>
+              <h4 class="pattern-title">Browser SPA</h4>
+              <p class="pattern-desc"><strong>The reporter</strong> — interviews the operator, captures answers, displays the finished story. React 19, lives in <code>src/</code>.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚡</div>
+              <h4 class="pattern-title">Vercel Edge</h4>
+              <p class="pattern-desc"><strong>The newsstand</strong> — caches finished stories close to readers worldwide. 60-second cache for trends, 30-second for analysis, 1-year immutable for static.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">☁️</div>
+              <h4 class="pattern-title">Vercel Functions</h4>
+              <p class="pattern-desc"><strong>The fact-checker</strong> — reads raw responses from the database, runs every engine, returns the story. Lives in <code>api/</code>. Stateless — boots fresh per request.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📦</div>
+              <h4 class="pattern-title">/shared engines</h4>
+              <p class="pattern-desc"><strong>The style guide</strong> — the rule book everyone consults. Question catalog, scoring formulas, signature math. Same code runs in functions AND frontend.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">🐘</div>
+              <h4 class="pattern-title">Supabase Postgres</h4>
+              <p class="pattern-desc"><strong>The archive</strong> — every assessment, every response, every score, immutable once finalized. Two tables: <code>assessments</code>, <code>responses</code>.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #6B8FAE">
+              <div class="pattern-icon" style="background: #6B8FAE">🗂️</div>
+              <h4 class="pattern-title">Supabase Storage</h4>
+              <p class="pattern-desc"><strong>The evidence locker</strong> — PDFs and Excel sheets attached as proof, accessed via short-lived signed links. Never publicly listable.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: where each actor lives ──────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">In the codebase, who lives where?</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">FILES</span>
+<pre><code><span class="code-line">ERM-repo/</span>
+<span class="code-line">├── <span class="code-keyword">src/</span>            <span class="code-comment">// Browser SPA</span></span>
+<span class="code-line">│   ├── App.tsx</span>
+<span class="code-line">│   ├── components/</span>
+<span class="code-line">│   └── screens/</span>
+<span class="code-line">├── <span class="code-keyword">api/</span>            <span class="code-comment">// Vercel Functions</span></span>
+<span class="code-line">│   └── assessments/</span>
+<span class="code-line">├── <span class="code-keyword">shared/</span>         <span class="code-comment">// Engines (single source of truth)</span></span>
+<span class="code-line">│   ├── static.ts</span>
+<span class="code-line">│   ├── engines.ts</span>
+<span class="code-line">│   └── signatures.ts</span>
+<span class="code-line">└── <span class="code-keyword">vercel.json</span>     <span class="code-comment">// Edge cache rules</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>src/</strong> — every file the user's browser downloads. React components, screens, styling. Disposable; replace it and the data survives.</p>
+                <p class="tl"><strong>api/</strong> — every URL that starts with <code>/api/</code>. These are tiny stateless servers that boot up, do one thing, return JSON, then vanish.</p>
+                <p class="tl"><strong>shared/</strong> — the rule book. Both <code>src/</code> and <code>api/</code> import from here. <strong>The whole product moat lives in 600 lines of this folder.</strong></p>
+                <p class="tl"><strong>vercel.json</strong> — tells the newsstand (Vercel Edge) how long to keep each kind of story.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — group chat: the "open this assessment" flow ─ -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A day in the newsroom: opening one assessment</h2>
+          <p>Watch the actors talk to each other when the operator clicks "Generation" in the sidebar:</p>
+
+          <div class="chat-window" id="chat-module2" style="margin-top: var(--space-6)">
+            <div class="chat-messages">
+              <div class="chat-message" data-msg="0" data-sender="actor-1" style="display:none">
+                <div class="chat-avatar" style="background: #C4542A">SPA</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #C4542A">Browser</span>
+                  <p>User clicked Generation. I need its analysis.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="1" data-sender="actor-2" style="display:none">
+                <div class="chat-avatar" style="background: #B5862A">EDGE</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #B5862A">Vercel Edge</span>
+                  <p>Got that one cached from 20 seconds ago — here, take it. (You skip the whole back-end.)</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="2" data-sender="actor-1" style="display:none">
+                <div class="chat-avatar" style="background: #C4542A">SPA</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #C4542A">Browser</span>
+                  <p>Cache miss this time. Edge, I need a fresh one.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="3" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>Booting up. Postgres, give me every response for assessment <code>TXSEEDGEN3</code>.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="4" data-sender="actor-5" style="display:none">
+                <div class="chat-avatar" style="background: #A6442B">PG</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #A6442B">Postgres</span>
+                  <p>Here's 100 rows. Question id, score, note, evidence path, timestamp.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="5" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>/shared, run the math: pillar scores, drift, roadmap, signatures.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="6" data-sender="actor-4" style="display:none">
+                <div class="chat-avatar" style="background: #3F7A57">SH</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #3F7A57">/shared engines</span>
+                  <p>Done. Overall 2.90. Risk Treatment regressed −1.00. 30 roadmap actions. Hash <code>80df5740…</code>. Pure functions; same input every time produces this exact JSON.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="7" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>Edge — here's the JSON. Cache it for 30 seconds private. Browser — render Today.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-typing" id="chat-typing" style="display:none">
+              <div class="chat-avatar" id="typing-avatar">?</div>
+              <div class="chat-typing-dots">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+
+            <div class="chat-controls">
+              <button class="btn chat-next-btn">Next message</button>
+              <button class="btn chat-all-btn">Play all</button>
+              <button class="btn chat-reset-btn">Replay</button>
+              <span class="chat-progress"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — the insight ──────────────────────────── -->
+        <div class="screen animate-in">
+          <div class="callout callout-accent">
+            <div class="callout-icon">💡</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why /shared is the most important folder</strong>
+              <p>Most projects have ONE place where they put "the rules" — and a duplicate of those rules in another place. Then the two copies drift apart. Bug city. We solved this by extracting the math + catalog into <code>/shared/</code>, then having both <code>src/</code> and <code>api/</code> import from it via thin re-exports. <strong>One source of truth.</strong> Engineers call this pattern "extract a kernel." Every serious software business eventually does it.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You're telling AI to "make the score include attached evidence file count." Where does the change go?</p>
+
+          <div class="quiz-container" id="quiz-module2">
+            <div class="quiz-question-block"
+                 data-correct="shared"
+                 data-explanation-right="Right. Scoring rules live in /shared/engines.ts. The browser AND the backend both read scores from the same place — if you only change one, the score on Today won't match the score on the PDF. Always patch the kernel."
+                 data-explanation-wrong="Be careful. Changing scoring logic in only the frontend means the backend still computes the old score; the PDF and the database disagree with the screen. Scoring rules MUST live in /shared/engines.ts so both sides see the same math.">
+              <h3 class="quiz-question">Where do you patch the scoring rule?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="src" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>src/screens/TodayScreen.tsx</code> (it's where the score is shown)</span>
+                </button>
+                <button class="quiz-option" data-value="api" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>api/assessments/[id]/analysis.ts</code> (it's the endpoint that returns the score)</span>
+                </button>
+                <button class="quiz-option" data-value="shared" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>shared/engines.ts</code> (the kernel both sides import from)</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Postgres — add a stored procedure</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-3">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">03</span>
+          <h1 class="module-title">The catalog — the product spec is data, not PowerPoint.</h1>
+          <p class="module-subtitle">1,526 lines of TypeScript that encode 100 questions, 10 pillars, 4 dimensions, 4 benchmark profiles, and the standards-alignment receipts. Change one weight, watch the test suite catch it.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A musical score, not a slide deck</h2>
+          <p>A symphony orchestra in Tokyo and one in Berlin can play the same Beethoven sonata and produce essentially the same piece — because they're both reading the same notation. The notation IS the spec.</p>
+          <p>Our catalog is the notation. <code>shared/static.ts</code> encodes every question, every weight, every benchmark — as data, not prose. The engine reads this data deterministically. Two runs of the same answers against the same catalog produce the same score, byte-for-byte.</p>
+          <p><strong>You can't hash a slide deck. You can hash this.</strong> That's how the patent moat is enforceable — see Module 5 for the receipt mechanism.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — what's in the catalog ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The shape of the catalog</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">QUESTIONS</code>
+              <span class="badge-desc">100 entries. Each: id, text, pillarId, dimensionId, weight, and a 5-level rubric of anchor text.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLARS</code>
+              <span class="badge-desc">10 named risk domains: Leadership & Governance, Strategy & Integration, … Continuous Improvement.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLAR_WEIGHTS</code>
+              <span class="badge-desc">10 numbers summing to 1.0. Leadership 0.20, Risk Assessment 0.20, Continuous Improvement 0.02. The "what matters most" knob.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">DIMENSIONS</code>
+              <span class="badge-desc">4 axes every question is tagged with: People, Process, Technology, Governance.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">BENCHMARKS</code>
+              <span class="badge-desc">4 reference profiles: Target / Industry / Peer / External. Each is a per-pillar target score the operator's score is compared against.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLAR_PROVENANCE</code>
+              <span class="badge-desc">Per-pillar standards alignment text — which clauses of ISO 31000, COSO ERM, NIST RMF, RIMS RMM each pillar maps to. Patent claim 13.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">MATURITY_LEVELS</code>
+              <span class="badge-desc">1=Initial, 2=Developing, 3=Defined, 4=Managed, 5=Optimized. The 1-5 scoring scale.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: one question entry ──────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">One question, fully encoded</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/static.ts</span>
+<pre><code><span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">id</span>: <span class="code-string">1</span>,</span>
+<span class="code-line">  <span class="code-property">text</span>: <span class="code-string">"Is there a formally approved ERM policy?"</span>,</span>
+<span class="code-line">  <span class="code-property">pillarId</span>: <span class="code-string">"lead"</span>,</span>
+<span class="code-line">  <span class="code-property">dimensionId</span>: <span class="code-string">"Governance"</span>,</span>
+<span class="code-line">  <span class="code-property">weight</span>: <span class="code-string">1.0</span>,</span>
+<span class="code-line">  <span class="code-property">rubric</span>: {</span>
+<span class="code-line">    <span class="code-string">1</span>: <span class="code-string">"No formal policy exists."</span>,</span>
+<span class="code-line">    <span class="code-string">2</span>: <span class="code-string">"Draft policy circulates internally."</span>,</span>
+<span class="code-line">    <span class="code-string">3</span>: <span class="code-string">"Approved with annual review cadence."</span>,</span>
+<span class="code-line">    <span class="code-string">4</span>: <span class="code-string">"Integrated into ops; KPIs measure adherence."</span>,</span>
+<span class="code-line">    <span class="code-string">5</span>: <span class="code-string">"Continuously evolves; benchmarked against peers."</span></span>
+<span class="code-line">  }</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>id</strong> — primary key. The signature hash uses this to canonicalize responses (sorted by id).</p>
+                <p class="tl"><strong>text</strong> — what the operator literally sees on the questionnaire screen. Plain English, no jargon.</p>
+                <p class="tl"><strong>pillarId</strong> — foreign key into PILLARS. <code>"lead"</code> = Leadership & Governance.</p>
+                <p class="tl"><strong>dimensionId</strong> — one of the 4 axes. Drives the Focus Inspector tiles on Today.</p>
+                <p class="tl"><strong>weight</strong> — within its (pillar × dimension) cell, how much this question counts. Most questions are 1.0; a few are weighted heavier.</p>
+                <p class="tl"><strong>rubric</strong> — anchor text for each 1-5 score. The operator sees this as a tooltip and inline preview when they pick a score. Different per question.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the 4 benchmark profiles ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The 4 benchmark profiles — what the score is compared against</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🎯</div>
+              <h4 class="pattern-title">Target</h4>
+              <p class="pattern-desc">Where the operator wants to be — typically 4.0+ across the board. The "aspirational" benchmark.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">🏭</div>
+              <h4 class="pattern-title">Industry</h4>
+              <p class="pattern-desc">Sector average. Drives the "is this normal for our industry" framing.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">👥</div>
+              <h4 class="pattern-title">Peer</h4>
+              <p class="pattern-desc">Same-size, same-region competitors. Tighter than industry, more meaningful for boards.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">🌐</div>
+              <h4 class="pattern-title">External</h4>
+              <p class="pattern-desc">Cross-industry leaders (e.g., what a high-maturity bank or hospital system looks like).</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🔀</div>
+            <div class="callout-content">
+              <strong class="callout-title">Switching benchmark is the only "live knob"</strong>
+              <p>Every other input to the score is locked at finalize. The benchmark dropdown on Today (Target / Industry / Peer / External tabs) re-runs <code>computeAnalytics</code> against a different profile. The <em>score doesn't change</em>; only the gap and "aligned pillars" count do. Module 5 explains why this means the analysisHash changes but the scoringInputHash doesn't.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — provenance is patent claim 13 ─────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Provenance — the receipts for every weight</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/static.ts</span>
+<pre><code><span class="code-line">PILLAR_PROVENANCE.lead = {</span>
+<span class="code-line">  <span class="code-property">weight</span>: <span class="code-string">0.20</span>,</span>
+<span class="code-line">  <span class="code-property">standards</span>: <span class="code-string">"ISO 31000 §5.4; COSO ERM 2017</span></span>
+<span class="code-line"><span class="code-string">    Component 1; NIST RMF Prepare step"</span>,</span>
+<span class="code-line">  <span class="code-property">rationale</span>: <span class="code-string">"Leadership commitment is the</span></span>
+<span class="code-line"><span class="code-string">    precondition for every other pillar..."</span></span>
+<span class="code-line">};</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>weight: 0.20</strong> — Leadership counts for 20% of the overall score.</p>
+                <p class="tl"><strong>standards</strong> — exactly which sections of which frameworks justify giving this pillar that much weight. Not "trust us" — citable references.</p>
+                <p class="tl"><strong>rationale</strong> — the human-readable argument. An auditor reads this and decides: do they accept the weighting?</p>
+                <p class="tl"><strong>This data is rendered verbatim on the Provenance screen.</strong> It's also embedded on PDF page 5. The product never abstracts the receipts away.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">📜</div>
+            <div class="callout-content">
+              <strong class="callout-title">Patent claim 13 lives in this field</strong>
+              <p>Per-pillar and per-dimension standards-alignment provenance is one of the 24 patent claims. It's not a marketing line — every weight in the catalog has a citation. A competitor can't ship the same numbers without either copying our citations (legally fraught) or generating their own (which won't match ours when audited side-by-side).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You want to add a new pillar called "Cyber Risk." What 4 places need updates so the engine still works?</p>
+
+          <div class="quiz-container" id="quiz-module3">
+            <div class="quiz-question-block"
+                 data-correct="all-four"
+                 data-explanation-right="Right. (1) PILLARS array gets a new entry. (2) PILLAR_WEIGHTS gets a new key — and ALL weights must be re-balanced to still sum to 1.0. (3) PILLAR_PROVENANCE gets a citation+rationale. (4) BENCHMARKS gets a new key in all 4 profiles (target / industry / peer / external). And separately, you'd tag some QUESTIONS with the new pillarId. Miss any of these and the engine returns wrong scores or NaN."
+                 data-explanation-wrong="Think about every place pillars are referenced. PILLARS is the registry. PILLAR_WEIGHTS must sum to 1.0. PILLAR_PROVENANCE is patent claim 13 — every pillar needs a citation. BENCHMARKS has a target score per pillar — across 4 profiles. All four files coupled.">
+              <h3 class="quiz-question">Adding a new pillar requires updates to:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="pillars-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Just PILLARS — the engine auto-discovers the rest</span>
+                </button>
+                <button class="quiz-option" data-value="pillars-weights" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>PILLARS + PILLAR_WEIGHTS</span>
+                </button>
+                <button class="quiz-option" data-value="all-four" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>PILLARS + PILLAR_WEIGHTS (re-balanced) + PILLAR_PROVENANCE + BENCHMARKS (all 4 profiles)</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Just add a row to a Postgres table</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-4">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">04</span>
+          <h1 class="module-title">How a score is born — pure math, no surprises.</h1>
+          <p class="module-subtitle">Four functions. Two hundred lines. The entire patent moat. If anyone asks <em>"how do you score?"</em>, this is the answer.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The score as a pour-over coffee</h2>
+          <p>You can build a coffee shop where every barista pours by feel — different cup every time. Or you can build one where the recipe is exact: <em>22g coffee, 350ml water, 4-minute pour, 96°C.</em> Same recipe → same coffee, every time, anywhere.</p>
+          <p>Our scoring engine is the second kind. The "recipe" is in <code>shared/engines.ts</code>. The "ingredients" are the operator's 100 answers. The "cup of coffee" is the overall maturity score — and the engine guarantees that the same answers always brew the same cup.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — four functions ─────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The four functions, in order</h2>
+
+          <div class="flow-steps" style="margin-top: var(--space-6)">
+            <div class="flow-step">
+              <div class="flow-step-num">1</div>
+              <p><code>computeVectors</code><br/><em>"Roll 100 answers up to 10 pillar scores + 1 overall."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">2</div>
+              <p><code>computeAnalytics</code><br/><em>"Compare each pillar to the active benchmark."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">3</div>
+              <p><code>computeDrift</code><br/><em>"Diff each pillar against the previous assessment."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">4</div>
+              <p><code>generateRoadmap</code><br/><em>"Sort improvement actions by uplift ÷ effort."</em></p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-8)">Everything else in the codebase — every screen, every chart, every PDF page — consumes the output of these four. <strong>Master these and you've mastered the product.</strong></p>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: computeVectors ──────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Function 1: <code>computeVectors</code> — the heart of the engine</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/engines.ts:51</span>
+<pre><code><span class="code-line"><span class="code-keyword">export function</span> <span class="code-function">computeVectors</span>(responses) {</span>
+<span class="code-line">  <span class="code-comment">// Step A — dimension averages</span></span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> r <span class="code-keyword">of</span> responses) {</span>
+<span class="code-line">    <span class="code-keyword">const</span> q = QUESTIONS_BY_ID.<span class="code-function">get</span>(r.questionId);</span>
+<span class="code-line">    dimSums.<span class="code-function">set</span>(q.dimensionId, sum + r.score);</span>
+<span class="code-line">  }</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// Step B — pillar aggregates (weighted)</span></span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> r <span class="code-keyword">of</span> responses) {</span>
+<span class="code-line">    cellSums.<span class="code-function">set</span>(key, sum + r.score * q.weight);</span>
+<span class="code-line">  }</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// Step C — overall = sum(pillarScore * pillarWeight)</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> overallScore = PILLAR_IDS.<span class="code-function">reduce</span>(</span>
+<span class="code-line">    (sum, pid) => sum + pillarScores.<span class="code-function">get</span>(pid) * PILLAR_WEIGHTS[pid], 0</span>
+<span class="code-line">  );</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-keyword">return</span> { pillarScores, dimensionScores, overallScore };</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Take 100 answers in. Return 1 overall + 10 pillar + 4 dimension scores.</strong></p>
+                <p class="tl"><strong>Step A:</strong> group answers by their <em>dimension</em> (People / Process / Technology / Governance) and average. This gives you 4 dimension scores.</p>
+                <p class="tl"><strong>Step B:</strong> for each <em>pillar</em>, weight each answer by how important that question is to that pillar, then sum. This gives you 10 pillar scores.</p>
+                <p class="tl"><strong>Step C:</strong> the overall score is a weighted average of the 10 pillar scores. Leadership matters more than Continuous Improvement, so its pillar weight is bigger.</p>
+                <p class="tl"><strong>Notice:</strong> no <code>Date.now()</code>, no random, no API calls, no database. Pure inputs in, pure output out. <em>That's why it's reproducible.</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — flow animation: 100 answers → score ───── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Watch one assessment flow through the engine</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"Operator finalized 100 responses. Stored in Postgres."},
+            {"highlight":"flow-actor-2","label":"Function reads raw responses","packet":true,"from":"actor-1","to":"actor-2"},
+            {"highlight":"flow-actor-3","label":"computeVectors → 1 overall, 10 pillar, 4 dimension scores","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"computeAnalytics → compare each pillar to the Industry benchmark"},
+            {"highlight":"flow-actor-3","label":"computeDrift → diff against the previous assessment for this BU"},
+            {"highlight":"flow-actor-3","label":"generateRoadmap → sort improvement actions by uplift ÷ effort"},
+            {"highlight":"flow-actor-2","label":"Engine returns the JSON","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-4","label":"Function ships JSON to browser","packet":true,"from":"actor-2","to":"actor-4"}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">PG</div>
+                <span>Postgres</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">⚙️</div>
+                <span>/shared engines</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-4">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — the determinism guarantee ─────────────── -->
+        <div class="screen animate-in">
+          <div class="callout callout-accent">
+            <div class="callout-icon">🔒</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why "pure functions" is the patent moat</strong>
+              <p>A <span class="term" data-definition="A function whose output depends only on its inputs — no random numbers, no current time, no network calls, no database reads. Same inputs in, same output out. Forever.">pure function</span> can't lie. There's no "hmm, last time it was Wednesday, this time it's Thursday, the answer might shift." We pinned this in tests: <code>tests/engines.test.ts</code> has 35 assertions like <em>"these specific 100 answers must produce overall score 3.20."</em> If anyone changes the math, that test fails. CI blocks the deploy. The reproducibility claim is enforceable in code, not in policy.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>Why do we deliberately NOT include the current date inside <code>computeVectors</code>?</p>
+
+          <div class="quiz-container" id="quiz-module4">
+            <div class="quiz-question-block"
+                 data-correct="determinism"
+                 data-explanation-right="Right. The instant you put `Date.now()` inside the engine, running it twice produces two different outputs — even if the answers were identical. The whole reproducibility claim collapses. Time-related fields (when the assessment was finalized, when a response was stamped) live in the database row, NOT inside the math."
+                 data-explanation-wrong="Think harder. The reason is about reproducibility — same inputs must produce same output, and `Date.now()` returns a different number every microsecond. Including it would make the engine non-deterministic.">
+              <h3 class="quiz-question">Why no <code>Date.now()</code> in the engine?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="performance" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Performance — calling Date.now() is slow</span>
+                </button>
+                <button class="quiz-option" data-value="determinism" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Determinism — same inputs must always produce the same output, and Date.now() returns a different number each time</span>
+                </button>
+                <button class="quiz-option" data-value="timezone" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Timezone bugs — dates are too hard to handle</span>
+                </button>
+                <button class="quiz-option" data-value="unrelated" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Time isn't related to scoring — it's just irrelevant</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-5">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">05</span>
+          <h1 class="module-title">The receipts — making the patent moat tactile.</h1>
+          <p class="module-subtitle">A pure function is reproducible. But the user can't <em>see</em> that without a signal. The "run signature" turns reproducibility into something an auditor can hold.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — metaphor ───────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Like a chess game's PGN notation</h2>
+          <p>In chess, every move history is a string: <code>1. e4 e5 2. Nf3 Nc6 ...</code>. Two players, anywhere in the world, can replay the exact same game from the notation. The notation IS the proof.</p>
+          <p>Our run signature is the same idea. It's a SHA-256 fingerprint of the inputs that produced a score. Two assessments with the same fingerprint <strong>MUST</strong> have produced the same score, because the math is deterministic and the inputs are bit-identical. The hash is the chess notation of an ERM score.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — what's in the hash ───────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What goes into the signature?</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">responses</code>
+              <span class="badge-desc">100 (questionId, score) pairs, sorted by id. Notes and evidence filenames are <strong>excluded</strong> — they don't change the score.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">catalogHash</code>
+              <span class="badge-desc">Hash of the question catalog itself. If a question text changes or a weight is tweaked, this differs.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">catalogVersion</code>
+              <span class="badge-desc">Human-readable bump (e.g. <code>1.0.0</code>). Lets us evolve the catalog while keeping comparisons safe.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">scoringSpecVersion</code>
+              <span class="badge-desc">Bumped when the scoring math itself changes. <code>1.0.0</code> today.</span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-content">
+              <strong class="callout-title">Notice what's NOT in the hash</strong>
+              <p>The current time. The operator's email. The browser. The IP address. The database row creation timestamp. <strong>None of those affect the score</strong>, so none of them belong in the signature. Including them would be lying to the auditor.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: the canonicalize step ───── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Why two hashes, not one?</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/signatures.ts</span>
+<pre><code><span class="code-line"><span class="code-comment">// Hash 1: the score itself</span></span>
+<span class="code-line"><span class="code-keyword">const</span> scoringInputHash = <span class="code-function">sha256</span>(<span class="code-function">canonicalize</span>({</span>
+<span class="code-line">  responses: <span class="code-comment">/* sorted, only q+s */</span>,</span>
+<span class="code-line">  catalogHash, catalogVersion, scoringSpecVersion,</span>
+<span class="code-line">}));</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Hash 2: the analysis VIEW</span></span>
+<span class="code-line"><span class="code-keyword">const</span> analysisHash = <span class="code-function">sha256</span>(<span class="code-function">canonicalize</span>({</span>
+<span class="code-line">  scoringInputHash,</span>
+<span class="code-line">  benchmarkType,           <span class="code-comment">// target / industry / peer</span></span>
+<span class="code-line">  benchmarkProfile,        <span class="code-comment">// the actual numbers</span></span>
+<span class="code-line">}));</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Hash 1 — scoringInputHash</strong> — the fingerprint of <em>"these answers, scored by these rules."</em> It does NOT change when you switch benchmark.</p>
+                <p class="tl"><strong>Hash 2 — analysisHash</strong> — the fingerprint of <em>"this score viewed against this benchmark."</em> It DOES change when you toggle Target → Industry on Today.</p>
+                <p class="tl">This separation matters. An auditor can ask "did the score change between Q1 and Q2?" — answer: compare scoringInputHash. The analyst can ask "did the relative gap change?" — answer: compare analysisHash. Two questions, two receipts.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — pinned tests ────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The contract is pinned in tests</h2>
+          <p>The signature isn't a vibe — it's enforced by the test suite. <code>tests/signatures.test.ts</code> contains assertions that close the loopholes:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">order-independence</code>
+              <span class="badge-desc">Shuffling the response array must not change the hash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">score-sensitivity</code>
+              <span class="badge-desc">Changing one answer must change the hash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">benchmark-isolation</code>
+              <span class="badge-desc">Switching benchmark changes analysisHash but NOT scoringInputHash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">coverage-rejection</code>
+              <span class="badge-desc">A response set with 99 valid + 1 fabricated questionId must reject.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">range-rejection</code>
+              <span class="badge-desc">A score outside 1–5 (or non-integer) must reject.</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-4)">If any of these break, CI fails the PR. The reproducibility claim is therefore enforceable: it's not a thing engineers <em>promise</em>, it's a thing tests <em>check</em>.</p>
+        </div>
+
+        <!-- ── SCREEN 5 — UI surface ──────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where the user sees the receipt</h2>
+          <p>The hash is rendered in two places:</p>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🖥️</div>
+              <h4 class="pattern-title">Today screen — the chip</h4>
+              <p class="pattern-desc">Below the hero score: a clickable chip reading <code>sig·80df5740 · spec v1.0.0 · complete</code>. Click → modal with full hash, catalog hash, coverage state, computed timestamp.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">📄</div>
+              <h4 class="pattern-title">PDF cover — the meta block</h4>
+              <p class="pattern-desc">Bottom-right of page 1: same fingerprint, printed. The PDF an auditor receives carries the receipt for the score it claims.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🎯</div>
+            <div class="callout-content">
+              <strong class="callout-title">The pitch in five seconds</strong>
+              <p><em>"This is a number you can defend. The receipt is on the screen. Re-run the assessment with the same answers — same hash. Tweak one answer — different hash. The math is open. The catalog is open. The auditor can verify."</em></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An operator finalizes Generation. They go to lunch. They come back, refresh the Today screen. The signature is identical. They switch the benchmark dropdown from Target to Industry. What happens to the two hashes?</p>
+
+          <div class="quiz-container" id="quiz-module5">
+            <div class="quiz-question-block"
+                 data-correct="b-only"
+                 data-explanation-right="Correct. scoringInputHash is the fingerprint of (responses + catalog + spec) — none of which changed. analysisHash includes the benchmark profile, so it changes when you toggle benchmarks. This separation is intentional: the score is the same, but the comparison view changed."
+                 data-explanation-wrong="Look again at what each hash includes. scoringInputHash covers (responses + catalog + spec) — those didn't change. analysisHash adds (benchmarkType + benchmarkProfile) — those did. So only the analysisHash changes.">
+              <h3 class="quiz-question">After switching benchmark from Target to Industry:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="both" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Both hashes change.</span>
+                </button>
+                <button class="quiz-option" data-value="b-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Only analysisHash changes; scoringInputHash stays the same.</span>
+                </button>
+                <button class="quiz-option" data-value="a-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Only scoringInputHash changes; analysisHash stays the same.</span>
+                </button>
+                <button class="quiz-option" data-value="neither" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Neither changes — benchmark is just a UI filter.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-6">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">06</span>
+          <h1 class="module-title">The questionnaire pipeline — 100 questions without losing your place.</h1>
+          <p class="module-subtitle">A 100-question form is where most assessment products fail. Ours auto-resumes mid-session, uploads evidence inline, and never silently destroys progress.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A flight checklist that resumes mid-flight</h2>
+          <p>Pilots have <span class="term" data-definition="A printed checklist of every action a pilot must perform before takeoff, during cruise, and on landing. Used for decades; orders of magnitude safer than 'just remember everything'.">checklists</span>. Each item gets ticked. If the pilot is interrupted, they go back to the last unticked item — they don't restart from the top, and they don't pretend an item was checked.</p>
+          <p>Our questionnaire is the same. The operator answers 100 questions across 10 pillars. They might get pulled into a meeting. They come back; the cursor is exactly where they left off. They click sidebar; nothing destroys their work. They upload a PDF; the upload happens inline without a "save" button.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — lifted draft state ───────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The trick: lifted state with resume</h2>
+          <p>Most React forms keep state inside the form component. When the user navigates away, the component unmounts, the state vanishes — work lost.</p>
+          <p>We <strong>lift the state</strong> to the App shell. The pipeline component is just a "view" of the draft. Mounting / unmounting doesn't destroy anything; the App holds the draft.</p>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/App.tsx</span>
+<pre><code><span class="code-line"><span class="code-comment">// In App.tsx — survives screen changes</span></span>
+<span class="code-line"><span class="code-keyword">const</span> [assessmentDraft, setAssessmentDraft] = <span class="code-function">useState</span>({</span>
+<span class="code-line">  id: null,</span>
+<span class="code-line">  responses: {},</span>
+<span class="code-line">  notes: {},</span>
+<span class="code-line">  evidenceNames: {},</span>
+<span class="code-line">  evidencePaths: {},</span>
+<span class="code-line">  answeredAt: {},</span>
+<span class="code-line">});</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Passed down to the pipeline as props</span></span>
+<span class="code-line">&lt;<span class="code-function">VectorCapturePipeline</span></span>
+<span class="code-line">  draft={assessmentDraft}</span>
+<span class="code-line">  onDraftChange={setAssessmentDraft}</span>
+<span class="code-line">/&gt;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>The App shell owns the draft.</strong> Even if the user navigates to Today and back, the App stays mounted — so the draft survives.</p>
+                <p class="tl"><strong>responses</strong> — questionId → score (1-5)</p>
+                <p class="tl"><strong>notes</strong> — questionId → free-text note</p>
+                <p class="tl"><strong>evidenceNames</strong> — questionId → filename string (always captured for audit trail)</p>
+                <p class="tl"><strong>evidencePaths</strong> — questionId → Storage object key (only set if upload succeeded). Module 9 covers this.</p>
+                <p class="tl"><strong>answeredAt</strong> — questionId → ISO timestamp. Captured but not yet surfaced in UI (claim 12, deferred).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — the auto-resume effect ────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Resume cursor on remount</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/screens/VectorCapturePipeline.tsx</span>
+<pre><code><span class="code-line"><span class="code-function">useEffect</span>(() => {</span>
+<span class="code-line">  <span class="code-keyword">if</span> (Object.<span class="code-function">keys</span>(responses).length === 0) <span class="code-keyword">return</span>;</span>
+<span class="code-line">  <span class="code-keyword">const</span> firstUnanswered = questions.<span class="code-function">findIndex</span>(</span>
+<span class="code-line">    (q) => responses[q.id] === <span class="code-keyword">undefined</span></span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">if</span> (firstUnanswered &gt;= 0) <span class="code-function">setCurrIdx</span>(firstUnanswered);</span>
+<span class="code-line">}, []);</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>On remount, find the first unanswered question and jump there.</strong></p>
+                <p class="tl">If the operator answered Q1-Q47 yesterday, came back today, the pipeline opens at Q48 — not at Q1. <em>That's the airline-checklist behavior.</em></p>
+                <p class="tl">The empty-array <code>[]</code> dependency means this only runs once on mount. If the user navigates within the pipeline, the cursor moves with their clicks instead.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the batched-update gotcha ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A subtle bug Codex caught: batched setter race</h2>
+          <p>In an early version of the lifted state, each setter spread the same stale <code>draft</code>:</p>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">BUGGY VERSION (caught pre-commit by Codex review)</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> setResponses = (next) => {</span>
+<span class="code-line">  <span class="code-function">onDraftChange</span>({ ...draft, responses: next });</span>
+<span class="code-line">};</span>
+<span class="code-line"><span class="code-keyword">const</span> setAnsweredAt = (next) => {</span>
+<span class="code-line">  <span class="code-function">onDraftChange</span>({ ...draft, answeredAt: next });</span>
+<span class="code-line">};</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Caller fires both in one click handler:</span></span>
+<span class="code-line"><span class="code-function">setResponses</span>(...);  <span class="code-comment">// React batches</span></span>
+<span class="code-line"><span class="code-function">setAnsweredAt</span>(...);  <span class="code-comment">// stale draft! score lost</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>The bug:</strong> both setters captured <code>draft</code> at render time. React batches state updates; the second setter overwrites the first because both wrote against the same stale snapshot.</p>
+                <p class="tl"><strong>Symptom:</strong> the score literally got lost on every click. The timestamp saved; the score didn't.</p>
+                <p class="tl"><strong>Fix:</strong> use functional updates — <code>onDraftChange((prev) =&gt; ({ ...prev, responses: next }))</code>. Each batched update reads the latest prev, so they compose correctly.</p>
+                <p class="tl"><strong>Why it matters:</strong> external review (Codex) caught this before commit. Reading your own code under deadline pressure misses these. Adversarial review > self-review.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-warning" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-content">
+              <strong class="callout-title">React state batching is a class of bugs you'll hit again</strong>
+              <p>Whenever you have multiple <code>setX</code> calls in the same handler updating the same parent, prefer functional updates: <code>setX(prev =&gt; …)</code> instead of <code>setX(newValue)</code>. The second form silently corrupts when batched.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — sidebar BU click semantics ────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Sidebar BU click: filter, not generate</h2>
+          <p>The audit found another gotcha — the sidebar's BU buttons used to <strong>destroy</strong> the in-progress draft:</p>
+
+          <div class="flow-steps">
+            <div class="flow-step">
+              <div class="flow-step-num">❌</div>
+              <p><strong>Old:</strong> Click "Generation" in sidebar → <code>handleEntitySelect()</code> → new aid → reset draft → route to assessment</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">✅</div>
+              <p><strong>New:</strong> Click "Generation" in sidebar → <code>handleSidebarBuSelect()</code> → if prior completed assessment exists, open it; else route to scope. <em>Never destroys the draft.</em></p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Two functions, one verb each. <code>handleEntitySelect</code> is for "begin new assessment" (Scope tile click only). <code>handleSidebarBuSelect</code> is for "filter the workspace to that unit." Mental-model parity: clicking a BU should never lose work.</p>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An operator is on Q47. They click Today in the sidebar (no assessment loaded yet). What happens?</p>
+
+          <div class="quiz-container" id="quiz-module6">
+            <div class="quiz-question-block"
+                 data-correct="empty-hub"
+                 data-explanation-right="Right. Today renders an EmptyHub component when authed but no analysis is loaded — there's nothing finalized to display. The draft survives in App state, so when the operator navigates back to Assessment, the cursor resumes at Q47 (or wherever they were)."
+                 data-explanation-wrong="Reread the design. The draft is owned by App, not by the pipeline component. Navigating away unmounts the pipeline but doesn't touch App state. When they come back, the cursor jumps to first unanswered question.">
+              <h3 class="quiz-question">After clicking Today mid-questionnaire:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="lost" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Their progress is lost — they have to start over</span>
+                </button>
+                <button class="quiz-option" data-value="empty-hub" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Today shows an empty-state hub. Their draft survives in App state. When they go back to Assessment, cursor resumes at Q47.</span>
+                </button>
+                <button class="quiz-option" data-value="autosave-prompt" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>A "save before leaving?" modal pops up</span>
+                </button>
+                <button class="quiz-option" data-value="route-blocked" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The Today nav is disabled while assessing — the click does nothing</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-7">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">07</span>
+          <h1 class="module-title">The Live Brief — every visible decision on the main dashboard.</h1>
+          <p class="module-subtitle">Today is the flagship surface. Every chart earns its pixels by answering one question — or it gets cut.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A morning newsroom briefing</h2>
+          <p>An editor walks into the newsroom. They want one sentence: <em>what's the lead story today?</em> Then they want supporting facts. Then they want the action plan.</p>
+          <p>Today is structured the same way. The Live Brief is the lead. The pillar table is the supporting facts. The Action Plan CTA is the verb. Everything else is optional reference.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — the 8 elements that survived the audit ──── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">8 elements, top-to-bottom</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">1. Top bar</code>
+              <span class="badge-desc">BU dropdown · benchmark tabs · status pill · ⌘K palette · Report button · Back. Workspace context.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">2. Live Brief hero</code>
+              <span class="badge-desc">Severity-striped card. Drift headline. 3 secondary metrics (benchmark avg / aligned pillars / active roadmap). Hero score with sparkline. Run signature chip. CTAs: Open action plan · Switch benchmark.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">3. Pillar table</code>
+              <span class="badge-desc">10 rows sorted by gap desc. Score · Bench · Δ · real per-pillar trajectory (sparkline) · status pill. Pillar names link to Provenance.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">4. Pillar Shape radar</code>
+              <span class="badge-desc">10-pillar polygon vs benchmark. Boards expect this — kept on Today after audit feedback.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">5. Focus Inspector</code>
+              <span class="badge-desc">4 dimension tiles (Governance / People / Process / Technology) vs the 4.0 "Managed" reference threshold.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">6. Response coverage</code>
+              <span class="badge-desc">4 metrics: vectors captured / evidence linked / notes captured / system integrity %. Audit-trail-friendly.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">7. Pillar evolution chart</code>
+              <span class="badge-desc">Real longitudinal trend across past assessments for this BU. Powered by /api/assessments/trend.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">8. Sequenced roadmap table</code>
+              <span class="badge-desc">Top 14 actions sorted by priority. Phase 1 / 2 / 3 chips. Click sort by uplift / phase / priority.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — what was cut and why ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What was cut — and why subtraction is a feature</h2>
+          <p>An external Devil's Advocate audit said Today had Bloomberg-cosplay levels of chart inflation. We cut 4 redundant cards in one commit:</p>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Operating Dimensions card</h4>
+              <p class="pattern-desc">4 progress bars showing dimensions. <strong>Cut:</strong> Focus Inspector tiles directly above show the same data with clearer hierarchy (gap vs reference + status pill).</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Pillar Delta bar chart</h4>
+              <p class="pattern-desc">10 vertical bars, current vs target. <strong>Cut:</strong> the pillar table's Δ column already shows score, bench, and gap side-by-side. The bar chart was the same data rendered visually.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Drift Signal mini-chart</h4>
+              <p class="pattern-desc">130px line of pillar deltas vs zero. <strong>Cut:</strong> the Live Brief headline says "regressed -1.00" and the pillar table has the Δ column. Three places telling the same story.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Regression Alerts card</h4>
+              <p class="pattern-desc">List of pillars with severity bars. <strong>Cut:</strong> the Live Brief headline IS the regression alert. The pillar table marks "Critical" rows with a coral pill. Fourth surface, same story.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">✂️</div>
+            <div class="callout-content">
+              <strong class="callout-title">Subtraction is a real engineering activity</strong>
+              <p>"What can I cut?" is harder than "what should I add?" — but it's the move that makes a screen sharp. After the cuts, Today went from 13 cards to 8. Reading time dropped. Focus increased. The patent moat got more visible because it wasn't competing with 5 redundant charts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the headline generator ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The Live Brief headline is generated, not handwritten</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/screens/TodayScreen.tsx</span>
+<pre><code><span class="code-line">{(() => {</span>
+<span class="code-line">  <span class="code-keyword">const</span> worstReg = (analysis.regressions ?? [])[0];</span>
+<span class="code-line">  <span class="code-keyword">if</span> (worstReg) <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{worstReg.pillarName} regressed</span>
+<span class="code-line">    {worstReg.delta.<span class="code-function">toFixed</span>(2)} on</span>
+<span class="code-line">    {entityName} since the prior assessment.&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">if</span> (alignedCount &gt;= 7) <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{entityName} is on benchmark</span>
+<span class="code-line">    across {alignedCount} of 10 pillars.&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{entityName} is drifting on</span>
+<span class="code-line">    {10 - alignedCount} of 10 pillars vs ...&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">})()}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Three forms, picked deterministically.</strong> No LLM. No hand-written copy. The headline is computed from the analysis JSON.</p>
+                <p class="tl"><strong>Form 1:</strong> if there's a regression, name the worst-regressed pillar and the delta. The pillar name is a clickable link to Provenance.</p>
+                <p class="tl"><strong>Form 2:</strong> if 7+ pillars are aligned, celebrate. Mint stripe.</p>
+                <p class="tl"><strong>Form 3:</strong> otherwise, "drifting" framing — names how many pillars are off-bench and which benchmark.</p>
+                <p class="tl"><strong>Why deterministic:</strong> two operators with identical analysis JSON see identical headlines. No surprise wording. Same property as the score.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — non-blocking loading ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A small UX win: the 2-pixel loading strip</h2>
+          <p>Earlier versions blasted the whole screen with a "Computing..." overlay every time the operator switched BU or benchmark. Annoying for routine clicks.</p>
+          <p>We split <code>loading</code> into two states:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">analysisLoading</code>
+              <span class="badge-desc">Fires on /api/assessments/[id]/analysis fetches. Shows a 2px terracotta progress strip ping-pong at the top of the screen. Non-blocking.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">loading</code>
+              <span class="badge-desc">Reserved for genuinely user-blocking ops: login auth, assessment finalize. Full-screen "Computing" overlay still fires here — appropriate, because the user shouldn't keep clicking.</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-4)">Lesson: <em>not all loading is equal</em>. Use a non-blocking indicator for routine fetches; reserve the blocking overlay for moments when blocking is the right behavior.</p>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You're shown the Today screen. Generation. The Live Brief headline reads "Risk Treatment regressed -1.00". The pillar Risk Treatment row says "Critical" in a coral pill. Why is this redundant by design?</p>
+
+          <div class="quiz-container" id="quiz-module7">
+            <div class="quiz-question-block"
+                 data-correct="hierarchy"
+                 data-explanation-right="Right. The headline is the SUMMARY (one sentence, eye-catching). The pillar table is the DETAIL (10 rows, drilldown). Both surface the same fact, but at different levels of zoom — the operator scans the hero, then refers to the table for specifics. We cut the EXTRA Regression Alerts card precisely because that one was 4th surface for the same fact, no new information."
+                 data-explanation-wrong="Reread the audit narrative — the design intentionally repeats the lead at the headline AND the table because they serve different scan patterns. We CUT the Regression Alerts card because it was a 4th repetition with no new information. Two = useful redundancy. Four = noise.">
+              <h3 class="quiz-question">Why is showing the regression in BOTH the headline AND the pillar table by design?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="hierarchy" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Hierarchy: headline = scannable summary, table = drilldown detail. Different zoom levels.</span>
+                </button>
+                <button class="quiz-option" data-value="bug" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's a bug; one of the two should have been cut.</span>
+                </button>
+                <button class="quiz-option" data-value="loading" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The headline is a loading skeleton — only shows until the table renders.</span>
+                </button>
+                <button class="quiz-option" data-value="ab-test" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's an A/B test: half of users see only one.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module7')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module7')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-8">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">08</span>
+          <h1 class="module-title">Drift and roadmap — what changed, and what to do.</h1>
+          <p class="module-subtitle">A score by itself is a vibe. A score plus <em>"this changed since last time"</em> plus <em>"here are 30 actions sorted by uplift ÷ effort"</em> is an audit instrument.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Drift = a doctor's vital-sign chart</h2>
+          <p>A doctor doesn't ask <em>"is the patient healthy?"</em> — they ask <em>"what changed since last visit?"</em> Single readings are noise; trajectories are signal.</p>
+
+          <div class="pattern-cards" style="margin-top: var(--space-4)">
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">📉</div>
+              <h4 class="pattern-title">Critical regression</h4>
+              <p class="pattern-desc"><code>severity: 'CRITICAL'</code> when |delta| &gt; 0.5. Coral severity stripe on the Live Brief. Demands action.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚠️</div>
+              <h4 class="pattern-title">Notice regression</h4>
+              <p class="pattern-desc"><code>severity: 'NOTICE'</code> when delta is negative but small. Worth knowing.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">↗️</div>
+              <h4 class="pattern-title">Improvement</h4>
+              <p class="pattern-desc">Positive delta. Pillar Evolution chart shows the upward line.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">"Prior assessment" is operator-scoped — and that fact is the difference between an audit-grade product and a prototype</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/assessments/[id]/analysis.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> [prior] = <span class="code-keyword">await</span> sql`</span>
+<span class="code-line">  <span class="code-keyword">SELECT</span> id <span class="code-keyword">FROM</span> assessments</span>
+<span class="code-line">  <span class="code-keyword">WHERE</span> "entityId" = ${assessment.entityId}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> id != ${id}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> "createdAt" &lt; ${assessment.createdAt}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> status = <span class="code-string">'completed'</span></span>
+<span class="code-line">    <span class="code-keyword">AND</span> "operatorEmail" = ${assessment.operatorEmail}</span>
+<span class="code-line">  <span class="code-keyword">ORDER BY</span> "createdAt" <span class="code-keyword">DESC</span> <span class="code-keyword">LIMIT</span> 1</span>
+<span class="code-line">`;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Find the previous version of THIS BU assessment, by THIS operator, that was actually finalized.</strong></p>
+                <p class="tl">The <code>operatorEmail</code> filter exists for a real reason: without it, Operator B's drift headline could compute against Operator A's data. Caught during audit; shipped same day.</p>
+                <p class="tl"><code>status = 'completed'</code> excludes drafts. Drift only compares to finalized snapshots.</p>
+                <p class="tl"><code>id != current</code> prevents self-comparison (drift would be 0 across the board).</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-warning" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🚨</div>
+            <div class="callout-content">
+              <strong class="callout-title">Cross-tenant data bleed: the silent killer</strong>
+              <p>The original version of this query missed the <code>operatorEmail</code> filter. It looked harmless. It also silently leaked one operator's risk posture into another operator's headline. <strong>Multi-tenant SaaS lives or dies on this kind of filter.</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The roadmap is a sort, not a stack of TODOs</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/engines.ts:165</span>
+<pre><code><span class="code-line"><span class="code-keyword">export function</span> <span class="code-function">generateRoadmap</span>(pillarScores, benchmarkType) {</span>
+<span class="code-line">  <span class="code-keyword">const</span> profile = BENCHMARKS[benchmarkType];</span>
+<span class="code-line">  <span class="code-keyword">const</span> gaps = PILLAR_IDS.<span class="code-function">map</span>(pid => ({</span>
+<span class="code-line">    pillarId: pid,</span>
+<span class="code-line">    gap: <span class="code-function">Math.max</span>(0, profile[pid] - pillarScores.<span class="code-function">get</span>(pid)),</span>
+<span class="code-line">  }));</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// score each canonical action by uplift / (cost × duration)</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> actions = ROADMAP_ACTIONS</span>
+<span class="code-line">    .<span class="code-function">filter</span>(a => gapsByPillar.<span class="code-function">get</span>(a.pillarId) > 0)</span>
+<span class="code-line">    .<span class="code-function">map</span>(a => ({</span>
+<span class="code-line">      ...a,</span>
+<span class="code-line">      score: a.expectedUplift / (a.costScore * a.durationScore),</span>
+<span class="code-line">    }))</span>
+<span class="code-line">    .<span class="code-function">sort</span>((a, b) => b.score - a.score);</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Step 1 — find the gaps.</strong> For each pillar, how far below benchmark are we?</p>
+                <p class="tl"><strong>Step 2 — filter actions.</strong> The catalog has canonical improvement actions tagged by pillar. Drop ones targeting pillars that don't have a gap.</p>
+                <p class="tl"><strong>Step 3 — score by ROI.</strong> Each action has expectedUplift, costScore (1-5, lower=cheaper), durationScore (1-5, lower=faster). Priority = uplift ÷ (cost × duration). Cheap, fast, high-uplift wins.</p>
+                <p class="tl"><strong>Step 4 — sort and bucket.</strong> Top scorers Phase 1, next Phase 2, rest Phase 3.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where drift + roadmap surface in the UI</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">Live Brief headline</code>
+              <span class="badge-desc">"Risk Treatment regressed -1.00 on Generation since the prior assessment." Auto-generated from the worst regression.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Pillar table sparklines</code>
+              <span class="badge-desc">REAL longitudinal data from /api/assessments/trend. Em-dash placeholder if &lt; 2 sessions. Never fabricated.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Pillar Evolution chart</code>
+              <span class="badge-desc">Full longitudinal view across all past assessments for this BU.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Sequenced roadmap table</code>
+              <span class="badge-desc">Top 14 actions on Today, sortable by phase / priority / uplift. Full table on Action Plan screen.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Action Plan scenarios</code>
+              <span class="badge-desc">3 scenario cards: "Status Quo" / "Phase 1 only" / "Full sequence." Each projects score uplift if those actions ship.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>Action 1: expectedUplift 1.5, costScore 5 (expensive), durationScore 5 (slow). Action 2: expectedUplift 0.5, costScore 1 (cheap), durationScore 1 (fast). Which goes in Phase 1?</p>
+
+          <div class="quiz-container" id="quiz-module8">
+            <div class="quiz-question-block"
+                 data-correct="cheap-fast"
+                 data-explanation-right="Right. Priority = uplift / (cost × duration). Action 1: 1.5 / 25 = 0.06. Action 2: 0.5 / 1 = 0.5. Action 2 wins by ~8x. The roadmap rewards cheap+fast over big+slow."
+                 data-explanation-wrong="Calculate the priority score: uplift / (cost × duration). Big uplift divides by 25 (5×5). Small uplift divides by 1 (1×1). Cheap+fast crushes big+slow.">
+              <h3 class="quiz-question">Which action has higher priority?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="big-uplift" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Action 1 — bigger uplift wins</span>
+                </button>
+                <button class="quiz-option" data-value="cheap-fast" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Action 2 — uplift/(cost×duration) is 0.5 vs 0.06</span>
+                </button>
+                <button class="quiz-option" data-value="depends" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Depends on the pillar — leadership wins</span>
+                </button>
+                <button class="quiz-option" data-value="tied" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Tied — same cost per uplift unit</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module8')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module8')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-9">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">09</span>
+          <h1 class="module-title">Evidence — the audit-grade attachment story.</h1>
+          <p class="module-subtitle">A score with no document behind it is hearsay. Real customers need real files in real storage with real access control.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A bank's safe-deposit box, not a public locker</h2>
+          <p>The metaphor matters. We could have stored evidence in any old bucket and called it a day. We didn't. Every uploaded file lives in a <strong>private bucket</strong>, never publicly listable, accessible only via short-lived signed links our function issues per-request after verifying ownership.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The 5 properties that make storage audit-grade</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">private bucket</code>
+              <span class="badge-desc">No public listing. No public URL. The only way in is a signed link our function issues.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">10 MB / file cap</code>
+              <span class="badge-desc">Server-side rejection of larger uploads — saves bandwidth, fits ERM evidence shape (PDFs, Excel, screenshots).</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">MIME allowlist</code>
+              <span class="badge-desc">PDF, XLSX, DOCX, common images, plain text. Bucket itself rejects anything else, regardless of file extension.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">5-min signed URLs</code>
+              <span class="badge-desc">Download links expire in 300 seconds. Even if a link leaks via screenshare, it's stale by the time anyone tries.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">deterministic key</code>
+              <span class="badge-desc"><code>{assessmentId}/{questionId}-{filename}</code>. One slot per (assessment, question). Re-uploads overwrite the slot.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">How an upload actually happens (without the service-role key ever leaving the server)</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"User picks a PDF on question 47"},
+            {"highlight":"flow-actor-1","label":"Browser asks function for a signed upload URL","packet":true,"from":"actor-1","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function verifies operator owns this assessment"},
+            {"highlight":"flow-actor-2","label":"Function asks Storage for a signed PUT URL using service-role key","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage returns short-lived URL","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function returns URL to browser (service-role key never leaves the server)","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-1","label":"Browser PUTs the bytes directly to Storage","packet":true,"from":"actor-1","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage stores the file, returns 200"}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">📁</div>
+                <span>Storage</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🔐</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why this dance</strong>
+              <p>The <span class="term" data-definition="A Supabase API key that bypasses Row Level Security and can read/write any object. If it leaks to a browser, anyone can read all your data. It belongs server-side only.">service-role key</span> can do anything. If it ended up in a browser bundle, the whole evidence locker becomes public. So the function holds the key, mints a 60-second-window upload URL, and hands ONLY that URL to the browser. The browser uploads directly to Storage — fast, no proxying through the function. Same pattern for downloads, with a 5-minute window.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Two columns, two purposes</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">SCHEMA · responses table</span>
+<pre><code><span class="code-line"><span class="code-keyword">CREATE TABLE</span> responses (</span>
+<span class="code-line">  <span class="code-property">id</span> serial <span class="code-keyword">PRIMARY KEY</span>,</span>
+<span class="code-line">  "assessmentId" text,</span>
+<span class="code-line">  "questionId" int,</span>
+<span class="code-line">  score int,</span>
+<span class="code-line">  note text,</span>
+<span class="code-line">  "evidenceName" text <span class="code-keyword">DEFAULT</span> <span class="code-string">''</span>,</span>
+<span class="code-line">  "evidencePath" text <span class="code-keyword">DEFAULT</span> <span class="code-string">''</span>,</span>
+<span class="code-line">  "answeredAt" timestamptz</span>
+<span class="code-line">);</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>evidenceName</strong> — the human-readable filename. Always captured if the operator references a file, EVEN IF the upload itself fails.</p>
+                <p class="tl"><strong>evidencePath</strong> — the Storage object key. Only set if the upload actually succeeded.</p>
+                <p class="tl"><strong>Why two?</strong> Audit trail. If an operator says "I attached control-test.pdf" but the upload errored, the audit trail still shows the reference — just without a downloadable file. The Evidence library renders these rows as "name only" in muted ink.</p>
+                <p class="tl"><strong>Honesty principle:</strong> the UI never fabricates a download where one doesn't exist. Better to show "name only" than a broken link.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>The Evidence library shows a row that says <em>"control-test-q3.pdf"</em> but no <strong>Open ↗</strong> button. The cell reads <em>"name only"</em> in muted ink. What does that mean?</p>
+
+          <div class="quiz-container" id="quiz-module9">
+            <div class="quiz-question-block"
+                 data-correct="captured-only"
+                 data-explanation-right="Right. The questionnaire captures a filename string for traceability whether or not the upload itself succeeds. evidenceName is set; evidencePath is not. The Evidence library shows hasUpload=false rows as 'name only' so the auditor can see what was referenced even when the file isn't in storage."
+                 data-explanation-wrong="Reread the design. We deliberately keep the filename around even on failed uploads because the audit trail still needs to show what file the operator referenced. The 'name only' label tells the auditor: 'we know about this file but we don't have it'.">
+              <h3 class="quiz-question">"name only" in the Evidence row means:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="captured-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The operator typed/picked a filename, but the actual upload didn't complete. evidenceName is set; evidencePath is empty.</span>
+                </button>
+                <button class="quiz-option" data-value="expired" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The signed URL expired. Click again to refresh.</span>
+                </button>
+                <button class="quiz-option" data-value="too-big" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The file was over 10 MB and got truncated.</span>
+                </button>
+                <button class="quiz-option" data-value="placeholder" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's a hardcoded fixture from the demo seed.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module9')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module9')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-10">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">10</span>
+          <h1 class="module-title">The PDF — the score in an envelope you can mail.</h1>
+          <p class="module-subtitle">A board doesn't open Vercel deployments. They open PDFs. The Report endpoint is the bridge from live app to durable artifact — same numbers, same provenance, same hash, in 5 pages.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A bank statement, not a screenshot</h2>
+          <p>You don't audit a bank account by screenshotting the web UI. You audit it from the PDF statement — generated server-side, signed, archived. The PDF <em>is</em> the record of truth.</p>
+          <p>Our Report is built the same way. <code>api/assessments/[id]/pdf.ts</code> takes the same analysis JSON the Today screen reads, runs it through <span class="term" data-definition="A pure-JS PDF library that builds documents page-by-page from primitives (drawText, drawRectangle). No headless Chrome, no HTML-to-PDF gymnastics — deterministic byte output.">pdf-lib</span>, and streams a binary back. No headless browser. No HTML scraping. Just data → bytes.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">5 pages, each earns its place</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">Page 1 · Cover</code>
+              <span class="badge-desc">BU name, benchmark, overall score, run signature chip, generation timestamp. The chip is the receipt — same SHA prefix as the Today screen.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 2 · Live Brief</code>
+              <span class="badge-desc">Drift headline (regression / aligned / drifting) — the same string the Today hero shows. Deterministic, not LLM-generated.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 3 · Pillar table</code>
+              <span class="badge-desc">10 rows: pillar · score · benchmark · gap · status. Sorted by gap descending so the worst pillars print at top.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 4 · Roadmap</code>
+              <span class="badge-desc">Top 14 actions sorted by uplift / (cost × duration). Phase pill, pillar, expected uplift. The same sort the Today table uses.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 5 · Provenance</code>
+              <span class="badge-desc">Per-pillar standards alignment — ISO 31000, COSO ERM, NIST RMF citations. Patent claim 13 in printable form.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Why pdf-lib instead of headless Chrome</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">⚡</div>
+              <h4 class="pattern-title">Cold-start budget</h4>
+              <p class="pattern-desc">A serverless function with headless Chrome cold-starts in 4-8s. pdf-lib cold-starts in &lt;200ms. The Report button feels instant.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📦</div>
+              <h4 class="pattern-title">Bundle size</h4>
+              <p class="pattern-desc">Chrome binary + Puppeteer = ~170 MB. pdf-lib = ~600 KB. Fits the Vercel function size cap with room to spare.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">🔒</div>
+              <h4 class="pattern-title">Determinism</h4>
+              <p class="pattern-desc">Same analysis JSON in → byte-identical PDF out. HTML-to-PDF rendering varies with font fallbacks, Chrome version, system locale.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚖️</div>
+              <h4 class="pattern-title">The trade-off</h4>
+              <p class="pattern-desc">No CSS. Every layout decision — column x-coords, row heights, page breaks — is hand-coded. Worth it for the determinism + speed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A pillar row, by hand</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/assessments/[id]/pdf.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> rows = analysis.pillars.<span class="code-function">slice</span>().<span class="code-function">sort</span>(</span>
+<span class="code-line">  (a, b) =&gt; b.gap - a.gap</span>
+<span class="code-line">);</span>
+<span class="code-line"></span>
+<span class="code-line">rows.<span class="code-function">forEach</span>((p, i) =&gt; {</span>
+<span class="code-line">  <span class="code-keyword">const</span> y = tableTop - i * 22;</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.name,    { x: 56,  y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.score.<span class="code-function">toFixed</span>(2),</span>
+<span class="code-line">                       { x: 280, y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.bench.<span class="code-function">toFixed</span>(2),</span>
+<span class="code-line">                       { x: 340, y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(<span class="code-string">`${p.delta &gt; 0 ? '+' : ''}${p.delta.toFixed(2)}`</span>,</span>
+<span class="code-line">                       { x: 400, y, size: 10,</span>
+<span class="code-line">                         color: p.delta &lt; 0 ? coral : ink });</span>
+<span class="code-line">});</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Sort once, draw once.</strong> The pillar list is sorted by gap descending so the worst regressions print at the top of the table — same hierarchy as the Today screen.</p>
+                <p class="tl"><strong>Hand-coded x coordinates.</strong> 56 / 280 / 340 / 400 are column anchors. No flexbox, no auto-layout. If the table needs a new column, you compute the math yourself.</p>
+                <p class="tl"><strong>Conditional color.</strong> Coral for negative delta, ink for the rest. The same color rule the pillar table on Today uses — visually consistent with the live UI.</p>
+                <p class="tl"><strong>22pt row height.</strong> A constant. Change it, every PDF re-paginates. This is the cost of hand-rolling layout — and the price for byte-deterministic output.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The signature chip on the cover</h2>
+          <p>Page 1 prints a small chip: <code>signature: a3f2…b71e · catalog v3 · generated 2026-05-12T08:14Z</code>. That chip is the same string Today renders below the hero score.</p>
+          <p>If a board member opens the PDF and the live app side-by-side, the SHAs match — proof the printed numbers came from the same deterministic run. If they don't match, the operator either re-finalized in between, or someone fabricated a screenshot. The chip removes the ambiguity.</p>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🧾</div>
+            <div class="callout-content">
+              <strong class="callout-title">Same hash → same numbers, period</strong>
+              <p>This is the difference between a PDF as <em>output</em> and a PDF as <em>artifact</em>. An output is a snapshot. An artifact is verifiable. The signature is what makes ours the second.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You download a Report, sign it with DocuSign, send it to the regulator. Three months later, someone asks "did anyone tamper with the numbers in this PDF before sending?" How do you prove it?</p>
+
+          <div class="quiz-container" id="quiz-module10">
+            <div class="quiz-question-block"
+                 data-correct="rerun"
+                 data-explanation-right="Right. The PDF cover prints the run signature. To verify, re-finalize the same assessment (same answers, same catalog) and check that the new signature matches the one on the printed cover. Match = nobody tampered. Mismatch = either the catalog changed (legitimate, version chip says so) or the PDF was edited (signature won't match recomputation)."
+                 data-explanation-wrong="Reread the receipt mechanism. The PDF is byte-deterministic from the analysis JSON. The cover prints the input hash. Re-run the math against the same answers; if the hash matches, the printed numbers are the ones the engine produced.">
+              <h3 class="quiz-question">How do you prove the printed PDF wasn't doctored?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="docusign" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>DocuSign signature is enough — it's cryptographically signed</span>
+                </button>
+                <button class="quiz-option" data-value="rerun" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Re-finalize the assessment in the app, compare the new run signature to the one on the PDF cover. Match = clean.</span>
+                </button>
+                <button class="quiz-option" data-value="watermark" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Look for a watermark on each page</span>
+                </button>
+                <button class="quiz-option" data-value="metadata" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Read the PDF metadata's "creator" field</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module10')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module10')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-11">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">11</span>
+          <h1 class="module-title">Edge and cache — the quiet 80% of "feels fast."</h1>
+          <p class="module-subtitle">The score is deterministic. Which means the answer is cacheable. Which means we can make the second click feel free — without ever serving stale data to the wrong operator.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A library reading room, not a vending machine</h2>
+          <p>A vending machine recomputes from scratch every time. A library hands you a copy from the shelf, and only goes to the basement when the catalog says the shelf is empty.</p>
+          <p>Our edge is the reading room. Vercel's CDN sits in front of every API route. The function tells it — per response — how long the answer is good for, who can share it, and whether to revalidate in the background. Module 5's hashes make this safe: the same input always produces the same output, so caching can never lie.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">3 cache policies, named for what they actually do</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/_lib/cache.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">shortPublic</span> =</span>
+<span class="code-line">  <span class="code-string">'public, max-age=0, s-maxage=60,</span></span>
+<span class="code-line"><span class="code-string">   stale-while-revalidate=300'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">mediumPrivate</span> =</span>
+<span class="code-line">  <span class="code-string">'private, max-age=30,</span></span>
+<span class="code-line"><span class="code-string">   stale-while-revalidate=120'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">noStore</span> =</span>
+<span class="code-line">  <span class="code-string">'no-store, no-cache, must-revalidate'</span>;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>shortPublic</strong> — for catalog data and other read-only, operator-independent payloads. The CDN can keep one copy and serve every operator from it. 60s freshness, 5min grace.</p>
+                <p class="tl"><strong>mediumPrivate</strong> — for analysis payloads tied to a single operator. <code>private</code> keeps the CDN from sharing across users; only the browser caches it. 30s fresh, 2min stale-while-revalidate.</p>
+                <p class="tl"><strong>noStore</strong> — for finalize, evidence upload URL minting, anything that mutates or returns short-lived secrets. Never cached, never reused.</p>
+                <p class="tl"><strong>The naming rule:</strong> the policy name says who can share + how long. <code>shortPublic</code> is sharable; <code>mediumPrivate</code> is not. No reading the Cache-Control string to figure out the intent.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">stale-while-revalidate is the magic word</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"Operator clicks Today, asks edge for analysis"},
+            {"highlight":"flow-actor-2","label":"Edge has a 45s-old cached copy (still fresh: max-age=60)","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-1","label":"Operator sees instant render"},
+            {"highlight":"flow-actor-1","label":"60 seconds later, operator switches benchmark"},
+            {"highlight":"flow-actor-2","label":"Edge has a 105s-old copy: stale, but inside SWR window. Serves it instantly...","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-2","label":"...AND fires a background fetch to the function","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Function recomputes, returns fresh JSON","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Edge replaces its copy. Next operator gets the fresh one — no waiting."}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">CDN</div>
+                <span>Vercel Edge</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚡</div>
+            <div class="callout-content">
+              <strong class="callout-title">Nobody waits for the cold function</strong>
+              <p>SWR means the user always gets a near-instant response from the edge. The freshness happens in the background. The trade: you might see a 105s-old number for 200ms. For a maturity score that changes once per finalize, that's invisible.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Which route gets which policy</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">GET /api/catalog</code>
+              <span class="badge-desc"><code>shortPublic</code> — same 100 questions for every operator. CDN serves one copy globally.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">GET /api/assessments/[id]/analysis</code>
+              <span class="badge-desc"><code>mediumPrivate</code> — operator-scoped score JSON. Browser caches it for 30s; CDN never shares it across operators.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">GET /api/assessments/trend</code>
+              <span class="badge-desc"><code>mediumPrivate</code> — longitudinal series for THIS operator's BU. Same isolation rule.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">POST /api/assessments/[id]/finalize</code>
+              <span class="badge-desc"><code>noStore</code> — mutations are never cached. The response is also a fresh signature; serving an old one would be a bug.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">POST /api/evidence/upload-url</code>
+              <span class="badge-desc"><code>noStore</code> — returns a 60s signed URL. Caching it would let one operator reuse another's upload window.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">vercel.json — the static-asset side of the story</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · vercel.json</span>
+<pre><code><span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">"headers"</span>: [</span>
+<span class="code-line">    {</span>
+<span class="code-line">      <span class="code-property">"source"</span>: <span class="code-string">"/assets/(.*)"</span>,</span>
+<span class="code-line">      <span class="code-property">"headers"</span>: [{</span>
+<span class="code-line">        <span class="code-property">"key"</span>: <span class="code-string">"Cache-Control"</span>,</span>
+<span class="code-line">        <span class="code-property">"value"</span>: <span class="code-string">"public, max-age=31536000, immutable"</span></span>
+<span class="code-line">      }]</span>
+<span class="code-line">    },</span>
+<span class="code-line">    {</span>
+<span class="code-line">      <span class="code-property">"source"</span>: <span class="code-string">"/index.html"</span>,</span>
+<span class="code-line">      <span class="code-property">"headers"</span>: [{</span>
+<span class="code-line">        <span class="code-property">"key"</span>: <span class="code-string">"Cache-Control"</span>,</span>
+<span class="code-line">        <span class="code-property">"value"</span>: <span class="code-string">"no-cache"</span></span>
+<span class="code-line">      }]</span>
+<span class="code-line">    }</span>
+<span class="code-line">  ]</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Hashed assets get the year-long lock.</strong> Vite emits <code>app.a3f2b71e.js</code>; the filename changes when contents change, so caching forever is safe.</p>
+                <p class="tl"><strong>index.html stays no-cache.</strong> It points to the hashed assets. If the browser kept a stale index, the user would never see new code ship.</p>
+                <p class="tl"><strong>The pattern:</strong> immutable for content-addressed files, no-cache for the entry point. Same approach every fast SPA uses; we just spell it out in vercel.json so deploys are reproducible.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An engineer is adding <code>GET /api/assessments/[id]/notes</code> — a per-operator list of the freeform notes attached to questions. Which cache policy?</p>
+
+          <div class="quiz-container" id="quiz-module11">
+            <div class="quiz-question-block"
+                 data-correct="medium-private"
+                 data-explanation-right="Right. Notes are operator-scoped — different operator, different content. mediumPrivate keeps the CDN from sharing across operators (private) and lets the browser cache for 30s with SWR for snappy refetch. shortPublic would leak Operator A's notes to Operator B from the shared edge cache."
+                 data-explanation-wrong="Reread the policies. The data is per-operator, so it must NEVER be shared by the CDN — that rules out shortPublic. It's also a read endpoint, not a mutation, so noStore is over-strict and kills perceived speed. mediumPrivate is the goldilocks.">
+              <h3 class="quiz-question">Cache policy for /api/assessments/[id]/notes:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="short-public" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>shortPublic — it's a GET, share it</span>
+                </button>
+                <button class="quiz-option" data-value="medium-private" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>mediumPrivate — per-operator content; browser caches, CDN does not share</span>
+                </button>
+                <button class="quiz-option" data-value="no-store" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>noStore — anything operator-scoped should never cache</span>
+                </button>
+                <button class="quiz-option" data-value="custom" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Write a fourth custom policy inline</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module11')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module11')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <section class="module" id="module-12">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">12</span>
+          <h1 class="module-title">Pick it up next — the map for the next builder.</h1>
+          <p class="module-subtitle">A codebase isn't done; it's <em>handed off</em>. This is the file map, the debugging compass, and the AI-prompting playbook for whoever sits in this chair next.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A subway map, not a tour</h2>
+          <p>You don't need to memorize every station. You need to know which line goes where, so when something breaks, you can find the right train fast. This module is that map.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where to look — the file compass</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">"the score is wrong"</code>
+              <span class="badge-desc"><code>shared/engines.ts</code> → computeVectors / computeAnalytics. Pure functions, easy to console.log. Then check <code>shared/static.ts</code> weights.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"the headline is wrong"</code>
+              <span class="badge-desc"><code>src/screens/TodayScreen.tsx</code> → the IIFE that picks regression / aligned / drifting. Three branches, deterministic.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"drift is bleeding across operators"</code>
+              <span class="badge-desc"><code>api/assessments/[id]/analysis.ts</code> → the prior-assessment SQL. Confirm <code>operatorEmail</code> filter still present.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"upload fails silently"</code>
+              <span class="badge-desc"><code>api/evidence/upload-url.ts</code> + <code>VectorCapturePipeline.tsx</code> upload effect. evidenceName should still set even on PUT failure.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"PDF page break is broken"</code>
+              <span class="badge-desc"><code>api/assessments/[id]/pdf.ts</code> → the row-height constant and the <code>tableTop - i * 22</code> math.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"second click is slow"</code>
+              <span class="badge-desc"><code>api/_lib/cache.ts</code> + the route's response headers. Likely <code>noStore</code> where <code>mediumPrivate</code> should be.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"the questionnaire lost work"</code>
+              <span class="badge-desc"><code>src/App.tsx</code> draft state — confirm functional setState (<code>setX(prev =&gt; ...)</code>), not stale-spread.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"a chart looks empty"</code>
+              <span class="badge-desc">Trend endpoint returned &lt; 2 sessions. By design, sparkline shows em-dash. Don't fabricate.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Deferred items — the things we said "later" to, on purpose</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⏱️</div>
+              <h4 class="pattern-title">answeredAt UI</h4>
+              <p class="pattern-desc">Per-question timestamps are captured in the responses row but not surfaced. Patent claim 12 ships when the Provenance screen renders these.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">👥</div>
+              <h4 class="pattern-title">Multi-operator on one BU</h4>
+              <p class="pattern-desc">Today, drift is operator-scoped. Cross-operator reconciliation (two raters, one BU) is intentionally deferred — needs a UI for disagreement.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">📥</div>
+              <h4 class="pattern-title">Bulk evidence import</h4>
+              <p class="pattern-desc">Right now operators upload one PDF per question. A drag-a-zip flow with auto-mapping is on the roadmap, not the path.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">🔁</div>
+              <h4 class="pattern-title">Re-finalize diff</h4>
+              <p class="pattern-desc">Re-finalize creates a new assessment row. Showing a side-by-side diff between the prior signature and the new one is queued, not built.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">AI prompting — what works on this codebase</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">EXAMPLES</span>
+<pre><code><span class="code-line"><span class="code-comment">// ✅ Concrete, anchored, testable</span></span>
+<span class="code-line"><span class="code-string">"In shared/engines.ts:165, generateRoadmap sorts by</span></span>
+<span class="code-line"><span class="code-string"> uplift / (cost × duration). Add a tie-breaker on</span></span>
+<span class="code-line"><span class="code-string"> pillarWeight desc, and update the test in</span></span>
+<span class="code-line"><span class="code-string"> shared/__tests__/engines.test.ts."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ❌ Vague, no anchor</span></span>
+<span class="code-line"><span class="code-string">"Make the roadmap smarter."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ✅ Names the invariant to preserve</span></span>
+<span class="code-line"><span class="code-string">"Add answeredAt rendering to Provenance.</span></span>
+<span class="code-line"><span class="code-string"> The signature hash MUST NOT change — it</span></span>
+<span class="code-line"><span class="code-string"> excludes timestamps by design (Module 5)."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ❌ Doesn't name the invariant — risks regression</span></span>
+<span class="code-line"><span class="code-string">"Show timestamps in Provenance."</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Anchor with a path + line.</strong> "shared/engines.ts:165" is a contract — the model can't guess the wrong file.</p>
+                <p class="tl"><strong>Name the invariant.</strong> The hash is sacred. Caching depends on it. Drift comparisons depend on it. Tell the model.</p>
+                <p class="tl"><strong>Cite the test file.</strong> Prefer "update <code>X.test.ts</code>" over "make sure tests still pass." Specific test files keep the model focused.</p>
+                <p class="tl"><strong>Adversarial review beats self-review.</strong> The Codex P1 catch on App.tsx (the batched setter race) shipped because a second model read the diff cold. Use Codex / a second pass before merging anything in <code>shared/</code> or <code>api/</code>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The closing principle</h2>
+          <p>The thing that makes this codebase defensible isn't any one feature. It's that <strong>the score is a pure function, the inputs are hashed, the receipts are printable, and every UI surface refuses to fabricate.</strong> Keep those four properties true and the patent moat stays a moat. Break any one of them and the product becomes another dashboard.</p>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🧭</div>
+            <div class="callout-content">
+              <strong class="callout-title">If you remember one thing</strong>
+              <p>Same answers + same catalog → same hash → same numbers. That sentence is the entire product. Everything else — the charts, the PDF, the evidence locker, the cache — is in service of making that sentence visible to a non-technical auditor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Final check</h2>
+          <p>You're handed a P0 bug: "the Today screen shows score 3.42, the freshly downloaded PDF shows 3.31." Where do you look first?</p>
+
+          <div class="quiz-container" id="quiz-module12">
+            <div class="quiz-question-block"
+                 data-correct="signatures"
+                 data-explanation-right="Right. Compare the run signature on the Today hero vs the PDF cover chip. If they differ, the PDF was generated against an older finalize (or someone re-finalized between the two views). If they match, you have a real determinism bug — drop into shared/engines.ts and check whether the analysis route and the pdf route are calling the same function with the same JSON. Either way, the signatures are the first thing that disambiguates."
+                 data-explanation-wrong="Reread Module 5 + Module 10. The signatures exist precisely so two surfaces showing different numbers can be diagnosed in one step. Anything else is guessing.">
+              <h3 class="quiz-question">First place to look:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="recharts" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Recharts rounding — the SVG might be rendering a different number than the PDF</span>
+                </button>
+                <button class="quiz-option" data-value="signatures" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The run signature on the Today hero vs the PDF cover chip — same hash, same numbers; different hash, different finalize</span>
+                </button>
+                <button class="quiz-option" data-value="cache" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The CDN — flush mediumPrivate cache and reload</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The Postgres responses table — diff against the seed</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module12')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module12')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

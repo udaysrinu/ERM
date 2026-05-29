@@ -1,0 +1,175 @@
+    <section class="module" id="module-4">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">04</span>
+          <h1 class="module-title">The receipts — making the patent moat tactile.</h1>
+          <p class="module-subtitle">A pure function is reproducible. But the user can't <em>see</em> that without a signal. The "run signature" turns reproducibility into something an auditor can hold.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — metaphor ───────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Like a chess game's PGN notation</h2>
+          <p>In chess, every move history is a string: <code>1. e4 e5 2. Nf3 Nc6 ...</code>. Two players, anywhere in the world, can replay the exact same game from the notation. The notation IS the proof.</p>
+          <p>Our run signature is the same idea. It's a SHA-256 fingerprint of the inputs that produced a score. Two assessments with the same fingerprint <strong>MUST</strong> have produced the same score, because the math is deterministic and the inputs are bit-identical. The hash is the chess notation of an ERM score.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — what's in the hash ───────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What goes into the signature?</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">responses</code>
+              <span class="badge-desc">100 (questionId, score) pairs, sorted by id. Notes and evidence filenames are <strong>excluded</strong> — they don't change the score.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">catalogHash</code>
+              <span class="badge-desc">Hash of the question catalog itself. If a question text changes or a weight is tweaked, this differs.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">catalogVersion</code>
+              <span class="badge-desc">Human-readable bump (e.g. <code>1.0.0</code>). Lets us evolve the catalog while keeping comparisons safe.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">scoringSpecVersion</code>
+              <span class="badge-desc">Bumped when the scoring math itself changes. <code>1.0.0</code> today.</span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-content">
+              <strong class="callout-title">Notice what's NOT in the hash</strong>
+              <p>The current time. The operator's email. The browser. The IP address. The database row creation timestamp. <strong>None of those affect the score</strong>, so none of them belong in the signature. Including them would be lying to the auditor.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: the canonicalize step ───── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Why two hashes, not one?</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/signatures.ts</span>
+<pre><code><span class="code-line"><span class="code-comment">// Hash 1: the score itself</span></span>
+<span class="code-line"><span class="code-keyword">const</span> scoringInputHash = <span class="code-function">sha256</span>(<span class="code-function">canonicalize</span>({</span>
+<span class="code-line">  responses: <span class="code-comment">/* sorted, only q+s */</span>,</span>
+<span class="code-line">  catalogHash, catalogVersion, scoringSpecVersion,</span>
+<span class="code-line">}));</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Hash 2: the analysis VIEW</span></span>
+<span class="code-line"><span class="code-keyword">const</span> analysisHash = <span class="code-function">sha256</span>(<span class="code-function">canonicalize</span>({</span>
+<span class="code-line">  scoringInputHash,</span>
+<span class="code-line">  benchmarkType,           <span class="code-comment">// target / industry / peer</span></span>
+<span class="code-line">  benchmarkProfile,        <span class="code-comment">// the actual numbers</span></span>
+<span class="code-line">}));</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Hash 1 — scoringInputHash</strong> — the fingerprint of <em>"these answers, scored by these rules."</em> It does NOT change when you switch benchmark.</p>
+                <p class="tl"><strong>Hash 2 — analysisHash</strong> — the fingerprint of <em>"this score viewed against this benchmark."</em> It DOES change when you toggle Target → Industry on Today.</p>
+                <p class="tl">This separation matters. An auditor can ask "did the score change between Q1 and Q2?" — answer: compare scoringInputHash. The analyst can ask "did the relative gap change?" — answer: compare analysisHash. Two questions, two receipts.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — pinned tests ────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The contract is pinned in tests</h2>
+          <p>The signature isn't a vibe — it's enforced by the test suite. <code>tests/signatures.test.ts</code> contains assertions that close the loopholes:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">order-independence</code>
+              <span class="badge-desc">Shuffling the response array must not change the hash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">score-sensitivity</code>
+              <span class="badge-desc">Changing one answer must change the hash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">benchmark-isolation</code>
+              <span class="badge-desc">Switching benchmark changes analysisHash but NOT scoringInputHash.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">coverage-rejection</code>
+              <span class="badge-desc">A response set with 99 valid + 1 fabricated questionId must reject.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">range-rejection</code>
+              <span class="badge-desc">A score outside 1–5 (or non-integer) must reject.</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-4)">If any of these break, CI fails the PR. The reproducibility claim is therefore enforceable: it's not a thing engineers <em>promise</em>, it's a thing tests <em>check</em>.</p>
+        </div>
+
+        <!-- ── SCREEN 5 — UI surface ──────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where the user sees the receipt</h2>
+          <p>The hash is rendered in two places:</p>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🖥️</div>
+              <h4 class="pattern-title">Today screen — the chip</h4>
+              <p class="pattern-desc">Below the hero score: a clickable chip reading <code>sig·80df5740 · spec v1.0.0 · complete</code>. Click → modal with full hash, catalog hash, coverage state, computed timestamp.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">📄</div>
+              <h4 class="pattern-title">PDF cover — the meta block</h4>
+              <p class="pattern-desc">Bottom-right of page 1: same fingerprint, printed. The PDF an auditor receives carries the receipt for the score it claims.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🎯</div>
+            <div class="callout-content">
+              <strong class="callout-title">The pitch in five seconds</strong>
+              <p><em>"This is a number you can defend. The receipt is on the screen. Re-run the assessment with the same answers — same hash. Tweak one answer — different hash. The math is open. The catalog is open. The auditor can verify."</em></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An operator finalizes Generation. They go to lunch. They come back, refresh the Today screen. The signature is identical. They switch the benchmark dropdown from Target to Industry. What happens to the two hashes?</p>
+
+          <div class="quiz-container" id="quiz-module4">
+            <div class="quiz-question-block"
+                 data-correct="b-only"
+                 data-explanation-right="Correct. scoringInputHash is the fingerprint of (responses + catalog + spec) — none of which changed. analysisHash includes the benchmark profile, so it changes when you toggle benchmarks. This separation is intentional: the score is the same, but the comparison view changed."
+                 data-explanation-wrong="Look again at what each hash includes. scoringInputHash covers (responses + catalog + spec) — those didn't change. analysisHash adds (benchmarkType + benchmarkProfile) — those did. So only the analysisHash changes.">
+              <h3 class="quiz-question">After switching benchmark from Target to Industry:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="both" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Both hashes change.</span>
+                </button>
+                <button class="quiz-option" data-value="b-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Only analysisHash changes; scoringInputHash stays the same.</span>
+                </button>
+                <button class="quiz-option" data-value="a-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Only scoringInputHash changes; analysisHash stays the same.</span>
+                </button>
+                <button class="quiz-option" data-value="neither" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Neither changes — benchmark is just a UI filter.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

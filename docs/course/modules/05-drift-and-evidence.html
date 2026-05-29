@@ -1,0 +1,186 @@
+    <section class="module" id="module-5">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">05</span>
+          <h1 class="module-title">Drift and evidence — what changed, and what backs it up.</h1>
+          <p class="module-subtitle">A score by itself is a vibe. A score plus <em>"this changed since last time"</em> plus <em>"here's the document"</em> is an audit trail.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — drift, the metaphor ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Drift = a doctor's vital-sign chart</h2>
+          <p>A doctor doesn't ask <em>"is the patient healthy?"</em> — they ask <em>"what changed since last visit?"</em> Single readings are noise; trajectories are signal. Same with risk maturity.</p>
+          <p>The Live Brief headline on Today is always one of three forms — generated automatically from the drift comparison:</p>
+
+          <div class="pattern-cards" style="margin-top: var(--space-4)">
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">📉</div>
+              <h4 class="pattern-title">Critical regression</h4>
+              <p class="pattern-desc"><em>"Risk Treatment regressed −1.00 on Generation since the prior assessment."</em> Coral severity stripe. <code>severity: 'CRITICAL'</code> when |delta| > 0.5.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">📊</div>
+              <h4 class="pattern-title">Drifting, not critical</h4>
+              <p class="pattern-desc"><em>"Generation is drifting on 6 of 10 pillars vs Industry."</em> Amber stripe. Worth looking at, not screaming.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">✅</div>
+              <h4 class="pattern-title">On benchmark</h4>
+              <p class="pattern-desc"><em>"Generation is on benchmark across 8 of 10 pillars."</em> Mint stripe. Celebrate, but stay vigilant.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 2 — the SQL detail that matters ─────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">"Prior assessment" is operator-scoped — and that fact is the difference between an audit-grade product and a prototype</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/assessments/[id]/analysis.ts</span>
+<pre><code><span class="code-line"><span class="code-comment">// Find the prior COMPLETED assessment for the same operator,</span></span>
+<span class="code-line"><span class="code-comment">// same entity. NOT just "same entity any operator".</span></span>
+<span class="code-line"><span class="code-keyword">const</span> [prior] = <span class="code-keyword">await</span> sql`</span>
+<span class="code-line">  <span class="code-keyword">SELECT</span> id <span class="code-keyword">FROM</span> assessments</span>
+<span class="code-line">  <span class="code-keyword">WHERE</span> "entityId" = ${assessment.entityId}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> id != ${id}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> "createdAt" < ${assessment.createdAt}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> status = <span class="code-string">'completed'</span></span>
+<span class="code-line">    <span class="code-keyword">AND</span> "operatorEmail" = ${assessment.operatorEmail}</span>
+<span class="code-line">  <span class="code-keyword">ORDER BY</span> "createdAt" <span class="code-keyword">DESC</span> <span class="code-keyword">LIMIT</span> 1</span>
+<span class="code-line">`;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Find the previous version of THIS Generation assessment, by THIS operator, that was actually finalized.</strong></p>
+                <p class="tl">The <code>operatorEmail</code> filter exists for a real reason: without it, Operator B's drift headline could compute against Operator A's data. We caught that during an audit and shipped the fix the same day.</p>
+                <p class="tl">The <code>status = 'completed'</code> filter excludes drafts and abandoned attempts. Drift only compares to <strong>finalized</strong> snapshots — not "I-was-just-experimenting".</p>
+                <p class="tl">"<code>id != current</code>" prevents self-comparison (drift would be 0 across the board, useless).</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-warning" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🚨</div>
+            <div class="callout-content">
+              <strong class="callout-title">Cross-tenant data bleed: the silent killer</strong>
+              <p>The original version of this query missed the <code>operatorEmail</code> filter. It looked harmless. It also silently leaked one operator's risk posture into another operator's headline. <strong>Multi-tenant SaaS lives or dies on this kind of filter.</strong> Every database query in this product that reads operator-scoped data is audited for this exact pattern.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — evidence storage architecture ─────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Evidence — the audit-grade attachment story</h2>
+          <p>An auditor's first question after seeing a score: <em>"show me the document that backs question 47."</em> If the answer is "we don't store it," the score is hearsay. So we store every uploaded file in a <strong>private bucket</strong> with three guarantees:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">private bucket</code>
+              <span class="badge-desc">No public listing. No public URL. The only way in is a signed link our function issues.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">10 MB / file cap</code>
+              <span class="badge-desc">Server-side rejection of larger uploads — saves bandwidth, fits ERM evidence shape (PDFs, Excel, screenshots).</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">MIME allowlist</code>
+              <span class="badge-desc">PDF, XLSX, DOCX, common images, plain text. Bucket itself rejects anything else, regardless of what the file extension says.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">5-min signed URLs</code>
+              <span class="badge-desc">Download links expire in 300 seconds. Even if a link leaks via screenshare, it's stale by the time anyone tries.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">deterministic key</code>
+              <span class="badge-desc"><code>{assessmentId}/{questionId}-{filename}</code>. One slot per (assessment, question). Re-uploads overwrite the slot — by design, since responses only carry one filename column.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the upload flow animation ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">How an upload actually happens (without the service-role key ever leaving the server)</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"User picks a PDF on question 47"},
+            {"highlight":"flow-actor-1","label":"Browser asks function for a signed upload URL","packet":true,"from":"actor-1","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function verifies operator owns this assessment"},
+            {"highlight":"flow-actor-2","label":"Function asks Storage for a signed PUT URL using service-role key","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage returns short-lived URL","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function returns URL to browser (service-role key never leaves the server)","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-1","label":"Browser PUTs the bytes directly to Storage","packet":true,"from":"actor-1","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage stores the file, returns 200"}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">📁</div>
+                <span>Storage</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🔐</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why this dance</strong>
+              <p>The <span class="term" data-definition="A Supabase API key that bypasses Row Level Security and can read/write any object. If it leaks to a browser, anyone can read all your data. It belongs server-side only.">service-role key</span> can do anything. If it ended up in a browser bundle, the whole evidence locker becomes public. So the function holds the key, mints a 60-second-window upload URL, and hands ONLY that URL to the browser. The browser uploads directly to Storage — fast, no proxying through the function. Same pattern for downloads, with a 5-minute window.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>The Evidence library shows a row that says <em>"control-test-q3.pdf"</em> but no <strong>Open ↗</strong> button. The cell reads <em>"name only"</em> in muted ink. What does that mean?</p>
+
+          <div class="quiz-container" id="quiz-module5">
+            <div class="quiz-question-block"
+                 data-correct="captured-only"
+                 data-explanation-right="Right. The questionnaire captures a filename string for traceability whether or not the upload itself succeeds. evidenceName is set; evidencePath is not. The Evidence library shows hasUpload=false rows as 'name only' so the auditor can see what was referenced even when the file isn't in storage."
+                 data-explanation-wrong="Reread the design. We deliberately keep the filename around even on failed uploads because the audit trail still needs to show what file the operator referenced. The 'name only' label tells the auditor: 'we know about this file but we don't have it'.">
+              <h3 class="quiz-question">"name only" in the Evidence row means:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="captured-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The operator typed/picked a filename, but the actual upload didn't complete. evidenceName is set; evidencePath is empty.</span>
+                </button>
+                <button class="quiz-option" data-value="expired" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The signed URL expired. Click again to refresh.</span>
+                </button>
+                <button class="quiz-option" data-value="too-big" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The file was over 10 MB and got truncated.</span>
+                </button>
+                <button class="quiz-option" data-value="placeholder" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's a hardcoded fixture from the demo seed.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module5')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module5')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

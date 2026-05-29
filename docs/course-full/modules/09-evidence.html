@@ -1,0 +1,152 @@
+    <section class="module" id="module-9">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">09</span>
+          <h1 class="module-title">Evidence — the audit-grade attachment story.</h1>
+          <p class="module-subtitle">A score with no document behind it is hearsay. Real customers need real files in real storage with real access control.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A bank's safe-deposit box, not a public locker</h2>
+          <p>The metaphor matters. We could have stored evidence in any old bucket and called it a day. We didn't. Every uploaded file lives in a <strong>private bucket</strong>, never publicly listable, accessible only via short-lived signed links our function issues per-request after verifying ownership.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The 5 properties that make storage audit-grade</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">private bucket</code>
+              <span class="badge-desc">No public listing. No public URL. The only way in is a signed link our function issues.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">10 MB / file cap</code>
+              <span class="badge-desc">Server-side rejection of larger uploads — saves bandwidth, fits ERM evidence shape (PDFs, Excel, screenshots).</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">MIME allowlist</code>
+              <span class="badge-desc">PDF, XLSX, DOCX, common images, plain text. Bucket itself rejects anything else, regardless of file extension.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">5-min signed URLs</code>
+              <span class="badge-desc">Download links expire in 300 seconds. Even if a link leaks via screenshare, it's stale by the time anyone tries.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">deterministic key</code>
+              <span class="badge-desc"><code>{assessmentId}/{questionId}-{filename}</code>. One slot per (assessment, question). Re-uploads overwrite the slot.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">How an upload actually happens (without the service-role key ever leaving the server)</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"User picks a PDF on question 47"},
+            {"highlight":"flow-actor-1","label":"Browser asks function for a signed upload URL","packet":true,"from":"actor-1","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function verifies operator owns this assessment"},
+            {"highlight":"flow-actor-2","label":"Function asks Storage for a signed PUT URL using service-role key","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage returns short-lived URL","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Function returns URL to browser (service-role key never leaves the server)","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-1","label":"Browser PUTs the bytes directly to Storage","packet":true,"from":"actor-1","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Storage stores the file, returns 200"}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">📁</div>
+                <span>Storage</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🔐</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why this dance</strong>
+              <p>The <span class="term" data-definition="A Supabase API key that bypasses Row Level Security and can read/write any object. If it leaks to a browser, anyone can read all your data. It belongs server-side only.">service-role key</span> can do anything. If it ended up in a browser bundle, the whole evidence locker becomes public. So the function holds the key, mints a 60-second-window upload URL, and hands ONLY that URL to the browser. The browser uploads directly to Storage — fast, no proxying through the function. Same pattern for downloads, with a 5-minute window.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Two columns, two purposes</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">SCHEMA · responses table</span>
+<pre><code><span class="code-line"><span class="code-keyword">CREATE TABLE</span> responses (</span>
+<span class="code-line">  <span class="code-property">id</span> serial <span class="code-keyword">PRIMARY KEY</span>,</span>
+<span class="code-line">  "assessmentId" text,</span>
+<span class="code-line">  "questionId" int,</span>
+<span class="code-line">  score int,</span>
+<span class="code-line">  note text,</span>
+<span class="code-line">  "evidenceName" text <span class="code-keyword">DEFAULT</span> <span class="code-string">''</span>,</span>
+<span class="code-line">  "evidencePath" text <span class="code-keyword">DEFAULT</span> <span class="code-string">''</span>,</span>
+<span class="code-line">  "answeredAt" timestamptz</span>
+<span class="code-line">);</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>evidenceName</strong> — the human-readable filename. Always captured if the operator references a file, EVEN IF the upload itself fails.</p>
+                <p class="tl"><strong>evidencePath</strong> — the Storage object key. Only set if the upload actually succeeded.</p>
+                <p class="tl"><strong>Why two?</strong> Audit trail. If an operator says "I attached control-test.pdf" but the upload errored, the audit trail still shows the reference — just without a downloadable file. The Evidence library renders these rows as "name only" in muted ink.</p>
+                <p class="tl"><strong>Honesty principle:</strong> the UI never fabricates a download where one doesn't exist. Better to show "name only" than a broken link.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>The Evidence library shows a row that says <em>"control-test-q3.pdf"</em> but no <strong>Open ↗</strong> button. The cell reads <em>"name only"</em> in muted ink. What does that mean?</p>
+
+          <div class="quiz-container" id="quiz-module9">
+            <div class="quiz-question-block"
+                 data-correct="captured-only"
+                 data-explanation-right="Right. The questionnaire captures a filename string for traceability whether or not the upload itself succeeds. evidenceName is set; evidencePath is not. The Evidence library shows hasUpload=false rows as 'name only' so the auditor can see what was referenced even when the file isn't in storage."
+                 data-explanation-wrong="Reread the design. We deliberately keep the filename around even on failed uploads because the audit trail still needs to show what file the operator referenced. The 'name only' label tells the auditor: 'we know about this file but we don't have it'.">
+              <h3 class="quiz-question">"name only" in the Evidence row means:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="captured-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The operator typed/picked a filename, but the actual upload didn't complete. evidenceName is set; evidencePath is empty.</span>
+                </button>
+                <button class="quiz-option" data-value="expired" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The signed URL expired. Click again to refresh.</span>
+                </button>
+                <button class="quiz-option" data-value="too-big" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The file was over 10 MB and got truncated.</span>
+                </button>
+                <button class="quiz-option" data-value="placeholder" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's a hardcoded fixture from the demo seed.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module9')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module9')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

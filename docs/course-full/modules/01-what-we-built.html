@@ -1,0 +1,150 @@
+    <section class="module" id="module-1">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">01</span>
+          <h1 class="module-title">What we built — and why anyone should care.</h1>
+          <p class="module-subtitle">A risk officer wants three numbers and a list. We built the boring infrastructure that makes those three numbers <em>defensible</em>.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the problem ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The problem we're solving</h2>
+          <p>Big companies hire consultants to assess their <span class="term" data-definition="Enterprise Risk Management — the discipline of figuring out what could go wrong across an entire company (cyber, financial, supply-chain, legal, reputational) and what to do about it.">ERM</span> maturity. A firm shows up with a spreadsheet, runs interviews for a quarter, hand-tallies scores, hands over a slide deck.</p>
+          <p>Three problems with that:</p>
+
+          <div class="pattern-cards" style="margin-top: var(--space-6)">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🎲</div>
+              <h4 class="pattern-title">Non-reproducible</h4>
+              <p class="pattern-desc">Two consultants score the same evidence differently. Two months apart, the same consultant produces a different score for the same company. The number isn't a measurement — it's an opinion.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">📐</div>
+              <h4 class="pattern-title">Non-comparable</h4>
+              <p class="pattern-desc">"You scored 3.4." Compared to what? Industry? Peers? Last year's you? Without a benchmark you trust, the score is a vibe.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📅</div>
+              <h4 class="pattern-title">Stale by delivery</h4>
+              <p class="pattern-desc">A 90-day engagement produces a 60-day-old picture by the time the deck arrives. Risk doesn't wait for your slide cycle.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 2 — the product, in one sentence ──────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The product, in one sentence</h2>
+          <div class="callout callout-accent">
+            <div class="callout-icon">🎯</div>
+            <div class="callout-content">
+              <strong class="callout-title">ERM Navigator</strong>
+              <p>A <strong>deterministic instrument</strong> that converts a 100-question, ISO/COSO/NIST-aligned interview into a reproducible weighted maturity score — with drift detection, sequenced roadmap, and a board-grade PDF, all in minutes.</p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Read that again with the right emphasis: <em>deterministic instrument</em>. Not a dashboard. Not a consulting deck. An <strong>instrument</strong> — like a thermometer. Same temperature → same number, every time, forever. That's the whole pitch.</p>
+        </div>
+
+        <!-- ── SCREEN 3 — what a thermometer needs ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What does a "thermometer" need to be one?</h2>
+          <p>A thermometer can be trusted because it has three properties. So does our score:</p>
+
+          <div class="badge-list" style="margin-top: var(--space-4)">
+            <div class="badge-item">
+              <code class="badge-code">reproducible</code>
+              <span class="badge-desc">Same inputs → same output, byte-for-byte. (Patent claim 24.)</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">standards-aligned</code>
+              <span class="badge-desc">Every weight is justified against ISO 31000, COSO ERM, NIST RMF, RIMS RMM. The receipts are public. (Patent claim 13.)</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">comparable-over-time</code>
+              <span class="badge-desc">Run it again 6 months later — what changed since last time, and by how much, with severity tags. (Patent claim 4.)</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Everything in the codebase exists to deliver one of those three. If you can't tie a file to one of them, it's probably a UI shell or a polish layer.</p>
+        </div>
+
+        <!-- ── SCREEN 4 — the demo narrative ──────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The demo, in 60 seconds</h2>
+          <p>The demo isn't <em>"look at our pretty dashboard."</em> The demo is one specific story:</p>
+
+          <div class="flow-steps" style="margin-top: var(--space-6)">
+            <div class="flow-step">
+              <div class="flow-step-num">1</div>
+              <p>Operator logs in. Sees an archive of past assessments.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">2</div>
+              <p>Opens <strong>Generation</strong> — last quarter's <span class="term" data-definition="Business Unit. Six in our demo: Generation, Transmission, Distribution, Corporate, Subsidiaries, Joint Ventures.">BU</span> assessment.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">3</div>
+              <p>Today screen says <strong style="color: #C4542A">"Risk Treatment regressed −1.00 since prior assessment."</strong> Coral severity stripe. Drift detected.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">4</div>
+              <p>Click the signature chip: <strong>same hash as last time means same score, computed deterministically</strong>.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">5</div>
+              <p>Click "Open action plan" — Phase 1 / Phase 2 sequenced by uplift ÷ (cost × duration).</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-8)">
+            <div class="callout-icon">🎬</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why this demo, not "look at the dashboard"</strong>
+              <p>The dashboard is decoration. The pitch is: <em>"a number you can defend."</em> The drift headline is the proof — the same instrument, run twice, found something. That's the pivot from "consulting deck" to "instrument."</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An auditor asks: <em>"How do I know the score didn't change because your software updated overnight?"</em></p>
+
+          <div class="quiz-container" id="quiz-module1">
+            <div class="quiz-question-block"
+                 data-correct="signature"
+                 data-explanation-right="Right. The scoring-input hash includes the catalog version AND the engine spec version, so any change to either invalidates the comparison. Different inputs → different hash. Same hash → same score. The hash IS the receipt."
+                 data-explanation-wrong="Not quite. We don't lock down the codebase from updating. Instead, we make any update visible: the score's signature includes both a catalog version and a scoring-spec version. If those change, the hash changes, and the comparison flags as different inputs.">
+              <h3 class="quiz-question">Which of these gives the auditor a defensible answer?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="freeze" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Freeze the codebase forever so nothing can change.</span>
+                </button>
+                <button class="quiz-option" data-value="signature" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Include the catalog and engine versions inside the score's hash, so any code change produces a different hash and is therefore visible.</span>
+                </button>
+                <button class="quiz-option" data-value="trust" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Tell them to trust us — we have tests.</span>
+                </button>
+                <button class="quiz-option" data-value="audit" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Do a third-party SOC 2 audit once a year.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

@@ -1,0 +1,189 @@
+    <section class="module" id="module-11">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">11</span>
+          <h1 class="module-title">Edge and cache — the quiet 80% of "feels fast."</h1>
+          <p class="module-subtitle">The score is deterministic. Which means the answer is cacheable. Which means we can make the second click feel free — without ever serving stale data to the wrong operator.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A library reading room, not a vending machine</h2>
+          <p>A vending machine recomputes from scratch every time. A library hands you a copy from the shelf, and only goes to the basement when the catalog says the shelf is empty.</p>
+          <p>Our edge is the reading room. Vercel's CDN sits in front of every API route. The function tells it — per response — how long the answer is good for, who can share it, and whether to revalidate in the background. Module 5's hashes make this safe: the same input always produces the same output, so caching can never lie.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">3 cache policies, named for what they actually do</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/_lib/cache.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">shortPublic</span> =</span>
+<span class="code-line">  <span class="code-string">'public, max-age=0, s-maxage=60,</span></span>
+<span class="code-line"><span class="code-string">   stale-while-revalidate=300'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">mediumPrivate</span> =</span>
+<span class="code-line">  <span class="code-string">'private, max-age=30,</span></span>
+<span class="code-line"><span class="code-string">   stale-while-revalidate=120'</span>;</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">export const</span> <span class="code-property">noStore</span> =</span>
+<span class="code-line">  <span class="code-string">'no-store, no-cache, must-revalidate'</span>;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>shortPublic</strong> — for catalog data and other read-only, operator-independent payloads. The CDN can keep one copy and serve every operator from it. 60s freshness, 5min grace.</p>
+                <p class="tl"><strong>mediumPrivate</strong> — for analysis payloads tied to a single operator. <code>private</code> keeps the CDN from sharing across users; only the browser caches it. 30s fresh, 2min stale-while-revalidate.</p>
+                <p class="tl"><strong>noStore</strong> — for finalize, evidence upload URL minting, anything that mutates or returns short-lived secrets. Never cached, never reused.</p>
+                <p class="tl"><strong>The naming rule:</strong> the policy name says who can share + how long. <code>shortPublic</code> is sharable; <code>mediumPrivate</code> is not. No reading the Cache-Control string to figure out the intent.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">stale-while-revalidate is the magic word</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"Operator clicks Today, asks edge for analysis"},
+            {"highlight":"flow-actor-2","label":"Edge has a 45s-old cached copy (still fresh: max-age=60)","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-1","label":"Operator sees instant render"},
+            {"highlight":"flow-actor-1","label":"60 seconds later, operator switches benchmark"},
+            {"highlight":"flow-actor-2","label":"Edge has a 105s-old copy: stale, but inside SWR window. Serves it instantly...","packet":true,"from":"actor-2","to":"actor-1"},
+            {"highlight":"flow-actor-2","label":"...AND fires a background fetch to the function","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"Function recomputes, returns fresh JSON","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-2","label":"Edge replaces its copy. Next operator gets the fresh one — no waiting."}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">CDN</div>
+                <span>Vercel Edge</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚡</div>
+            <div class="callout-content">
+              <strong class="callout-title">Nobody waits for the cold function</strong>
+              <p>SWR means the user always gets a near-instant response from the edge. The freshness happens in the background. The trade: you might see a 105s-old number for 200ms. For a maturity score that changes once per finalize, that's invisible.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Which route gets which policy</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">GET /api/catalog</code>
+              <span class="badge-desc"><code>shortPublic</code> — same 100 questions for every operator. CDN serves one copy globally.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">GET /api/assessments/[id]/analysis</code>
+              <span class="badge-desc"><code>mediumPrivate</code> — operator-scoped score JSON. Browser caches it for 30s; CDN never shares it across operators.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">GET /api/assessments/trend</code>
+              <span class="badge-desc"><code>mediumPrivate</code> — longitudinal series for THIS operator's BU. Same isolation rule.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">POST /api/assessments/[id]/finalize</code>
+              <span class="badge-desc"><code>noStore</code> — mutations are never cached. The response is also a fresh signature; serving an old one would be a bug.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">POST /api/evidence/upload-url</code>
+              <span class="badge-desc"><code>noStore</code> — returns a 60s signed URL. Caching it would let one operator reuse another's upload window.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">vercel.json — the static-asset side of the story</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · vercel.json</span>
+<pre><code><span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">"headers"</span>: [</span>
+<span class="code-line">    {</span>
+<span class="code-line">      <span class="code-property">"source"</span>: <span class="code-string">"/assets/(.*)"</span>,</span>
+<span class="code-line">      <span class="code-property">"headers"</span>: [{</span>
+<span class="code-line">        <span class="code-property">"key"</span>: <span class="code-string">"Cache-Control"</span>,</span>
+<span class="code-line">        <span class="code-property">"value"</span>: <span class="code-string">"public, max-age=31536000, immutable"</span></span>
+<span class="code-line">      }]</span>
+<span class="code-line">    },</span>
+<span class="code-line">    {</span>
+<span class="code-line">      <span class="code-property">"source"</span>: <span class="code-string">"/index.html"</span>,</span>
+<span class="code-line">      <span class="code-property">"headers"</span>: [{</span>
+<span class="code-line">        <span class="code-property">"key"</span>: <span class="code-string">"Cache-Control"</span>,</span>
+<span class="code-line">        <span class="code-property">"value"</span>: <span class="code-string">"no-cache"</span></span>
+<span class="code-line">      }]</span>
+<span class="code-line">    }</span>
+<span class="code-line">  ]</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Hashed assets get the year-long lock.</strong> Vite emits <code>app.a3f2b71e.js</code>; the filename changes when contents change, so caching forever is safe.</p>
+                <p class="tl"><strong>index.html stays no-cache.</strong> It points to the hashed assets. If the browser kept a stale index, the user would never see new code ship.</p>
+                <p class="tl"><strong>The pattern:</strong> immutable for content-addressed files, no-cache for the entry point. Same approach every fast SPA uses; we just spell it out in vercel.json so deploys are reproducible.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An engineer is adding <code>GET /api/assessments/[id]/notes</code> — a per-operator list of the freeform notes attached to questions. Which cache policy?</p>
+
+          <div class="quiz-container" id="quiz-module11">
+            <div class="quiz-question-block"
+                 data-correct="medium-private"
+                 data-explanation-right="Right. Notes are operator-scoped — different operator, different content. mediumPrivate keeps the CDN from sharing across operators (private) and lets the browser cache for 30s with SWR for snappy refetch. shortPublic would leak Operator A's notes to Operator B from the shared edge cache."
+                 data-explanation-wrong="Reread the policies. The data is per-operator, so it must NEVER be shared by the CDN — that rules out shortPublic. It's also a read endpoint, not a mutation, so noStore is over-strict and kills perceived speed. mediumPrivate is the goldilocks.">
+              <h3 class="quiz-question">Cache policy for /api/assessments/[id]/notes:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="short-public" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>shortPublic — it's a GET, share it</span>
+                </button>
+                <button class="quiz-option" data-value="medium-private" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>mediumPrivate — per-operator content; browser caches, CDN does not share</span>
+                </button>
+                <button class="quiz-option" data-value="no-store" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>noStore — anything operator-scoped should never cache</span>
+                </button>
+                <button class="quiz-option" data-value="custom" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Write a fourth custom policy inline</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module11')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module11')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

@@ -1,0 +1,167 @@
+    <section class="module" id="module-8">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">08</span>
+          <h1 class="module-title">Drift and roadmap — what changed, and what to do.</h1>
+          <p class="module-subtitle">A score by itself is a vibe. A score plus <em>"this changed since last time"</em> plus <em>"here are 30 actions sorted by uplift ÷ effort"</em> is an audit instrument.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Drift = a doctor's vital-sign chart</h2>
+          <p>A doctor doesn't ask <em>"is the patient healthy?"</em> — they ask <em>"what changed since last visit?"</em> Single readings are noise; trajectories are signal.</p>
+
+          <div class="pattern-cards" style="margin-top: var(--space-4)">
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">📉</div>
+              <h4 class="pattern-title">Critical regression</h4>
+              <p class="pattern-desc"><code>severity: 'CRITICAL'</code> when |delta| &gt; 0.5. Coral severity stripe on the Live Brief. Demands action.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚠️</div>
+              <h4 class="pattern-title">Notice regression</h4>
+              <p class="pattern-desc"><code>severity: 'NOTICE'</code> when delta is negative but small. Worth knowing.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">↗️</div>
+              <h4 class="pattern-title">Improvement</h4>
+              <p class="pattern-desc">Positive delta. Pillar Evolution chart shows the upward line.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">"Prior assessment" is operator-scoped — and that fact is the difference between an audit-grade product and a prototype</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/assessments/[id]/analysis.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> [prior] = <span class="code-keyword">await</span> sql`</span>
+<span class="code-line">  <span class="code-keyword">SELECT</span> id <span class="code-keyword">FROM</span> assessments</span>
+<span class="code-line">  <span class="code-keyword">WHERE</span> "entityId" = ${assessment.entityId}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> id != ${id}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> "createdAt" &lt; ${assessment.createdAt}</span>
+<span class="code-line">    <span class="code-keyword">AND</span> status = <span class="code-string">'completed'</span></span>
+<span class="code-line">    <span class="code-keyword">AND</span> "operatorEmail" = ${assessment.operatorEmail}</span>
+<span class="code-line">  <span class="code-keyword">ORDER BY</span> "createdAt" <span class="code-keyword">DESC</span> <span class="code-keyword">LIMIT</span> 1</span>
+<span class="code-line">`;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Find the previous version of THIS BU assessment, by THIS operator, that was actually finalized.</strong></p>
+                <p class="tl">The <code>operatorEmail</code> filter exists for a real reason: without it, Operator B's drift headline could compute against Operator A's data. Caught during audit; shipped same day.</p>
+                <p class="tl"><code>status = 'completed'</code> excludes drafts. Drift only compares to finalized snapshots.</p>
+                <p class="tl"><code>id != current</code> prevents self-comparison (drift would be 0 across the board).</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-warning" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🚨</div>
+            <div class="callout-content">
+              <strong class="callout-title">Cross-tenant data bleed: the silent killer</strong>
+              <p>The original version of this query missed the <code>operatorEmail</code> filter. It looked harmless. It also silently leaked one operator's risk posture into another operator's headline. <strong>Multi-tenant SaaS lives or dies on this kind of filter.</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The roadmap is a sort, not a stack of TODOs</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/engines.ts:165</span>
+<pre><code><span class="code-line"><span class="code-keyword">export function</span> <span class="code-function">generateRoadmap</span>(pillarScores, benchmarkType) {</span>
+<span class="code-line">  <span class="code-keyword">const</span> profile = BENCHMARKS[benchmarkType];</span>
+<span class="code-line">  <span class="code-keyword">const</span> gaps = PILLAR_IDS.<span class="code-function">map</span>(pid => ({</span>
+<span class="code-line">    pillarId: pid,</span>
+<span class="code-line">    gap: <span class="code-function">Math.max</span>(0, profile[pid] - pillarScores.<span class="code-function">get</span>(pid)),</span>
+<span class="code-line">  }));</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// score each canonical action by uplift / (cost × duration)</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> actions = ROADMAP_ACTIONS</span>
+<span class="code-line">    .<span class="code-function">filter</span>(a => gapsByPillar.<span class="code-function">get</span>(a.pillarId) > 0)</span>
+<span class="code-line">    .<span class="code-function">map</span>(a => ({</span>
+<span class="code-line">      ...a,</span>
+<span class="code-line">      score: a.expectedUplift / (a.costScore * a.durationScore),</span>
+<span class="code-line">    }))</span>
+<span class="code-line">    .<span class="code-function">sort</span>((a, b) => b.score - a.score);</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Step 1 — find the gaps.</strong> For each pillar, how far below benchmark are we?</p>
+                <p class="tl"><strong>Step 2 — filter actions.</strong> The catalog has canonical improvement actions tagged by pillar. Drop ones targeting pillars that don't have a gap.</p>
+                <p class="tl"><strong>Step 3 — score by ROI.</strong> Each action has expectedUplift, costScore (1-5, lower=cheaper), durationScore (1-5, lower=faster). Priority = uplift ÷ (cost × duration). Cheap, fast, high-uplift wins.</p>
+                <p class="tl"><strong>Step 4 — sort and bucket.</strong> Top scorers Phase 1, next Phase 2, rest Phase 3.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where drift + roadmap surface in the UI</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">Live Brief headline</code>
+              <span class="badge-desc">"Risk Treatment regressed -1.00 on Generation since the prior assessment." Auto-generated from the worst regression.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Pillar table sparklines</code>
+              <span class="badge-desc">REAL longitudinal data from /api/assessments/trend. Em-dash placeholder if &lt; 2 sessions. Never fabricated.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Pillar Evolution chart</code>
+              <span class="badge-desc">Full longitudinal view across all past assessments for this BU.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Sequenced roadmap table</code>
+              <span class="badge-desc">Top 14 actions on Today, sortable by phase / priority / uplift. Full table on Action Plan screen.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Action Plan scenarios</code>
+              <span class="badge-desc">3 scenario cards: "Status Quo" / "Phase 1 only" / "Full sequence." Each projects score uplift if those actions ship.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>Action 1: expectedUplift 1.5, costScore 5 (expensive), durationScore 5 (slow). Action 2: expectedUplift 0.5, costScore 1 (cheap), durationScore 1 (fast). Which goes in Phase 1?</p>
+
+          <div class="quiz-container" id="quiz-module8">
+            <div class="quiz-question-block"
+                 data-correct="cheap-fast"
+                 data-explanation-right="Right. Priority = uplift / (cost × duration). Action 1: 1.5 / 25 = 0.06. Action 2: 0.5 / 1 = 0.5. Action 2 wins by ~8x. The roadmap rewards cheap+fast over big+slow."
+                 data-explanation-wrong="Calculate the priority score: uplift / (cost × duration). Big uplift divides by 25 (5×5). Small uplift divides by 1 (1×1). Cheap+fast crushes big+slow.">
+              <h3 class="quiz-question">Which action has higher priority?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="big-uplift" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Action 1 — bigger uplift wins</span>
+                </button>
+                <button class="quiz-option" data-value="cheap-fast" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Action 2 — uplift/(cost×duration) is 0.5 vs 0.06</span>
+                </button>
+                <button class="quiz-option" data-value="depends" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Depends on the pillar — leadership wins</span>
+                </button>
+                <button class="quiz-option" data-value="tied" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Tied — same cost per uplift unit</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module8')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module8')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

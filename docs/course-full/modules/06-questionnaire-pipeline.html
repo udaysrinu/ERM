@@ -1,0 +1,178 @@
+    <section class="module" id="module-6">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">06</span>
+          <h1 class="module-title">The questionnaire pipeline — 100 questions without losing your place.</h1>
+          <p class="module-subtitle">A 100-question form is where most assessment products fail. Ours auto-resumes mid-session, uploads evidence inline, and never silently destroys progress.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A flight checklist that resumes mid-flight</h2>
+          <p>Pilots have <span class="term" data-definition="A printed checklist of every action a pilot must perform before takeoff, during cruise, and on landing. Used for decades; orders of magnitude safer than 'just remember everything'.">checklists</span>. Each item gets ticked. If the pilot is interrupted, they go back to the last unticked item — they don't restart from the top, and they don't pretend an item was checked.</p>
+          <p>Our questionnaire is the same. The operator answers 100 questions across 10 pillars. They might get pulled into a meeting. They come back; the cursor is exactly where they left off. They click sidebar; nothing destroys their work. They upload a PDF; the upload happens inline without a "save" button.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — lifted draft state ───────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The trick: lifted state with resume</h2>
+          <p>Most React forms keep state inside the form component. When the user navigates away, the component unmounts, the state vanishes — work lost.</p>
+          <p>We <strong>lift the state</strong> to the App shell. The pipeline component is just a "view" of the draft. Mounting / unmounting doesn't destroy anything; the App holds the draft.</p>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/App.tsx</span>
+<pre><code><span class="code-line"><span class="code-comment">// In App.tsx — survives screen changes</span></span>
+<span class="code-line"><span class="code-keyword">const</span> [assessmentDraft, setAssessmentDraft] = <span class="code-function">useState</span>({</span>
+<span class="code-line">  id: null,</span>
+<span class="code-line">  responses: {},</span>
+<span class="code-line">  notes: {},</span>
+<span class="code-line">  evidenceNames: {},</span>
+<span class="code-line">  evidencePaths: {},</span>
+<span class="code-line">  answeredAt: {},</span>
+<span class="code-line">});</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Passed down to the pipeline as props</span></span>
+<span class="code-line">&lt;<span class="code-function">VectorCapturePipeline</span></span>
+<span class="code-line">  draft={assessmentDraft}</span>
+<span class="code-line">  onDraftChange={setAssessmentDraft}</span>
+<span class="code-line">/&gt;</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>The App shell owns the draft.</strong> Even if the user navigates to Today and back, the App stays mounted — so the draft survives.</p>
+                <p class="tl"><strong>responses</strong> — questionId → score (1-5)</p>
+                <p class="tl"><strong>notes</strong> — questionId → free-text note</p>
+                <p class="tl"><strong>evidenceNames</strong> — questionId → filename string (always captured for audit trail)</p>
+                <p class="tl"><strong>evidencePaths</strong> — questionId → Storage object key (only set if upload succeeded). Module 9 covers this.</p>
+                <p class="tl"><strong>answeredAt</strong> — questionId → ISO timestamp. Captured but not yet surfaced in UI (claim 12, deferred).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — the auto-resume effect ────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Resume cursor on remount</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/screens/VectorCapturePipeline.tsx</span>
+<pre><code><span class="code-line"><span class="code-function">useEffect</span>(() => {</span>
+<span class="code-line">  <span class="code-keyword">if</span> (Object.<span class="code-function">keys</span>(responses).length === 0) <span class="code-keyword">return</span>;</span>
+<span class="code-line">  <span class="code-keyword">const</span> firstUnanswered = questions.<span class="code-function">findIndex</span>(</span>
+<span class="code-line">    (q) => responses[q.id] === <span class="code-keyword">undefined</span></span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">if</span> (firstUnanswered &gt;= 0) <span class="code-function">setCurrIdx</span>(firstUnanswered);</span>
+<span class="code-line">}, []);</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>On remount, find the first unanswered question and jump there.</strong></p>
+                <p class="tl">If the operator answered Q1-Q47 yesterday, came back today, the pipeline opens at Q48 — not at Q1. <em>That's the airline-checklist behavior.</em></p>
+                <p class="tl">The empty-array <code>[]</code> dependency means this only runs once on mount. If the user navigates within the pipeline, the cursor moves with their clicks instead.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the batched-update gotcha ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A subtle bug Codex caught: batched setter race</h2>
+          <p>In an early version of the lifted state, each setter spread the same stale <code>draft</code>:</p>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">BUGGY VERSION (caught pre-commit by Codex review)</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> setResponses = (next) => {</span>
+<span class="code-line">  <span class="code-function">onDraftChange</span>({ ...draft, responses: next });</span>
+<span class="code-line">};</span>
+<span class="code-line"><span class="code-keyword">const</span> setAnsweredAt = (next) => {</span>
+<span class="code-line">  <span class="code-function">onDraftChange</span>({ ...draft, answeredAt: next });</span>
+<span class="code-line">};</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// Caller fires both in one click handler:</span></span>
+<span class="code-line"><span class="code-function">setResponses</span>(...);  <span class="code-comment">// React batches</span></span>
+<span class="code-line"><span class="code-function">setAnsweredAt</span>(...);  <span class="code-comment">// stale draft! score lost</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>The bug:</strong> both setters captured <code>draft</code> at render time. React batches state updates; the second setter overwrites the first because both wrote against the same stale snapshot.</p>
+                <p class="tl"><strong>Symptom:</strong> the score literally got lost on every click. The timestamp saved; the score didn't.</p>
+                <p class="tl"><strong>Fix:</strong> use functional updates — <code>onDraftChange((prev) =&gt; ({ ...prev, responses: next }))</code>. Each batched update reads the latest prev, so they compose correctly.</p>
+                <p class="tl"><strong>Why it matters:</strong> external review (Codex) caught this before commit. Reading your own code under deadline pressure misses these. Adversarial review > self-review.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-warning" style="margin-top: var(--space-6)">
+            <div class="callout-icon">⚠️</div>
+            <div class="callout-content">
+              <strong class="callout-title">React state batching is a class of bugs you'll hit again</strong>
+              <p>Whenever you have multiple <code>setX</code> calls in the same handler updating the same parent, prefer functional updates: <code>setX(prev =&gt; …)</code> instead of <code>setX(newValue)</code>. The second form silently corrupts when batched.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — sidebar BU click semantics ────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Sidebar BU click: filter, not generate</h2>
+          <p>The audit found another gotcha — the sidebar's BU buttons used to <strong>destroy</strong> the in-progress draft:</p>
+
+          <div class="flow-steps">
+            <div class="flow-step">
+              <div class="flow-step-num">❌</div>
+              <p><strong>Old:</strong> Click "Generation" in sidebar → <code>handleEntitySelect()</code> → new aid → reset draft → route to assessment</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">✅</div>
+              <p><strong>New:</strong> Click "Generation" in sidebar → <code>handleSidebarBuSelect()</code> → if prior completed assessment exists, open it; else route to scope. <em>Never destroys the draft.</em></p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-6)">Two functions, one verb each. <code>handleEntitySelect</code> is for "begin new assessment" (Scope tile click only). <code>handleSidebarBuSelect</code> is for "filter the workspace to that unit." Mental-model parity: clicking a BU should never lose work.</p>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>An operator is on Q47. They click Today in the sidebar (no assessment loaded yet). What happens?</p>
+
+          <div class="quiz-container" id="quiz-module6">
+            <div class="quiz-question-block"
+                 data-correct="empty-hub"
+                 data-explanation-right="Right. Today renders an EmptyHub component when authed but no analysis is loaded — there's nothing finalized to display. The draft survives in App state, so when the operator navigates back to Assessment, the cursor resumes at Q47 (or wherever they were)."
+                 data-explanation-wrong="Reread the design. The draft is owned by App, not by the pipeline component. Navigating away unmounts the pipeline but doesn't touch App state. When they come back, the cursor jumps to first unanswered question.">
+              <h3 class="quiz-question">After clicking Today mid-questionnaire:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="lost" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Their progress is lost — they have to start over</span>
+                </button>
+                <button class="quiz-option" data-value="empty-hub" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Today shows an empty-state hub. Their draft survives in App state. When they go back to Assessment, cursor resumes at Q47.</span>
+                </button>
+                <button class="quiz-option" data-value="autosave-prompt" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>A "save before leaving?" modal pops up</span>
+                </button>
+                <button class="quiz-option" data-value="route-blocked" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The Today nav is disabled while assessing — the click does nothing</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

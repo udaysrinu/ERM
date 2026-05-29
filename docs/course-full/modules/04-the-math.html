@@ -1,0 +1,176 @@
+    <section class="module" id="module-4">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">04</span>
+          <h1 class="module-title">How a score is born — pure math, no surprises.</h1>
+          <p class="module-subtitle">Four functions. Two hundred lines. The entire patent moat. If anyone asks <em>"how do you score?"</em>, this is the answer.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The score as a pour-over coffee</h2>
+          <p>You can build a coffee shop where every barista pours by feel — different cup every time. Or you can build one where the recipe is exact: <em>22g coffee, 350ml water, 4-minute pour, 96°C.</em> Same recipe → same coffee, every time, anywhere.</p>
+          <p>Our scoring engine is the second kind. The "recipe" is in <code>shared/engines.ts</code>. The "ingredients" are the operator's 100 answers. The "cup of coffee" is the overall maturity score — and the engine guarantees that the same answers always brew the same cup.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — four functions ─────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The four functions, in order</h2>
+
+          <div class="flow-steps" style="margin-top: var(--space-6)">
+            <div class="flow-step">
+              <div class="flow-step-num">1</div>
+              <p><code>computeVectors</code><br/><em>"Roll 100 answers up to 10 pillar scores + 1 overall."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">2</div>
+              <p><code>computeAnalytics</code><br/><em>"Compare each pillar to the active benchmark."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">3</div>
+              <p><code>computeDrift</code><br/><em>"Diff each pillar against the previous assessment."</em></p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+              <div class="flow-step-num">4</div>
+              <p><code>generateRoadmap</code><br/><em>"Sort improvement actions by uplift ÷ effort."</em></p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-8)">Everything else in the codebase — every screen, every chart, every PDF page — consumes the output of these four. <strong>Master these and you've mastered the product.</strong></p>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: computeVectors ──────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Function 1: <code>computeVectors</code> — the heart of the engine</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/engines.ts:51</span>
+<pre><code><span class="code-line"><span class="code-keyword">export function</span> <span class="code-function">computeVectors</span>(responses) {</span>
+<span class="code-line">  <span class="code-comment">// Step A — dimension averages</span></span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> r <span class="code-keyword">of</span> responses) {</span>
+<span class="code-line">    <span class="code-keyword">const</span> q = QUESTIONS_BY_ID.<span class="code-function">get</span>(r.questionId);</span>
+<span class="code-line">    dimSums.<span class="code-function">set</span>(q.dimensionId, sum + r.score);</span>
+<span class="code-line">  }</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// Step B — pillar aggregates (weighted)</span></span>
+<span class="code-line">  <span class="code-keyword">for</span> (<span class="code-keyword">const</span> r <span class="code-keyword">of</span> responses) {</span>
+<span class="code-line">    cellSums.<span class="code-function">set</span>(key, sum + r.score * q.weight);</span>
+<span class="code-line">  }</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-comment">// Step C — overall = sum(pillarScore * pillarWeight)</span></span>
+<span class="code-line">  <span class="code-keyword">const</span> overallScore = PILLAR_IDS.<span class="code-function">reduce</span>(</span>
+<span class="code-line">    (sum, pid) => sum + pillarScores.<span class="code-function">get</span>(pid) * PILLAR_WEIGHTS[pid], 0</span>
+<span class="code-line">  );</span>
+<span class="code-line"></span>
+<span class="code-line">  <span class="code-keyword">return</span> { pillarScores, dimensionScores, overallScore };</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Take 100 answers in. Return 1 overall + 10 pillar + 4 dimension scores.</strong></p>
+                <p class="tl"><strong>Step A:</strong> group answers by their <em>dimension</em> (People / Process / Technology / Governance) and average. This gives you 4 dimension scores.</p>
+                <p class="tl"><strong>Step B:</strong> for each <em>pillar</em>, weight each answer by how important that question is to that pillar, then sum. This gives you 10 pillar scores.</p>
+                <p class="tl"><strong>Step C:</strong> the overall score is a weighted average of the 10 pillar scores. Leadership matters more than Continuous Improvement, so its pillar weight is bigger.</p>
+                <p class="tl"><strong>Notice:</strong> no <code>Date.now()</code>, no random, no API calls, no database. Pure inputs in, pure output out. <em>That's why it's reproducible.</em></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — flow animation: 100 answers → score ───── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Watch one assessment flow through the engine</h2>
+
+          <div class="flow-animation" data-steps='[
+            {"highlight":"flow-actor-1","label":"Operator finalized 100 responses. Stored in Postgres."},
+            {"highlight":"flow-actor-2","label":"Function reads raw responses","packet":true,"from":"actor-1","to":"actor-2"},
+            {"highlight":"flow-actor-3","label":"computeVectors → 1 overall, 10 pillar, 4 dimension scores","packet":true,"from":"actor-2","to":"actor-3"},
+            {"highlight":"flow-actor-3","label":"computeAnalytics → compare each pillar to the Industry benchmark"},
+            {"highlight":"flow-actor-3","label":"computeDrift → diff against the previous assessment for this BU"},
+            {"highlight":"flow-actor-3","label":"generateRoadmap → sort improvement actions by uplift ÷ effort"},
+            {"highlight":"flow-actor-2","label":"Engine returns the JSON","packet":true,"from":"actor-3","to":"actor-2"},
+            {"highlight":"flow-actor-4","label":"Function ships JSON to browser","packet":true,"from":"actor-2","to":"actor-4"}
+          ]'>
+            <div class="flow-actors">
+              <div class="flow-actor" id="flow-actor-1">
+                <div class="flow-actor-icon">PG</div>
+                <span>Postgres</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-2">
+                <div class="flow-actor-icon">FN</div>
+                <span>Function</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-3">
+                <div class="flow-actor-icon">⚙️</div>
+                <span>/shared engines</span>
+              </div>
+              <div class="flow-actor" id="flow-actor-4">
+                <div class="flow-actor-icon">SPA</div>
+                <span>Browser</span>
+              </div>
+            </div>
+            <div class="flow-packet" id="flow-packet"></div>
+            <div class="flow-step-label" id="flow-label">Click "Next step" to begin.</div>
+            <div class="flow-controls">
+              <button class="btn flow-next-btn">Next step</button>
+              <button class="btn flow-reset-btn">Restart</button>
+              <span class="flow-progress"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — the determinism guarantee ─────────────── -->
+        <div class="screen animate-in">
+          <div class="callout callout-accent">
+            <div class="callout-icon">🔒</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why "pure functions" is the patent moat</strong>
+              <p>A <span class="term" data-definition="A function whose output depends only on its inputs — no random numbers, no current time, no network calls, no database reads. Same inputs in, same output out. Forever.">pure function</span> can't lie. There's no "hmm, last time it was Wednesday, this time it's Thursday, the answer might shift." We pinned this in tests: <code>tests/engines.test.ts</code> has 35 assertions like <em>"these specific 100 answers must produce overall score 3.20."</em> If anyone changes the math, that test fails. CI blocks the deploy. The reproducibility claim is enforceable in code, not in policy.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>Why do we deliberately NOT include the current date inside <code>computeVectors</code>?</p>
+
+          <div class="quiz-container" id="quiz-module4">
+            <div class="quiz-question-block"
+                 data-correct="determinism"
+                 data-explanation-right="Right. The instant you put `Date.now()` inside the engine, running it twice produces two different outputs — even if the answers were identical. The whole reproducibility claim collapses. Time-related fields (when the assessment was finalized, when a response was stamped) live in the database row, NOT inside the math."
+                 data-explanation-wrong="Think harder. The reason is about reproducibility — same inputs must produce same output, and `Date.now()` returns a different number every microsecond. Including it would make the engine non-deterministic.">
+              <h3 class="quiz-question">Why no <code>Date.now()</code> in the engine?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="performance" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Performance — calling Date.now() is slow</span>
+                </button>
+                <button class="quiz-option" data-value="determinism" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Determinism — same inputs must always produce the same output, and Date.now() returns a different number each time</span>
+                </button>
+                <button class="quiz-option" data-value="timezone" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Timezone bugs — dates are too hard to handle</span>
+                </button>
+                <button class="quiz-option" data-value="unrelated" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Time isn't related to scoring — it's just irrelevant</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

@@ -1,0 +1,218 @@
+    <section class="module" id="module-2">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">02</span>
+          <h1 class="module-title">The cast — six actors and what each one owes the others.</h1>
+          <p class="module-subtitle">Every system is a small theater company. Knowing who plays which role lets you tell AI <em>"put that logic in the engine, not the React component"</em> and have it actually mean something.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A newsroom, not a kitchen</h2>
+          <p>The <span class="term" data-definition="The standard metaphor where the front-end is the dining room and the back-end is the kitchen. It's overused and doesn't fit a deterministic-instrument product, where the math IS the product.">"restaurant" metaphor</span> is overused. Try this instead: a <strong>newsroom</strong>.</p>
+          <p>A risk-management report is a <em>news story</em> — the numbers are facts, the drift headline is the lede, the roadmap is the editorial recommendation. Each actor in the codebase has a role on that newsroom floor.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — meet the actors ──────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Meet the six actors</h2>
+
+          <div class="pattern-cards" style="margin-top: var(--space-6)">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🌐</div>
+              <h4 class="pattern-title">Browser SPA</h4>
+              <p class="pattern-desc"><strong>The reporter</strong> — interviews the operator, captures answers, displays the finished story. React 19, lives in <code>src/</code>.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚡</div>
+              <h4 class="pattern-title">Vercel Edge</h4>
+              <p class="pattern-desc"><strong>The newsstand</strong> — caches finished stories close to readers worldwide. 60-second cache for trends, 30-second for analysis, 1-year immutable for static.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">☁️</div>
+              <h4 class="pattern-title">Vercel Functions</h4>
+              <p class="pattern-desc"><strong>The fact-checker</strong> — reads raw responses from the database, runs every engine, returns the story. Lives in <code>api/</code>. Stateless — boots fresh per request.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📦</div>
+              <h4 class="pattern-title">/shared engines</h4>
+              <p class="pattern-desc"><strong>The style guide</strong> — the rule book everyone consults. Question catalog, scoring formulas, signature math. Same code runs in functions AND frontend.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">🐘</div>
+              <h4 class="pattern-title">Supabase Postgres</h4>
+              <p class="pattern-desc"><strong>The archive</strong> — every assessment, every response, every score, immutable once finalized. Two tables: <code>assessments</code>, <code>responses</code>.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #6B8FAE">
+              <div class="pattern-icon" style="background: #6B8FAE">🗂️</div>
+              <h4 class="pattern-title">Supabase Storage</h4>
+              <p class="pattern-desc"><strong>The evidence locker</strong> — PDFs and Excel sheets attached as proof, accessed via short-lived signed links. Never publicly listable.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: where each actor lives ──────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">In the codebase, who lives where?</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">FILES</span>
+<pre><code><span class="code-line">ERM-repo/</span>
+<span class="code-line">├── <span class="code-keyword">src/</span>            <span class="code-comment">// Browser SPA</span></span>
+<span class="code-line">│   ├── App.tsx</span>
+<span class="code-line">│   ├── components/</span>
+<span class="code-line">│   └── screens/</span>
+<span class="code-line">├── <span class="code-keyword">api/</span>            <span class="code-comment">// Vercel Functions</span></span>
+<span class="code-line">│   └── assessments/</span>
+<span class="code-line">├── <span class="code-keyword">shared/</span>         <span class="code-comment">// Engines (single source of truth)</span></span>
+<span class="code-line">│   ├── static.ts</span>
+<span class="code-line">│   ├── engines.ts</span>
+<span class="code-line">│   └── signatures.ts</span>
+<span class="code-line">└── <span class="code-keyword">vercel.json</span>     <span class="code-comment">// Edge cache rules</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>src/</strong> — every file the user's browser downloads. React components, screens, styling. Disposable; replace it and the data survives.</p>
+                <p class="tl"><strong>api/</strong> — every URL that starts with <code>/api/</code>. These are tiny stateless servers that boot up, do one thing, return JSON, then vanish.</p>
+                <p class="tl"><strong>shared/</strong> — the rule book. Both <code>src/</code> and <code>api/</code> import from here. <strong>The whole product moat lives in 600 lines of this folder.</strong></p>
+                <p class="tl"><strong>vercel.json</strong> — tells the newsstand (Vercel Edge) how long to keep each kind of story.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — group chat: the "open this assessment" flow ─ -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A day in the newsroom: opening one assessment</h2>
+          <p>Watch the actors talk to each other when the operator clicks "Generation" in the sidebar:</p>
+
+          <div class="chat-window" id="chat-module2" style="margin-top: var(--space-6)">
+            <div class="chat-messages">
+              <div class="chat-message" data-msg="0" data-sender="actor-1" style="display:none">
+                <div class="chat-avatar" style="background: #C4542A">SPA</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #C4542A">Browser</span>
+                  <p>User clicked Generation. I need its analysis.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="1" data-sender="actor-2" style="display:none">
+                <div class="chat-avatar" style="background: #B5862A">EDGE</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #B5862A">Vercel Edge</span>
+                  <p>Got that one cached from 20 seconds ago — here, take it. (You skip the whole back-end.)</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="2" data-sender="actor-1" style="display:none">
+                <div class="chat-avatar" style="background: #C4542A">SPA</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #C4542A">Browser</span>
+                  <p>Cache miss this time. Edge, I need a fresh one.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="3" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>Booting up. Postgres, give me every response for assessment <code>TXSEEDGEN3</code>.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="4" data-sender="actor-5" style="display:none">
+                <div class="chat-avatar" style="background: #A6442B">PG</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #A6442B">Postgres</span>
+                  <p>Here's 100 rows. Question id, score, note, evidence path, timestamp.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="5" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>/shared, run the math: pillar scores, drift, roadmap, signatures.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="6" data-sender="actor-4" style="display:none">
+                <div class="chat-avatar" style="background: #3F7A57">SH</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #3F7A57">/shared engines</span>
+                  <p>Done. Overall 2.90. Risk Treatment regressed −1.00. 30 roadmap actions. Hash <code>80df5740…</code>. Pure functions; same input every time produces this exact JSON.</p>
+                </div>
+              </div>
+              <div class="chat-message" data-msg="7" data-sender="actor-3" style="display:none">
+                <div class="chat-avatar" style="background: #2C5F8C">FN</div>
+                <div class="chat-bubble">
+                  <span class="chat-sender" style="color: #2C5F8C">Vercel Function</span>
+                  <p>Edge — here's the JSON. Cache it for 30 seconds private. Browser — render Today.</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-typing" id="chat-typing" style="display:none">
+              <div class="chat-avatar" id="typing-avatar">?</div>
+              <div class="chat-typing-dots">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+
+            <div class="chat-controls">
+              <button class="btn chat-next-btn">Next message</button>
+              <button class="btn chat-all-btn">Play all</button>
+              <button class="btn chat-reset-btn">Replay</button>
+              <span class="chat-progress"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — the insight ──────────────────────────── -->
+        <div class="screen animate-in">
+          <div class="callout callout-accent">
+            <div class="callout-icon">💡</div>
+            <div class="callout-content">
+              <strong class="callout-title">Why /shared is the most important folder</strong>
+              <p>Most projects have ONE place where they put "the rules" — and a duplicate of those rules in another place. Then the two copies drift apart. Bug city. We solved this by extracting the math + catalog into <code>/shared/</code>, then having both <code>src/</code> and <code>api/</code> import from it via thin re-exports. <strong>One source of truth.</strong> Engineers call this pattern "extract a kernel." Every serious software business eventually does it.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You're telling AI to "make the score include attached evidence file count." Where does the change go?</p>
+
+          <div class="quiz-container" id="quiz-module2">
+            <div class="quiz-question-block"
+                 data-correct="shared"
+                 data-explanation-right="Right. Scoring rules live in /shared/engines.ts. The browser AND the backend both read scores from the same place — if you only change one, the score on Today won't match the score on the PDF. Always patch the kernel."
+                 data-explanation-wrong="Be careful. Changing scoring logic in only the frontend means the backend still computes the old score; the PDF and the database disagree with the screen. Scoring rules MUST live in /shared/engines.ts so both sides see the same math.">
+              <h3 class="quiz-question">Where do you patch the scoring rule?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="src" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>src/screens/TodayScreen.tsx</code> (it's where the score is shown)</span>
+                </button>
+                <button class="quiz-option" data-value="api" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>api/assessments/[id]/analysis.ts</code> (it's the endpoint that returns the score)</span>
+                </button>
+                <button class="quiz-option" data-value="shared" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span><code>shared/engines.ts</code> (the kernel both sides import from)</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Postgres — add a stored procedure</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

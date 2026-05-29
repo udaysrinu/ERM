@@ -1,0 +1,165 @@
+    <section class="module" id="module-12">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">12</span>
+          <h1 class="module-title">Pick it up next — the map for the next builder.</h1>
+          <p class="module-subtitle">A codebase isn't done; it's <em>handed off</em>. This is the file map, the debugging compass, and the AI-prompting playbook for whoever sits in this chair next.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A subway map, not a tour</h2>
+          <p>You don't need to memorize every station. You need to know which line goes where, so when something breaks, you can find the right train fast. This module is that map.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where to look — the file compass</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">"the score is wrong"</code>
+              <span class="badge-desc"><code>shared/engines.ts</code> → computeVectors / computeAnalytics. Pure functions, easy to console.log. Then check <code>shared/static.ts</code> weights.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"the headline is wrong"</code>
+              <span class="badge-desc"><code>src/screens/TodayScreen.tsx</code> → the IIFE that picks regression / aligned / drifting. Three branches, deterministic.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"drift is bleeding across operators"</code>
+              <span class="badge-desc"><code>api/assessments/[id]/analysis.ts</code> → the prior-assessment SQL. Confirm <code>operatorEmail</code> filter still present.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"upload fails silently"</code>
+              <span class="badge-desc"><code>api/evidence/upload-url.ts</code> + <code>VectorCapturePipeline.tsx</code> upload effect. evidenceName should still set even on PUT failure.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"PDF page break is broken"</code>
+              <span class="badge-desc"><code>api/assessments/[id]/pdf.ts</code> → the row-height constant and the <code>tableTop - i * 22</code> math.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"second click is slow"</code>
+              <span class="badge-desc"><code>api/_lib/cache.ts</code> + the route's response headers. Likely <code>noStore</code> where <code>mediumPrivate</code> should be.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"the questionnaire lost work"</code>
+              <span class="badge-desc"><code>src/App.tsx</code> draft state — confirm functional setState (<code>setX(prev =&gt; ...)</code>), not stale-spread.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">"a chart looks empty"</code>
+              <span class="badge-desc">Trend endpoint returned &lt; 2 sessions. By design, sparkline shows em-dash. Don't fabricate.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Deferred items — the things we said "later" to, on purpose</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⏱️</div>
+              <h4 class="pattern-title">answeredAt UI</h4>
+              <p class="pattern-desc">Per-question timestamps are captured in the responses row but not surfaced. Patent claim 12 ships when the Provenance screen renders these.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">👥</div>
+              <h4 class="pattern-title">Multi-operator on one BU</h4>
+              <p class="pattern-desc">Today, drift is operator-scoped. Cross-operator reconciliation (two raters, one BU) is intentionally deferred — needs a UI for disagreement.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">📥</div>
+              <h4 class="pattern-title">Bulk evidence import</h4>
+              <p class="pattern-desc">Right now operators upload one PDF per question. A drag-a-zip flow with auto-mapping is on the roadmap, not the path.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">🔁</div>
+              <h4 class="pattern-title">Re-finalize diff</h4>
+              <p class="pattern-desc">Re-finalize creates a new assessment row. Showing a side-by-side diff between the prior signature and the new one is queued, not built.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">AI prompting — what works on this codebase</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">EXAMPLES</span>
+<pre><code><span class="code-line"><span class="code-comment">// ✅ Concrete, anchored, testable</span></span>
+<span class="code-line"><span class="code-string">"In shared/engines.ts:165, generateRoadmap sorts by</span></span>
+<span class="code-line"><span class="code-string"> uplift / (cost × duration). Add a tie-breaker on</span></span>
+<span class="code-line"><span class="code-string"> pillarWeight desc, and update the test in</span></span>
+<span class="code-line"><span class="code-string"> shared/__tests__/engines.test.ts."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ❌ Vague, no anchor</span></span>
+<span class="code-line"><span class="code-string">"Make the roadmap smarter."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ✅ Names the invariant to preserve</span></span>
+<span class="code-line"><span class="code-string">"Add answeredAt rendering to Provenance.</span></span>
+<span class="code-line"><span class="code-string"> The signature hash MUST NOT change — it</span></span>
+<span class="code-line"><span class="code-string"> excludes timestamps by design (Module 5)."</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment">// ❌ Doesn't name the invariant — risks regression</span></span>
+<span class="code-line"><span class="code-string">"Show timestamps in Provenance."</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Anchor with a path + line.</strong> "shared/engines.ts:165" is a contract — the model can't guess the wrong file.</p>
+                <p class="tl"><strong>Name the invariant.</strong> The hash is sacred. Caching depends on it. Drift comparisons depend on it. Tell the model.</p>
+                <p class="tl"><strong>Cite the test file.</strong> Prefer "update <code>X.test.ts</code>" over "make sure tests still pass." Specific test files keep the model focused.</p>
+                <p class="tl"><strong>Adversarial review beats self-review.</strong> The Codex P1 catch on App.tsx (the batched setter race) shipped because a second model read the diff cold. Use Codex / a second pass before merging anything in <code>shared/</code> or <code>api/</code>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The closing principle</h2>
+          <p>The thing that makes this codebase defensible isn't any one feature. It's that <strong>the score is a pure function, the inputs are hashed, the receipts are printable, and every UI surface refuses to fabricate.</strong> Keep those four properties true and the patent moat stays a moat. Break any one of them and the product becomes another dashboard.</p>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🧭</div>
+            <div class="callout-content">
+              <strong class="callout-title">If you remember one thing</strong>
+              <p>Same answers + same catalog → same hash → same numbers. That sentence is the entire product. Everything else — the charts, the PDF, the evidence locker, the cache — is in service of making that sentence visible to a non-technical auditor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Final check</h2>
+          <p>You're handed a P0 bug: "the Today screen shows score 3.42, the freshly downloaded PDF shows 3.31." Where do you look first?</p>
+
+          <div class="quiz-container" id="quiz-module12">
+            <div class="quiz-question-block"
+                 data-correct="signatures"
+                 data-explanation-right="Right. Compare the run signature on the Today hero vs the PDF cover chip. If they differ, the PDF was generated against an older finalize (or someone re-finalized between the two views). If they match, you have a real determinism bug — drop into shared/engines.ts and check whether the analysis route and the pdf route are calling the same function with the same JSON. Either way, the signatures are the first thing that disambiguates."
+                 data-explanation-wrong="Reread Module 5 + Module 10. The signatures exist precisely so two surfaces showing different numbers can be diagnosed in one step. Anything else is guessing.">
+              <h3 class="quiz-question">First place to look:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="recharts" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Recharts rounding — the SVG might be rendering a different number than the PDF</span>
+                </button>
+                <button class="quiz-option" data-value="signatures" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The run signature on the Today hero vs the PDF cover chip — same hash, same numbers; different hash, different finalize</span>
+                </button>
+                <button class="quiz-option" data-value="cache" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The CDN — flush mediumPrivate cache and reload</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The Postgres responses table — diff against the seed</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module12')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module12')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

@@ -1,0 +1,182 @@
+    <section class="module" id="module-6">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">06</span>
+          <h1 class="module-title">Pick it up next — what to build, what to defer, where to look.</h1>
+          <p class="module-subtitle">You can now hand any AI coding tool a sharp instruction instead of a vague brief. This module gives you the map.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — what's deferred and why ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What's deferred (and why each one is a real decision, not a TODO)</h2>
+          <p><code>CONTEXT.md §9</code> is the single source of truth for "what's on the roadmap and how much it costs." Read that file before you commit to any direction. The big four:</p>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">🤖</div>
+              <h4 class="pattern-title">Real LLM chat</h4>
+              <p class="pattern-desc">The Navigator Assistant popup uses 15 hand-coded regex patterns. Highest demo ROI of any deferred item — 30 min once you provide a Vercel AI Gateway or Gemini API key.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📄</div>
+              <h4 class="pattern-title">AI evidence validation</h4>
+              <p class="pattern-desc">Run uploaded PDFs through Gemini Vision and validate them against the rubric. Half a day. Requires evidence storage (already shipped).</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🔐</div>
+              <h4 class="pattern-title">Real Google SSO</h4>
+              <p class="pattern-desc">Drop the @gmail.com regex. Wire Supabase Auth + Row Level Security. <strong>Required</strong> before any real customer. ~4 hours.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">👥</div>
+              <h4 class="pattern-title">Multi-tenant + RBAC</h4>
+              <p class="pattern-desc">Assessor / Reviewer / Approver roles. Patent Section B. ~1 week. Pre-customer territory, not pre-investor.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 2 — where to look for what ────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Where to look for what — a 30-second map</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">CONTEXT.md</code>
+              <span class="badge-desc">Product spec, patent claims, demo narrative, deferred decisions. <strong>Read this first, every time.</strong></span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">shared/static.ts</code>
+              <span class="badge-desc">100 questions, 10 pillars, 4 dimensions, 4 benchmark profiles, provenance text. The "spec" of the product is in this file.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">shared/engines.ts</code>
+              <span class="badge-desc">The math. computeVectors → computeAnalytics → computeDrift → generateRoadmap.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">shared/signatures.ts</code>
+              <span class="badge-desc">Run-signature SHA-256 + coverage validator. The patent moat in code.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">api/assessments/[id]/analysis.ts</code>
+              <span class="badge-desc">The single endpoint that drives Today. ~170 lines of "read DB → run engines → emit JSON".</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">src/screens/TodayScreen.tsx</code>
+              <span class="badge-desc">Every visible decision on the main dashboard. Live Brief, signature chip, pillar table, Focus Inspector, radar.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">tests/engines.test.ts + properties.test.ts</code>
+              <span class="badge-desc">35 pinned engine assertions + 6 property tests × 100 random runs each. If these pass, the patent claim holds.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">docs/architecture.png</code>
+              <span class="badge-desc">System diagram you've already seen. Print it; tape it next to your monitor.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — instructions to AI ────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Now you can write better prompts to AI</h2>
+          <p>The whole point of this course was to make you a sharper director. Compare:</p>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">VAGUE PROMPT (before)</span>
+<pre><code><span class="code-line"><span class="code-comment">// Pre-course you</span></span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-string">"Add a column showing whether each pillar</span></span>
+<span class="code-line"><span class="code-string"> is improving or declining. Make it look nice."</span></span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">SHARP PROMPT (after)</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Post-course you:</strong></p>
+                <p class="tl"><em>"In src/screens/TodayScreen.tsx, find the pillar table. Add a column called 'Δ since prior' that reads from analysis.driftProfile (already returned by /analysis). Use mint for positive deltas, coral for negative, em-dash if no prior assessment exists. Pillar order stays sorted by gap desc. Don't fabricate data — if driftProfile is empty, render em-dashes everywhere."</em></p>
+                <p class="tl"><strong>Why this is better:</strong> you named the file, the prop, the data source, the visual treatment, AND the failure mode. AI can't get this wrong.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — debugging compass ─────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">When AI gets stuck — the debugging compass</h2>
+          <p>Hit a bug? Match the symptom to the file:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">score is wrong</code>
+              <span class="badge-desc">Look in <code>shared/engines.ts</code>. Run <code>npx vitest run tests/engines.test.ts</code> — the failing test will name the formula.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">drift is wrong</code>
+              <span class="badge-desc">Look in <code>api/assessments/[id]/analysis.ts</code> — the SQL query that finds the prior assessment. Operator + entity + completed status filter.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">UI shows stale data</code>
+              <span class="badge-desc">Edge cache. Check <code>vercel.json</code> and <code>api/_lib/cache.ts</code>. Force-refresh skips the cache.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">upload fails silently</code>
+              <span class="badge-desc"><code>SUPABASE_SERVICE_ROLE_KEY</code> missing in Vercel env. The endpoint throws a clear error.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">App.tsx merge conflicts</code>
+              <span class="badge-desc">Most edits should NOT touch App.tsx. If your AI is editing it, ask "should this go in a screen file under src/screens/ instead?"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — the closing ───────────────────────────── -->
+        <div class="screen animate-in">
+          <div class="callout callout-accent">
+            <div class="callout-icon">🎯</div>
+            <div class="callout-content">
+              <strong class="callout-title">The whole product, one paragraph</strong>
+              <p>ERM Navigator is a <strong>deterministic instrument</strong>. Same answers always produce the same score, byte-for-byte. The receipt is on the screen and on the PDF (run signature, claim 24). Every weight is justified against ISO/COSO/NIST/RIMS, with the rationale visible to anyone (provenance, claim 13). Run it again later and we'll tell you what changed and by how much (drift, claim 4). Evidence is stored privately and accessed via short-lived signed links. The whole stack is one Vercel project + one Supabase project + ~1500 lines of TypeScript. Everything else — the dashboard, the radar, the chatbot — is decoration around those three claims.</p>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-8); font-size: var(--text-lg); text-align: center"><em>You built this. You can now defend it.</em></p>
+        </div>
+
+        <!-- ── SCREEN 6 — final quiz ────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Final check</h2>
+          <p>An investor asks: <em>"What's the moat? Why can't a competitor build this in 6 months?"</em> What's the sharpest answer?</p>
+
+          <div class="quiz-container" id="quiz-module6">
+            <div class="quiz-question-block"
+                 data-correct="reproducibility"
+                 data-explanation-right="Right. Anyone can build a dashboard in 6 months. The moat is the BUNDLE: deterministic scoring (claim 24, enforced by tests) + standards-aligned provenance (claim 13, with the rationale visible) + the catalog itself (100 questions × 4 dimensions × 4 benchmarks, sourced from real frameworks). A competitor would need to either copy our catalog (legally fraught) OR generate one from scratch (expensive, slow, and won't match ours when audited side-by-side). The receipts make that comparison verifiable in seconds."
+                 data-explanation-wrong="Reread the patent claims and the demo narrative. The dashboard polish, the AI chat, even the run-once speed — none of those are defensible. The moat is reproducibility + provenance. A competitor's score isn't comparable to ours because their catalog is theirs. Auditors care about THAT difference.">
+              <h3 class="quiz-question">The moat is:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="ui" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The polish — better dashboard than the consultants ship.</span>
+                </button>
+                <button class="quiz-option" data-value="speed" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The speed — minutes vs. months.</span>
+                </button>
+                <button class="quiz-option" data-value="reproducibility" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Reproducibility plus standards-aligned provenance plus a catalog you can defend question-by-question. The receipt makes it verifiable.</span>
+                </button>
+                <button class="quiz-option" data-value="ai" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The AI chat assistant — every product needs one.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module6')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module6')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

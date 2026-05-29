@@ -1,0 +1,154 @@
+    <section class="module" id="module-10">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">10</span>
+          <h1 class="module-title">The PDF — the score in an envelope you can mail.</h1>
+          <p class="module-subtitle">A board doesn't open Vercel deployments. They open PDFs. The Report endpoint is the bridge from live app to durable artifact — same numbers, same provenance, same hash, in 5 pages.</p>
+        </header>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A bank statement, not a screenshot</h2>
+          <p>You don't audit a bank account by screenshotting the web UI. You audit it from the PDF statement — generated server-side, signed, archived. The PDF <em>is</em> the record of truth.</p>
+          <p>Our Report is built the same way. <code>api/assessments/[id]/pdf.ts</code> takes the same analysis JSON the Today screen reads, runs it through <span class="term" data-definition="A pure-JS PDF library that builds documents page-by-page from primitives (drawText, drawRectangle). No headless Chrome, no HTML-to-PDF gymnastics — deterministic byte output.">pdf-lib</span>, and streams a binary back. No headless browser. No HTML scraping. Just data → bytes.</p>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">5 pages, each earns its place</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">Page 1 · Cover</code>
+              <span class="badge-desc">BU name, benchmark, overall score, run signature chip, generation timestamp. The chip is the receipt — same SHA prefix as the Today screen.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 2 · Live Brief</code>
+              <span class="badge-desc">Drift headline (regression / aligned / drifting) — the same string the Today hero shows. Deterministic, not LLM-generated.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 3 · Pillar table</code>
+              <span class="badge-desc">10 rows: pillar · score · benchmark · gap · status. Sorted by gap descending so the worst pillars print at top.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 4 · Roadmap</code>
+              <span class="badge-desc">Top 14 actions sorted by uplift / (cost × duration). Phase pill, pillar, expected uplift. The same sort the Today table uses.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">Page 5 · Provenance</code>
+              <span class="badge-desc">Per-pillar standards alignment — ISO 31000, COSO ERM, NIST RMF citations. Patent claim 13 in printable form.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Why pdf-lib instead of headless Chrome</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">⚡</div>
+              <h4 class="pattern-title">Cold-start budget</h4>
+              <p class="pattern-desc">A serverless function with headless Chrome cold-starts in 4-8s. pdf-lib cold-starts in &lt;200ms. The Report button feels instant.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">📦</div>
+              <h4 class="pattern-title">Bundle size</h4>
+              <p class="pattern-desc">Chrome binary + Puppeteer = ~170 MB. pdf-lib = ~600 KB. Fits the Vercel function size cap with room to spare.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">🔒</div>
+              <h4 class="pattern-title">Determinism</h4>
+              <p class="pattern-desc">Same analysis JSON in → byte-identical PDF out. HTML-to-PDF rendering varies with font fallbacks, Chrome version, system locale.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">⚖️</div>
+              <h4 class="pattern-title">The trade-off</h4>
+              <p class="pattern-desc">No CSS. Every layout decision — column x-coords, row heights, page breaks — is hand-coded. Worth it for the determinism + speed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A pillar row, by hand</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · api/assessments/[id]/pdf.ts</span>
+<pre><code><span class="code-line"><span class="code-keyword">const</span> rows = analysis.pillars.<span class="code-function">slice</span>().<span class="code-function">sort</span>(</span>
+<span class="code-line">  (a, b) =&gt; b.gap - a.gap</span>
+<span class="code-line">);</span>
+<span class="code-line"></span>
+<span class="code-line">rows.<span class="code-function">forEach</span>((p, i) =&gt; {</span>
+<span class="code-line">  <span class="code-keyword">const</span> y = tableTop - i * 22;</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.name,    { x: 56,  y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.score.<span class="code-function">toFixed</span>(2),</span>
+<span class="code-line">                       { x: 280, y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(p.bench.<span class="code-function">toFixed</span>(2),</span>
+<span class="code-line">                       { x: 340, y, size: 10 });</span>
+<span class="code-line">  page.<span class="code-function">drawText</span>(<span class="code-string">`${p.delta &gt; 0 ? '+' : ''}${p.delta.toFixed(2)}`</span>,</span>
+<span class="code-line">                       { x: 400, y, size: 10,</span>
+<span class="code-line">                         color: p.delta &lt; 0 ? coral : ink });</span>
+<span class="code-line">});</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Sort once, draw once.</strong> The pillar list is sorted by gap descending so the worst regressions print at the top of the table — same hierarchy as the Today screen.</p>
+                <p class="tl"><strong>Hand-coded x coordinates.</strong> 56 / 280 / 340 / 400 are column anchors. No flexbox, no auto-layout. If the table needs a new column, you compute the math yourself.</p>
+                <p class="tl"><strong>Conditional color.</strong> Coral for negative delta, ink for the rest. The same color rule the pillar table on Today uses — visually consistent with the live UI.</p>
+                <p class="tl"><strong>22pt row height.</strong> A constant. Change it, every PDF re-paginates. This is the cost of hand-rolling layout — and the price for byte-deterministic output.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The signature chip on the cover</h2>
+          <p>Page 1 prints a small chip: <code>signature: a3f2…b71e · catalog v3 · generated 2026-05-12T08:14Z</code>. That chip is the same string Today renders below the hero score.</p>
+          <p>If a board member opens the PDF and the live app side-by-side, the SHAs match — proof the printed numbers came from the same deterministic run. If they don't match, the operator either re-finalized in between, or someone fabricated a screenshot. The chip removes the ambiguity.</p>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🧾</div>
+            <div class="callout-content">
+              <strong class="callout-title">Same hash → same numbers, period</strong>
+              <p>This is the difference between a PDF as <em>output</em> and a PDF as <em>artifact</em>. An output is a snapshot. An artifact is verifiable. The signature is what makes ours the second.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You download a Report, sign it with DocuSign, send it to the regulator. Three months later, someone asks "did anyone tamper with the numbers in this PDF before sending?" How do you prove it?</p>
+
+          <div class="quiz-container" id="quiz-module10">
+            <div class="quiz-question-block"
+                 data-correct="rerun"
+                 data-explanation-right="Right. The PDF cover prints the run signature. To verify, re-finalize the same assessment (same answers, same catalog) and check that the new signature matches the one on the printed cover. Match = nobody tampered. Mismatch = either the catalog changed (legitimate, version chip says so) or the PDF was edited (signature won't match recomputation)."
+                 data-explanation-wrong="Reread the receipt mechanism. The PDF is byte-deterministic from the analysis JSON. The cover prints the input hash. Re-run the math against the same answers; if the hash matches, the printed numbers are the ones the engine produced.">
+              <h3 class="quiz-question">How do you prove the printed PDF wasn't doctored?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="docusign" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>DocuSign signature is enough — it's cryptographically signed</span>
+                </button>
+                <button class="quiz-option" data-value="rerun" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Re-finalize the assessment in the app, compare the new run signature to the one on the PDF cover. Match = clean.</span>
+                </button>
+                <button class="quiz-option" data-value="watermark" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Look for a watermark on each page</span>
+                </button>
+                <button class="quiz-option" data-value="metadata" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Read the PDF metadata's "creator" field</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module10')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module10')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

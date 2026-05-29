@@ -1,0 +1,198 @@
+    <section class="module" id="module-3">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">03</span>
+          <h1 class="module-title">The catalog — the product spec is data, not PowerPoint.</h1>
+          <p class="module-subtitle">1,526 lines of TypeScript that encode 100 questions, 10 pillars, 4 dimensions, 4 benchmark profiles, and the standards-alignment receipts. Change one weight, watch the test suite catch it.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A musical score, not a slide deck</h2>
+          <p>A symphony orchestra in Tokyo and one in Berlin can play the same Beethoven sonata and produce essentially the same piece — because they're both reading the same notation. The notation IS the spec.</p>
+          <p>Our catalog is the notation. <code>shared/static.ts</code> encodes every question, every weight, every benchmark — as data, not prose. The engine reads this data deterministically. Two runs of the same answers against the same catalog produce the same score, byte-for-byte.</p>
+          <p><strong>You can't hash a slide deck. You can hash this.</strong> That's how the patent moat is enforceable — see Module 5 for the receipt mechanism.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — what's in the catalog ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The shape of the catalog</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">QUESTIONS</code>
+              <span class="badge-desc">100 entries. Each: id, text, pillarId, dimensionId, weight, and a 5-level rubric of anchor text.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLARS</code>
+              <span class="badge-desc">10 named risk domains: Leadership & Governance, Strategy & Integration, … Continuous Improvement.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLAR_WEIGHTS</code>
+              <span class="badge-desc">10 numbers summing to 1.0. Leadership 0.20, Risk Assessment 0.20, Continuous Improvement 0.02. The "what matters most" knob.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">DIMENSIONS</code>
+              <span class="badge-desc">4 axes every question is tagged with: People, Process, Technology, Governance.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">BENCHMARKS</code>
+              <span class="badge-desc">4 reference profiles: Target / Industry / Peer / External. Each is a per-pillar target score the operator's score is compared against.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">PILLAR_PROVENANCE</code>
+              <span class="badge-desc">Per-pillar standards alignment text — which clauses of ISO 31000, COSO ERM, NIST RMF, RIMS RMM each pillar maps to. Patent claim 13.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">MATURITY_LEVELS</code>
+              <span class="badge-desc">1=Initial, 2=Developing, 3=Defined, 4=Managed, 5=Optimized. The 1-5 scoring scale.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — translation: one question entry ──────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">One question, fully encoded</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/static.ts</span>
+<pre><code><span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">id</span>: <span class="code-string">1</span>,</span>
+<span class="code-line">  <span class="code-property">text</span>: <span class="code-string">"Is there a formally approved ERM policy?"</span>,</span>
+<span class="code-line">  <span class="code-property">pillarId</span>: <span class="code-string">"lead"</span>,</span>
+<span class="code-line">  <span class="code-property">dimensionId</span>: <span class="code-string">"Governance"</span>,</span>
+<span class="code-line">  <span class="code-property">weight</span>: <span class="code-string">1.0</span>,</span>
+<span class="code-line">  <span class="code-property">rubric</span>: {</span>
+<span class="code-line">    <span class="code-string">1</span>: <span class="code-string">"No formal policy exists."</span>,</span>
+<span class="code-line">    <span class="code-string">2</span>: <span class="code-string">"Draft policy circulates internally."</span>,</span>
+<span class="code-line">    <span class="code-string">3</span>: <span class="code-string">"Approved with annual review cadence."</span>,</span>
+<span class="code-line">    <span class="code-string">4</span>: <span class="code-string">"Integrated into ops; KPIs measure adherence."</span>,</span>
+<span class="code-line">    <span class="code-string">5</span>: <span class="code-string">"Continuously evolves; benchmarked against peers."</span></span>
+<span class="code-line">  }</span>
+<span class="code-line">}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>id</strong> — primary key. The signature hash uses this to canonicalize responses (sorted by id).</p>
+                <p class="tl"><strong>text</strong> — what the operator literally sees on the questionnaire screen. Plain English, no jargon.</p>
+                <p class="tl"><strong>pillarId</strong> — foreign key into PILLARS. <code>"lead"</code> = Leadership & Governance.</p>
+                <p class="tl"><strong>dimensionId</strong> — one of the 4 axes. Drives the Focus Inspector tiles on Today.</p>
+                <p class="tl"><strong>weight</strong> — within its (pillar × dimension) cell, how much this question counts. Most questions are 1.0; a few are weighted heavier.</p>
+                <p class="tl"><strong>rubric</strong> — anchor text for each 1-5 score. The operator sees this as a tooltip and inline preview when they pick a score. Different per question.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the 4 benchmark profiles ─────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The 4 benchmark profiles — what the score is compared against</h2>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #C4542A">
+              <div class="pattern-icon" style="background: #C4542A">🎯</div>
+              <h4 class="pattern-title">Target</h4>
+              <p class="pattern-desc">Where the operator wants to be — typically 4.0+ across the board. The "aspirational" benchmark.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #2C5F8C">
+              <div class="pattern-icon" style="background: #2C5F8C">🏭</div>
+              <h4 class="pattern-title">Industry</h4>
+              <p class="pattern-desc">Sector average. Drives the "is this normal for our industry" framing.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #3F7A57">
+              <div class="pattern-icon" style="background: #3F7A57">👥</div>
+              <h4 class="pattern-title">Peer</h4>
+              <p class="pattern-desc">Same-size, same-region competitors. Tighter than industry, more meaningful for boards.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #B5862A">
+              <div class="pattern-icon" style="background: #B5862A">🌐</div>
+              <h4 class="pattern-title">External</h4>
+              <p class="pattern-desc">Cross-industry leaders (e.g., what a high-maturity bank or hospital system looks like).</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">🔀</div>
+            <div class="callout-content">
+              <strong class="callout-title">Switching benchmark is the only "live knob"</strong>
+              <p>Every other input to the score is locked at finalize. The benchmark dropdown on Today (Target / Industry / Peer / External tabs) re-runs <code>computeAnalytics</code> against a different profile. The <em>score doesn't change</em>; only the gap and "aligned pillars" count do. Module 5 explains why this means the analysisHash changes but the scoringInputHash doesn't.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — provenance is patent claim 13 ─────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Provenance — the receipts for every weight</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · shared/static.ts</span>
+<pre><code><span class="code-line">PILLAR_PROVENANCE.lead = {</span>
+<span class="code-line">  <span class="code-property">weight</span>: <span class="code-string">0.20</span>,</span>
+<span class="code-line">  <span class="code-property">standards</span>: <span class="code-string">"ISO 31000 §5.4; COSO ERM 2017</span></span>
+<span class="code-line"><span class="code-string">    Component 1; NIST RMF Prepare step"</span>,</span>
+<span class="code-line">  <span class="code-property">rationale</span>: <span class="code-string">"Leadership commitment is the</span></span>
+<span class="code-line"><span class="code-string">    precondition for every other pillar..."</span></span>
+<span class="code-line">};</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>weight: 0.20</strong> — Leadership counts for 20% of the overall score.</p>
+                <p class="tl"><strong>standards</strong> — exactly which sections of which frameworks justify giving this pillar that much weight. Not "trust us" — citable references.</p>
+                <p class="tl"><strong>rationale</strong> — the human-readable argument. An auditor reads this and decides: do they accept the weighting?</p>
+                <p class="tl"><strong>This data is rendered verbatim on the Provenance screen.</strong> It's also embedded on PDF page 5. The product never abstracts the receipts away.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout callout-accent" style="margin-top: var(--space-6)">
+            <div class="callout-icon">📜</div>
+            <div class="callout-content">
+              <strong class="callout-title">Patent claim 13 lives in this field</strong>
+              <p>Per-pillar and per-dimension standards-alignment provenance is one of the 24 patent claims. It's not a marketing line — every weight in the catalog has a citation. A competitor can't ship the same numbers without either copying our citations (legally fraught) or generating their own (which won't match ours when audited side-by-side).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You want to add a new pillar called "Cyber Risk." What 4 places need updates so the engine still works?</p>
+
+          <div class="quiz-container" id="quiz-module3">
+            <div class="quiz-question-block"
+                 data-correct="all-four"
+                 data-explanation-right="Right. (1) PILLARS array gets a new entry. (2) PILLAR_WEIGHTS gets a new key — and ALL weights must be re-balanced to still sum to 1.0. (3) PILLAR_PROVENANCE gets a citation+rationale. (4) BENCHMARKS gets a new key in all 4 profiles (target / industry / peer / external). And separately, you'd tag some QUESTIONS with the new pillarId. Miss any of these and the engine returns wrong scores or NaN."
+                 data-explanation-wrong="Think about every place pillars are referenced. PILLARS is the registry. PILLAR_WEIGHTS must sum to 1.0. PILLAR_PROVENANCE is patent claim 13 — every pillar needs a citation. BENCHMARKS has a target score per pillar — across 4 profiles. All four files coupled.">
+              <h3 class="quiz-question">Adding a new pillar requires updates to:</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="pillars-only" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Just PILLARS — the engine auto-discovers the rest</span>
+                </button>
+                <button class="quiz-option" data-value="pillars-weights" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>PILLARS + PILLAR_WEIGHTS</span>
+                </button>
+                <button class="quiz-option" data-value="all-four" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>PILLARS + PILLAR_WEIGHTS (re-balanced) + PILLAR_PROVENANCE + BENCHMARKS (all 4 profiles)</span>
+                </button>
+                <button class="quiz-option" data-value="db" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Just add a row to a Postgres table</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>

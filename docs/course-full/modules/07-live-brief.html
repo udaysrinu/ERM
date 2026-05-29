@@ -1,0 +1,188 @@
+    <section class="module" id="module-7">
+      <div class="module-content">
+
+        <header class="module-header animate-in">
+          <span class="module-number">07</span>
+          <h1 class="module-title">The Live Brief — every visible decision on the main dashboard.</h1>
+          <p class="module-subtitle">Today is the flagship surface. Every chart earns its pixels by answering one question — or it gets cut.</p>
+        </header>
+
+        <!-- ── SCREEN 1 — the metaphor ─────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A morning newsroom briefing</h2>
+          <p>An editor walks into the newsroom. They want one sentence: <em>what's the lead story today?</em> Then they want supporting facts. Then they want the action plan.</p>
+          <p>Today is structured the same way. The Live Brief is the lead. The pillar table is the supporting facts. The Action Plan CTA is the verb. Everything else is optional reference.</p>
+        </div>
+
+        <!-- ── SCREEN 2 — the 8 elements that survived the audit ──── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">8 elements, top-to-bottom</h2>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">1. Top bar</code>
+              <span class="badge-desc">BU dropdown · benchmark tabs · status pill · ⌘K palette · Report button · Back. Workspace context.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">2. Live Brief hero</code>
+              <span class="badge-desc">Severity-striped card. Drift headline. 3 secondary metrics (benchmark avg / aligned pillars / active roadmap). Hero score with sparkline. Run signature chip. CTAs: Open action plan · Switch benchmark.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">3. Pillar table</code>
+              <span class="badge-desc">10 rows sorted by gap desc. Score · Bench · Δ · real per-pillar trajectory (sparkline) · status pill. Pillar names link to Provenance.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">4. Pillar Shape radar</code>
+              <span class="badge-desc">10-pillar polygon vs benchmark. Boards expect this — kept on Today after audit feedback.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">5. Focus Inspector</code>
+              <span class="badge-desc">4 dimension tiles (Governance / People / Process / Technology) vs the 4.0 "Managed" reference threshold.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">6. Response coverage</code>
+              <span class="badge-desc">4 metrics: vectors captured / evidence linked / notes captured / system integrity %. Audit-trail-friendly.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">7. Pillar evolution chart</code>
+              <span class="badge-desc">Real longitudinal trend across past assessments for this BU. Powered by /api/assessments/trend.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">8. Sequenced roadmap table</code>
+              <span class="badge-desc">Top 14 actions sorted by priority. Phase 1 / 2 / 3 chips. Click sort by uplift / phase / priority.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 3 — what was cut and why ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">What was cut — and why subtraction is a feature</h2>
+          <p>An external Devil's Advocate audit said Today had Bloomberg-cosplay levels of chart inflation. We cut 4 redundant cards in one commit:</p>
+
+          <div class="pattern-cards">
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Operating Dimensions card</h4>
+              <p class="pattern-desc">4 progress bars showing dimensions. <strong>Cut:</strong> Focus Inspector tiles directly above show the same data with clearer hierarchy (gap vs reference + status pill).</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Pillar Delta bar chart</h4>
+              <p class="pattern-desc">10 vertical bars, current vs target. <strong>Cut:</strong> the pillar table's Δ column already shows score, bench, and gap side-by-side. The bar chart was the same data rendered visually.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Drift Signal mini-chart</h4>
+              <p class="pattern-desc">130px line of pillar deltas vs zero. <strong>Cut:</strong> the Live Brief headline says "regressed -1.00" and the pillar table has the Δ column. Three places telling the same story.</p>
+            </div>
+            <div class="pattern-card" style="border-top: 3px solid #A6442B">
+              <div class="pattern-icon" style="background: #A6442B">❌</div>
+              <h4 class="pattern-title">Regression Alerts card</h4>
+              <p class="pattern-desc">List of pillars with severity bars. <strong>Cut:</strong> the Live Brief headline IS the regression alert. The pillar table marks "Critical" rows with a coral pill. Fourth surface, same story.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-info" style="margin-top: var(--space-6)">
+            <div class="callout-icon">✂️</div>
+            <div class="callout-content">
+              <strong class="callout-title">Subtraction is a real engineering activity</strong>
+              <p>"What can I cut?" is harder than "what should I add?" — but it's the move that makes a screen sharp. After the cuts, Today went from 13 cards to 8. Reading time dropped. Focus increased. The patent moat got more visible because it wasn't competing with 5 redundant charts.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 4 — the headline generator ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">The Live Brief headline is generated, not handwritten</h2>
+
+          <div class="translation-block">
+            <div class="translation-code">
+              <span class="translation-label">CODE · src/screens/TodayScreen.tsx</span>
+<pre><code><span class="code-line">{(() => {</span>
+<span class="code-line">  <span class="code-keyword">const</span> worstReg = (analysis.regressions ?? [])[0];</span>
+<span class="code-line">  <span class="code-keyword">if</span> (worstReg) <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{worstReg.pillarName} regressed</span>
+<span class="code-line">    {worstReg.delta.<span class="code-function">toFixed</span>(2)} on</span>
+<span class="code-line">    {entityName} since the prior assessment.&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">if</span> (alignedCount &gt;= 7) <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{entityName} is on benchmark</span>
+<span class="code-line">    across {alignedCount} of 10 pillars.&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">  <span class="code-keyword">return</span> (</span>
+<span class="code-line">    &lt;&gt;{entityName} is drifting on</span>
+<span class="code-line">    {10 - alignedCount} of 10 pillars vs ...&lt;/&gt;</span>
+<span class="code-line">  );</span>
+<span class="code-line">})()}</span></code></pre>
+            </div>
+            <div class="translation-english">
+              <span class="translation-label">PLAIN ENGLISH</span>
+              <div class="translation-lines">
+                <p class="tl"><strong>Three forms, picked deterministically.</strong> No LLM. No hand-written copy. The headline is computed from the analysis JSON.</p>
+                <p class="tl"><strong>Form 1:</strong> if there's a regression, name the worst-regressed pillar and the delta. The pillar name is a clickable link to Provenance.</p>
+                <p class="tl"><strong>Form 2:</strong> if 7+ pillars are aligned, celebrate. Mint stripe.</p>
+                <p class="tl"><strong>Form 3:</strong> otherwise, "drifting" framing — names how many pillars are off-bench and which benchmark.</p>
+                <p class="tl"><strong>Why deterministic:</strong> two operators with identical analysis JSON see identical headlines. No surprise wording. Same property as the score.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCREEN 5 — non-blocking loading ─────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">A small UX win: the 2-pixel loading strip</h2>
+          <p>Earlier versions blasted the whole screen with a "Computing..." overlay every time the operator switched BU or benchmark. Annoying for routine clicks.</p>
+          <p>We split <code>loading</code> into two states:</p>
+
+          <div class="badge-list">
+            <div class="badge-item">
+              <code class="badge-code">analysisLoading</code>
+              <span class="badge-desc">Fires on /api/assessments/[id]/analysis fetches. Shows a 2px terracotta progress strip ping-pong at the top of the screen. Non-blocking.</span>
+            </div>
+            <div class="badge-item">
+              <code class="badge-code">loading</code>
+              <span class="badge-desc">Reserved for genuinely user-blocking ops: login auth, assessment finalize. Full-screen "Computing" overlay still fires here — appropriate, because the user shouldn't keep clicking.</span>
+            </div>
+          </div>
+
+          <p style="margin-top: var(--space-4)">Lesson: <em>not all loading is equal</em>. Use a non-blocking indicator for routine fetches; reserve the blocking overlay for moments when blocking is the right behavior.</p>
+        </div>
+
+        <!-- ── SCREEN 6 — quiz ─────────────────────────────────── -->
+        <div class="screen animate-in">
+          <h2 class="screen-heading">Quick check</h2>
+          <p>You're shown the Today screen. Generation. The Live Brief headline reads "Risk Treatment regressed -1.00". The pillar Risk Treatment row says "Critical" in a coral pill. Why is this redundant by design?</p>
+
+          <div class="quiz-container" id="quiz-module7">
+            <div class="quiz-question-block"
+                 data-correct="hierarchy"
+                 data-explanation-right="Right. The headline is the SUMMARY (one sentence, eye-catching). The pillar table is the DETAIL (10 rows, drilldown). Both surface the same fact, but at different levels of zoom — the operator scans the hero, then refers to the table for specifics. We cut the EXTRA Regression Alerts card precisely because that one was 4th surface for the same fact, no new information."
+                 data-explanation-wrong="Reread the audit narrative — the design intentionally repeats the lead at the headline AND the table because they serve different scan patterns. We CUT the Regression Alerts card because it was a 4th repetition with no new information. Two = useful redundancy. Four = noise.">
+              <h3 class="quiz-question">Why is showing the regression in BOTH the headline AND the pillar table by design?</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="hierarchy" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>Hierarchy: headline = scannable summary, table = drilldown detail. Different zoom levels.</span>
+                </button>
+                <button class="quiz-option" data-value="bug" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's a bug; one of the two should have been cut.</span>
+                </button>
+                <button class="quiz-option" data-value="loading" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>The headline is a loading skeleton — only shows until the table renders.</span>
+                </button>
+                <button class="quiz-option" data-value="ab-test" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>It's an A/B test: half of users see only one.</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module7')">Check Answer</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module7')">Try Again</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
