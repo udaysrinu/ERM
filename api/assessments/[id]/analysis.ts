@@ -25,12 +25,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = req.query.id as string;
   const benchmarkType = (typeof req.query.benchmarkType === "string" ? req.query.benchmarkType : "target");
 
+  // Operator scoping: the caller must prove which operator they are. Without
+  // this, anyone who guesses an assessment id could read another tenant's full
+  // scores, drift, roadmap and 100 responses. The id is the only thing in the
+  // URL, so the email is the access-control gate.
+  const rawEmail = req.query.operatorEmail;
+  const emailParam = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
+  if (!emailParam || typeof emailParam !== "string") {
+    return res.status(400).json({ error: "operatorEmail query parameter is required" });
+  }
+  const normalizedEmail = emailParam.trim().toLowerCase();
+
   try {
     // Load current assessment + its raw responses.
     const [assessment] = await sql<
       { id: string; entityId: string; createdAt: string; status: string; operatorEmail: string | null }[]
     >`SELECT id, "entityId", "createdAt", status, "operatorEmail" FROM assessments WHERE id = ${id}`;
-    if (!assessment) return res.status(404).json({ error: "Assessment not found" });
+    // 404 (not 403) on both "no row" and "wrong owner" so we never leak that an
+    // assessment id exists for a different operator.
+    if (!assessment || (assessment.operatorEmail ?? "").toLowerCase() !== normalizedEmail) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
 
     const rawResponses = await sql<
       { questionId: number; score: number; note: string; evidenceName: string; evidencePath: string; answeredAt: string }[]

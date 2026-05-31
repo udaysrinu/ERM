@@ -414,11 +414,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const id = req.query.id as string;
   const benchmarkType = (typeof req.query.benchmarkType === "string" ? req.query.benchmarkType : "target");
 
+  // Operator scoping — same gate as the analysis endpoint. A PDF export leaks
+  // exactly as much tenant data as the dashboard, so it needs the same check.
+  const rawEmail = req.query.operatorEmail;
+  const emailParam = Array.isArray(rawEmail) ? rawEmail[0] : rawEmail;
+  if (!emailParam || typeof emailParam !== "string") {
+    return res.status(400).json({ error: "operatorEmail query parameter is required" });
+  }
+  const normalizedEmail = emailParam.trim().toLowerCase();
+
   try {
     const [assessment] = await sql<
-      { id: string; entityId: string; createdAt: string; status: string }[]
-    >`SELECT id, "entityId", "createdAt", status FROM assessments WHERE id = ${id}`;
-    if (!assessment) return res.status(404).json({ error: "Assessment not found" });
+      { id: string; entityId: string; createdAt: string; status: string; operatorEmail: string | null }[]
+    >`SELECT id, "entityId", "createdAt", status, "operatorEmail" FROM assessments WHERE id = ${id}`;
+    // 404 on missing row OR wrong owner — never confirm an id belongs to someone else.
+    if (!assessment || (assessment.operatorEmail ?? "").toLowerCase() !== normalizedEmail) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
 
     const rawResponses = await sql<
       { questionId: number; score: number; note: string; evidenceName: string; answeredAt: string }[]
@@ -437,12 +449,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { pillarScores, dimensionScores, overallScore } = computeVectors(responses);
     const { analytics, benchmarkAverage } = computeAnalytics(pillarScores, benchmarkType);
 
-    // Drift vs prior assessment for same entity.
+    // Drift vs the prior COMPLETED assessment for the SAME operator and entity.
+    // The operatorEmail + status filters mirror the analysis endpoint exactly
+    // (api/assessments/[id]/analysis.ts) — without them a PDF could compute
+    // drift against another tenant's data or an abandoned in-flight row.
     const [prior] = await sql<{ id: string }[]>`
       SELECT id FROM assessments
       WHERE "entityId" = ${assessment.entityId}
         AND id != ${id}
         AND "createdAt" < ${assessment.createdAt}
+        AND status = 'completed'
+        AND "operatorEmail" = ${assessment.operatorEmail}
       ORDER BY "createdAt" DESC LIMIT 1
     `;
     let regressions: any[] = [];

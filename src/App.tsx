@@ -215,7 +215,10 @@ export default function App() {
     analysisAbortRef.current = ctrl;
     setAnalysisLoading(true);
     try {
-      const res = await fetch(`/api/assessments/${aid}/analysis?benchmarkType=${bType}`, { signal: ctrl.signal });
+      const res = await fetch(
+        `/api/assessments/${aid}/analysis?benchmarkType=${bType}&operatorEmail=${encodeURIComponent(loginEmail)}`,
+        { signal: ctrl.signal },
+      );
       const data = await res.json();
       if (!ctrl.signal.aborted) setAnalysis(data);
     } catch (e: any) {

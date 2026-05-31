@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "vercel dev --yes",
-    "build": "vite build",
+    "build": "vite build && cp -r docs/course-full dist/course",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "seed:history": "tsx scripts/seed-history.ts",

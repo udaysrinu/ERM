@@ -381,8 +381,11 @@ export function ReportScreen({
   const regressions: any[] = analysis?.regressions ?? [];
 
   const handleDownload = () => {
-    if (!assessmentId) return;
-    window.open(`/api/assessments/${assessmentId}/pdf`, "_blank");
+    if (!assessmentId || !operatorEmail) return;
+    window.open(
+      `/api/assessments/${assessmentId}/pdf?operatorEmail=${encodeURIComponent(operatorEmail)}`,
+      "_blank",
+    );
   };
 
   const buName = (bu?.name ?? "Generation").toUpperCase();

@@ -204,6 +204,32 @@ describe('POST /api/responses/create', () => {
     `;
     expect(Number(count)).toBe(100);
   });
+
+  it('refuses to overwrite another operator\'s assessment → 403 (no spoofing)', async () => {
+    // Operator A finalizes an assessment.
+    const id = makeAssessmentId('owned');
+    const created = mockRes();
+    await responsesCreateHandler(
+      mockReq('POST', { assessmentId: id, entityId: 'gen', operatorEmail: TEST_EMAIL, responses: fullResponses(3) }),
+      created,
+    );
+    expect(created._status).toBe(200);
+
+    // Operator B tries to overwrite it by reusing the known id with their own email.
+    const attack = mockRes();
+    await responsesCreateHandler(
+      mockReq('POST', { assessmentId: id, entityId: 'gen', operatorEmail: TEST_EMAIL_2, responses: fullResponses(5) }),
+      attack,
+    );
+    expect(attack._status).toBe(403);
+
+    // Operator A's data is intact: still owned by A, still the original score.
+    const [row] = await sql<{ operatorEmail: string; overallScore: number }[]>`
+      SELECT "operatorEmail", "overallScore" FROM assessments WHERE id = ${id}
+    `;
+    expect(row.operatorEmail).toBe(TEST_EMAIL);
+    expect(Number(row.overallScore)).toBeCloseTo(3.0, 5);
+  });
 });
 
 // ── /api/assessments (list) ───────────────────────────────────────────
@@ -291,7 +317,7 @@ describe('GET /api/assessments/[id]/analysis', () => {
 
   it('returns expected analysis JSON shape', async () => {
     const res = mockRes();
-    await assessmentsAnalysisHandler(mockReq('GET', undefined, { id: analysisId }), res);
+    await assessmentsAnalysisHandler(mockReq('GET', undefined, { id: analysisId, operatorEmail: TEST_EMAIL }), res);
     expect(res._status).toBe(200);
     const body = res._body;
     expect(body.assessmentId).toBe(analysisId);
@@ -305,24 +331,40 @@ describe('GET /api/assessments/[id]/analysis', () => {
     expect(body.benchmarkType).toBe('target');
   });
 
+  it('rejects missing operatorEmail → 400', async () => {
+    const res = mockRes();
+    await assessmentsAnalysisHandler(mockReq('GET', undefined, { id: analysisId }), res);
+    expect(res._status).toBe(400);
+  });
+
   it('returns 404 for unknown id', async () => {
     const res = mockRes();
     await assessmentsAnalysisHandler(
-      mockReq('GET', undefined, { id: `${TEST_PREFIX}-does-not-exist` }),
+      mockReq('GET', undefined, { id: `${TEST_PREFIX}-does-not-exist`, operatorEmail: TEST_EMAIL }),
       res,
     );
+    expect(res._status).toBe(404);
+  });
+
+  it('returns 404 when a different operator requests this assessment (no cross-tenant read)', async () => {
+    const res = mockRes();
+    await assessmentsAnalysisHandler(
+      mockReq('GET', undefined, { id: analysisId, operatorEmail: TEST_EMAIL_2 }),
+      res,
+    );
+    // 404 (not 403) so we never confirm the id exists for another operator.
     expect(res._status).toBe(404);
   });
 
   it('switches profile when benchmarkType=industry', async () => {
     const target = mockRes();
     await assessmentsAnalysisHandler(
-      mockReq('GET', undefined, { id: analysisId, benchmarkType: 'target' }),
+      mockReq('GET', undefined, { id: analysisId, benchmarkType: 'target', operatorEmail: TEST_EMAIL }),
       target,
     );
     const industry = mockRes();
     await assessmentsAnalysisHandler(
-      mockReq('GET', undefined, { id: analysisId, benchmarkType: 'industry' }),
+      mockReq('GET', undefined, { id: analysisId, benchmarkType: 'industry', operatorEmail: TEST_EMAIL }),
       industry,
     );
     expect(industry._status).toBe(200);
@@ -410,7 +452,7 @@ describe('GET /api/assessments/[id]/pdf', () => {
 
   it('returns a PDF buffer with correct headers', async () => {
     const res = mockRes();
-    await assessmentsPdfHandler(mockReq('GET', undefined, { id: pdfId }), res);
+    await assessmentsPdfHandler(mockReq('GET', undefined, { id: pdfId, operatorEmail: TEST_EMAIL }), res);
     expect(res._status).toBe(200);
     expect(res._headers['content-type']).toBe('application/pdf');
     expect(res._headers['content-disposition']).toMatch(/\.pdf"?/);
@@ -421,10 +463,25 @@ describe('GET /api/assessments/[id]/pdf', () => {
     expect(buf.slice(0, 4).toString('ascii')).toBe('%PDF');
   });
 
+  it('rejects missing operatorEmail → 400', async () => {
+    const res = mockRes();
+    await assessmentsPdfHandler(mockReq('GET', undefined, { id: pdfId }), res);
+    expect(res._status).toBe(400);
+  });
+
   it('returns 404 for unknown id', async () => {
     const res = mockRes();
     await assessmentsPdfHandler(
-      mockReq('GET', undefined, { id: `${TEST_PREFIX}-no-such-pdf` }),
+      mockReq('GET', undefined, { id: `${TEST_PREFIX}-no-such-pdf`, operatorEmail: TEST_EMAIL }),
+      res,
+    );
+    expect(res._status).toBe(404);
+  });
+
+  it('returns 404 when a different operator requests this PDF (no cross-tenant export)', async () => {
+    const res = mockRes();
+    await assessmentsPdfHandler(
+      mockReq('GET', undefined, { id: pdfId, operatorEmail: TEST_EMAIL_2 }),
       res,
     );
     expect(res._status).toBe(404);

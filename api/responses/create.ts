@@ -57,6 +57,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : null;
 
   try {
+    // Ownership gate. The DELETE+INSERT below replaces every response row for
+    // this assessment, so without a check an attacker who knows a victim's
+    // assessmentId could pass the victim's email (or any email) and wipe/rewrite
+    // their answers. If the assessment already exists and is owned by someone
+    // else, refuse. A brand-new assessmentId (no row yet) is allowed through —
+    // that's the normal "finalize a fresh assessment" path.
+    const [existing] = await sql<{ operatorEmail: string | null }[]>`
+      SELECT "operatorEmail" FROM assessments WHERE id = ${assessmentId}
+    `;
+    if (existing && existing.operatorEmail) {
+      if (existing.operatorEmail.toLowerCase() !== normalizedEmail) {
+        return res.status(403).json({ error: "This assessment belongs to a different operator." });
+      }
+    }
+
     await sql.begin(async tx => {
       await tx`
         INSERT INTO assessments (id, "entityId", status, "operatorEmail", "overallScore")

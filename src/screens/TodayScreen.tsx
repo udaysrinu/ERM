@@ -176,8 +176,8 @@ export function TodayScreen({
           </button>
           <button
             onClick={() => {
-              if (!assessmentId) return;
-              const url = `/api/assessments/${assessmentId}/pdf?benchmarkType=${benchmarkType}`;
+              if (!assessmentId || !operatorEmail) return;
+              const url = `/api/assessments/${assessmentId}/pdf?benchmarkType=${benchmarkType}&operatorEmail=${encodeURIComponent(operatorEmail)}`;
               window.open(url, "_blank");
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] border hairline text-[11px] font-mono tracking-[0.06em] text-[var(--color-ink-soft)] hover:border-[var(--color-ink)] hover:text-[var(--color-ink)] cursor-pointer transition-colors"
